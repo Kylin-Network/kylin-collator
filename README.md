@@ -10,14 +10,19 @@ Follow these steps to prepare a local development environment :hammer_and_wrench
 
 ### Build
 
-Debug version
+Checkout code
+```bash
+git clone --recursive https://github.com/Kylin-Network/kylin-node.git
+```
+
+Build debug version
 
 ```bash
 cd kylin-node
 cargo build
 ```
 
-Release version
+Build release version
 
 ```bash
 cd kylin-node
