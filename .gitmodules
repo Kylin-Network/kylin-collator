@@ -1,6 +1,3 @@
 [submodule "contracts"]
 	path = contracts
 	url = https://github.com/Kylin-Network/kylin-contracts.git
-[submodule "pallets/offchain-worker"]
-	path = pallets/offchain-worker
-	url = https://github.com/Kylin-Network/kylin-ocw-module.git
