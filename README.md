@@ -65,4 +65,4 @@ RUST_LOG=debug RUST_BACKTRACE=1 ./target/debug/kylin-node -lruntime=debug --dev
 
 Replace `debug` with `release`.
 
-Caution! Donot try to run `release` version everytime, it will take lots of time.
+**Caution! Donot try to run `release` version everytime, it will take lots of time.**
