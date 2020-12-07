@@ -66,3 +66,34 @@ RUST_LOG=debug RUST_BACKTRACE=1 ./target/debug/kylin-node -lruntime=debug --dev
 Replace `debug` with `release`.
 
 **Caution! Donot try to run `release` version everytime, it will take lots of time.**
+
+
+### using polkadot.js webUI
+visit <https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/settings/developer>
+
+type config in Settings>>Developer.
+```js
+{
+  "Address": "AccountId",
+  "LookupSource": "AccountId",
+  "DataInfo": {
+    "url": "Text",
+    "data": "Text"
+  }
+}
+```
+
+#### add ocw signer
+run script.
+```bash
+./scripts/insert_alice_key.sh
+```
+if the signer has not enough balance, please charge money.
+
+#### add a request url
+select Developer>>Extrinsics, then using priceFetchModule.addFetchDataRequest(url), type a url encode hex format.
+![pic](doc/imgs/addFetchDataRequest.png)
+
+#### query requested data
+select Developer>>Chain state, then using priceFetchModule.requestedOffchainData(u64), press +.
+![pic](doc/imgs/queryRequestedData.jpg)
