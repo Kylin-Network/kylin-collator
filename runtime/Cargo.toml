@@ -30,7 +30,7 @@ serde = { features = ['derive'], optional = true, version = '1.0.101' }
 # pallet-ocw = { git = 'https://github.com/Kylin-Network/kylin-ocw-module', rev = "90960dc4a1ca085928558c9ccb0bcf8160c12922", branch = "main", package = 'offchain-worker', default-features = false }
 
 pallet-template = { path = '../pallets/template', default-features = false, version = '2.0.0' }
-pallet-ocw = { path = '../pallets/offchain-worker', default-features = false, version = '2.0.0' }
+kylin-ocw = { path = '../pallets/kylin-ocw', default-features = false, version = '2.0.0' }
 
 # >>>
 
@@ -97,7 +97,7 @@ std = [
 
 #<<<
     'pallet-template/std',
-    'pallet-ocw/std',
+    'kylin-ocw/std',
 #>>>
 
     'sp-api/std',

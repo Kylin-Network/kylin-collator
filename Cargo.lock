@@ -2622,13 +2622,13 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "hex-literal",
+ "kylin-ocw",
  "pallet-aura",
  "pallet-balances",
  "pallet-contracts",
  "pallet-contracts-primitives",
  "pallet-contracts-rpc-runtime-api",
  "pallet-grandpa",
- "pallet-ocw",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
  "pallet-template",
@@ -2649,6 +2649,21 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder-runner",
+]
+
+[[package]]
+name = "kylin-ocw"
+version = "2.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "lite-json",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -3872,21 +3887,6 @@ dependencies = [
  "sp-runtime",
  "sp-session",
  "sp-staking",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-ocw"
-version = "2.0.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "lite-json",
- "parity-scale-codec",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
  "sp-std",
 ]
 

@@ -44,7 +44,7 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
 /// Import the ocw pallet.
-pub use pallet_ocw;
+pub use kylin_ocw;
 
 /// Import the template pallet.
 pub use pallet_template;
@@ -326,9 +326,9 @@ parameter_types! {
     pub const UnsignedPriority: u64 = 1 << 20;
 }
 
-impl pallet_ocw::Trait for Runtime {
+impl kylin_ocw::Trait for Runtime {
     type Event = Event;
-    type AuthorityId = pallet_ocw::crypto::TestAuthId;
+    type AuthorityId = kylin_ocw::crypto::TestAuthId;
     type Call = Call;
     type GracePeriod = GracePeriod;
     type UnsignedInterval = UnsignedInterval;
@@ -408,7 +408,7 @@ construct_runtime!(
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
         // Include the custom logic from the template pallet in the runtime.
         TemplateModule: pallet_template::{Module, Call, Storage, Event<T>},
-        PriceFetchModule: pallet_ocw::{Module, Call, Storage, Event<T>},
+        KylinOcwModule: kylin_ocw::{Module, Call, Storage, Event<T>},
         Contracts: pallet_contracts::{Module, Call, Config, Storage, Event<T>},
     }
 );
