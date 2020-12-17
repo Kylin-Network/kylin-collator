@@ -5,7 +5,7 @@
 Follow these steps to prepare a local development environment :hammer_and_wrench:
 
 ### Setup
-[Rust development environment](https://substrate.dev/docs/en/knowledgebase/getting-started).
+[Rust development environment](https://substrate.dev/docs/en/knowledgebase/getting-started)
 
 
 ### Build
