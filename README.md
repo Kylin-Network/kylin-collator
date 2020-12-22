@@ -68,7 +68,7 @@ Replace `debug` with `release`.
 **Caution! Donot try to run `release` version everytime, it will take lots of time.**
 
 
-### using polkadot.js webUI
+### Using polkadot.js webUI
 visit <https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/settings/developer>
 
 type config in Settings>>Developer.
