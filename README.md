@@ -90,7 +90,7 @@ run script.
 ```
 if the signer has not enough balance, please charge money.
 
-#### add a request url
+#### Add a request url
 select Developer>>Extrinsics, then using priceFetchModule.addFetchDataRequest(url), type a url encode hex format.
 ![pic](doc/imgs/addFetchDataRequest.png)
 
