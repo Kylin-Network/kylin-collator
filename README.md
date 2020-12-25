@@ -94,6 +94,6 @@ if the signer has not enough balance, please charge money.
 select Developer>>Extrinsics, then using priceFetchModule.addFetchDataRequest(url), type a url encode hex format.
 ![pic](doc/imgs/addFetchDataRequest.png)
 
-#### query requested data
+#### Query requested data
 select Developer>>Chain state, then using priceFetchModule.requestedOffchainData(u64), press +.
 ![pic](doc/imgs/queryRequestedData.jpg)
