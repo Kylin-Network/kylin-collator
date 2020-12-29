@@ -84,7 +84,7 @@ type config in Settings>>Developer.
 ```
 
 #### Add ocw signer
-run script.
+Run script.
 ```bash
 ./scripts/insert_alice_key.sh
 ```
