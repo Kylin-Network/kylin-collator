@@ -35,7 +35,7 @@ Build debug version
 
 ```bash
 docker build -f Dockerfile -t kylin-node .
-docker run -p "9944:9944" -p "9933:9933" -p "30333:30333" kylin-node:latest bash -c "/kylin-node --dev --ws-external --rpc-external --rpc-methods Unsafe"
+docker run -p "9944:9944" -p "9933:9933" -p "9615:9615" -p "30333:30333" kylin-node:latest bash -c "/kylin-node --dev --ws-external --rpc-external --rpc-methods Unsafe"
 ```
 
 
