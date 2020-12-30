@@ -31,6 +31,15 @@ cargo build --release
 
 ### Docker
 
+Build debug version
+
+```bash
+docker build -f Dockerfile -t kylin-node .
+docker run -p "9944:9944" -p "9933:9933" -p "30333:30333" kylin-node:latest bash -c "/kylin-node --dev --ws-external --rpc-external --rpc-methods Unsafe"
+```
+
+
+
 ### Interact
 Using [Kylin Front End](https://github.com/Kylin-Network/kylin-front-end) which can be used to interact with Kylin Node.
 
