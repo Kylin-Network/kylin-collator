@@ -68,14 +68,14 @@ Replace `debug` with `release`.
 **Caution! Donot try to run `release` version everytime, it will take lots of time.**
 
 
-### Using polkadot.js webUI
-visit <https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/settings/developer>
+### Using polkadot.js
+Visit <https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/settings/developer>
 
-type config in Settings>>Developer.
+Fill the config in Settings>>Developer.
 ```js
 {
-  "Address": "AccountId",
-  "LookupSource": "AccountId",
+  "Address": "<AccountId>",
+  "LookupSource": "<AccountId>",
   "DataInfo": {
     "url": "Text",
     "data": "Text"
@@ -83,17 +83,13 @@ type config in Settings>>Developer.
 }
 ```
 
-#### Add ocw signer
-Run script.
-```bash
-./scripts/insert_alice_key.sh
-```
-If the signer has not enough balance, please charge money.
+#### Add OCW Signer
+Run `./scripts/insert_alice_key.sh` to insert OCW signer. If the OCW signer does not have enough balance, please charge money as following instructions.
 
-#### Add a request url
-select Developer>>Extrinsics, then using priceFetchModule.addFetchDataRequest(url), type a url encode hex format.
+#### Add New Oracle Service URL
+Select Developer>>Extrinsics, then using priceFetchModule.addFetchDataRequest(url), type a url encode hex format.
 ![pic](doc/imgs/addFetchDataRequest.png)
 
-#### Query requested data
-select Developer>>Chain state, then using priceFetchModule.requestedOffchainData(u64), press +.
+#### Query Oracle Data
+Select Developer>>Chain state, then using priceFetchModule.requestedOffchainData(u64), press **+**.
 ![pic](doc/imgs/queryRequestedData.jpg)
