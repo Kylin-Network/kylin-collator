@@ -88,7 +88,7 @@ Run script.
 ```bash
 ./scripts/insert_alice_key.sh
 ```
-if the signer has not enough balance, please charge money.
+If the signer has not enough balance, please charge money.
 
 #### Add a request url
 select Developer>>Extrinsics, then using priceFetchModule.addFetchDataRequest(url), type a url encode hex format.
