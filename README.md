@@ -80,7 +80,7 @@ Replace `debug` with `release`.
 
 
 ### Using polkadot.js
-Visit <https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/settings/developer>
+Visit <https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/settings/developer>.
 
 Fill the config in Settings>>Developer.
 ```js
