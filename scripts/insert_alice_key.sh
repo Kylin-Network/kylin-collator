@@ -43,3 +43,15 @@ curl http://localhost:9933 -H "Content-Type:application/json;charset=utf-8" -X P
     "0x9effc1668ca381c242885516ec9fa2b19c67b6684c02a8a3237b6862e5c8cd7e"
   ]
 }'
+
+# insert ocw data_fetch key
+curl http://localhost:9933 -H "Content-Type:application/json;charset=utf-8" -X POST  --data '{
+  "jsonrpc":"2.0",
+  "id":1,
+  "method":"author_insertKey",
+  "params": [
+    "dftc",
+    "clip organ olive upper oak void inject side suit toilet stick narrow",
+    "0x9effc1668ca381c242885516ec9fa2b19c67b6684c02a8a3237b6862e5c8cd7e"
+  ]
+}'
