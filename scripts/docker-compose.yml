@@ -1,0 +1,29 @@
+version: "3.2"
+
+services:
+  kylin-data-proxy:
+    container_name: kylin-data-proxy
+    image: kylin-node:latest
+    ports:
+      - "8080:8080"
+    env_file:
+      - kylin-data-proxy.env
+    command: bash -c "/data_fetcher"
+
+  kylin-node:
+    container_name: kylin-node
+    image: kylin-node:latest
+    ports:
+      - "9944:9944"
+      - "9933:9933"
+      - "30333:30333"
+    command: bash -c "/kylin-node --dev --ws-external --rpc-external --rpc-methods Unsafe"
+    depends_on:
+      - kylin-data-proxy
+
+  insert-ocw:
+    container_name: insert-ocw
+    image: kylin-node:latest
+    command: bash -c "sleep 30 && /insert_alice_key.sh"
+    depends_on:
+      - kylin-node
