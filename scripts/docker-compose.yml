@@ -27,3 +27,13 @@ services:
     command: bash -c "sleep 30 && /insert_alice_key.sh"
     depends_on:
       - kylin-node
+  
+  kylin-market-frontend:
+    container_name: kylin-market-frontend
+    image: kylin-node:latest
+    ports:
+      - "3001:3001"
+    command: bash -c "cd /apps && serve -p 3001 build"
+    depends_on:
+      - kylin-node
+  
