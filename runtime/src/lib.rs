@@ -43,11 +43,8 @@ pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
-/// Import the ocw pallet.
-pub use kylin_ocw;
-
-/// Import the template pallet.
-pub use pallet_template;
+/// Import the kylin pallet.
+pub use kylin_oracle;
 
 /// Import the contract pallet.
 pub use pallet_contracts;
@@ -305,14 +302,6 @@ impl pallet_contracts::Trait for Runtime {
 
 /*** pallet-contract end ***/
 
-/*** pallet-template start ***/
-/// Configure the template pallet in pallets/template.
-impl pallet_template::Trait for Runtime {
-    type Event = Event;
-}
-
-/*** pallet-contract end ***/
-
 /*** pallet-ocw start ***/
 /// Configure the template pallet in pallets/offchain-worker.
 
@@ -326,9 +315,9 @@ parameter_types! {
     pub const UnsignedPriority: u64 = 1 << 20;
 }
 
-impl kylin_ocw::Trait for Runtime {
+impl kylin_oracle::Trait for Runtime {
     type Event = Event;
-    type AuthorityId = kylin_ocw::crypto::TestAuthId;
+    type AuthorityId = kylin_oracle::crypto::TestAuthId;
     type Call = Call;
     type GracePeriod = GracePeriod;
     type UnsignedInterval = UnsignedInterval;
@@ -392,8 +381,8 @@ where
 /*** pallet-ocw end ***/
 
 /*** kylin-data-fetcher start ***/
-impl kylin_data_fetcher::Trait for Runtime {
-    type AuthorityId = kylin_data_fetcher::crypto::DataFetcherAuthId;
+impl kylin_ocw::Trait for Runtime {
+    type AuthorityId = kylin_ocw::crypto::DataFetcherAuthId;
     type Call = Call;
     type Event = Event;
 }
@@ -414,11 +403,9 @@ construct_runtime!(
         Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
-        // Include the custom logic from the template pallet in the runtime.
-        TemplateModule: pallet_template::{Module, Call, Storage, Event<T>},
-        KylinOcwModule: kylin_ocw::{Module, Call, Storage, Event<T>},
+        KylinOracleModule: kylin_oracle::{Module, Call, Storage, Event<T>},
         Contracts: pallet_contracts::{Module, Call, Config, Storage, Event<T>},
-        DataFetcherModule: kylin_data_fetcher::{Module, Call, Storage, Event<T>},
+        KylinOcwModule: kylin_ocw::{Module, Call, Storage, Event<T>},
     }
 );
 

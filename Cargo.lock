@@ -121,6 +121,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "alt_serde"
+version = "1.0.104"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "03beeddedd09889b96def26f78ba46e34ffd9bdaaa33b2c980cbaa1d0e762686"
+dependencies = [
+ "alt_serde_derive",
+]
+
+[[package]]
+name = "alt_serde_derive"
+version = "1.0.104"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6757ed5faa82ccfbfa1837cd7a7a2e1bdb634236f21fa74d6c5c5736152838a1"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "ansi_term"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1689,7 +1709,7 @@ dependencies = [
  "parking_lot 0.9.0",
  "pin-project 0.4.27",
  "serde",
- "serde_json",
+ "serde_json 1.0.59",
 ]
 
 [[package]]
@@ -2400,7 +2420,7 @@ dependencies = [
  "jsonrpc-pubsub",
  "log",
  "serde",
- "serde_json",
+ "serde_json 1.0.59",
  "url 1.7.2",
 ]
 
@@ -2414,7 +2434,7 @@ dependencies = [
  "log",
  "serde",
  "serde_derive",
- "serde_json",
+ "serde_json 1.0.59",
 ]
 
 [[package]]
@@ -2623,6 +2643,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "hex-literal",
  "kylin-ocw",
+ "kylin-oracle",
  "pallet-aura",
  "pallet-balances",
  "pallet-contracts",
@@ -2631,7 +2652,6 @@ dependencies = [
  "pallet-grandpa",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
- "pallet-template",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
@@ -2655,9 +2675,23 @@ dependencies = [
 name = "kylin-ocw"
 version = "2.0.0"
 dependencies = [
+ "alt_serde",
  "frame-support",
  "frame-system",
- "lite-json",
+ "parity-scale-codec",
+ "serde_json 1.0.44",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "kylin-oracle"
+version = "2.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
  "parity-scale-codec",
  "serde",
  "sp-core",
@@ -3181,24 +3215,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lite-json"
-version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0460d985423a026b4d9b828a7c6eed1bcf606f476322f3f9b507529686a61715"
-dependencies = [
- "lite-parser",
-]
-
-[[package]]
-name = "lite-parser"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c50092e40e0ccd1bf2015a10333fde0502ff95b832b0895dc1ca0d7ac6c52f6"
-dependencies = [
- "paste",
-]
-
-[[package]]
 name = "lock_api"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3244,7 +3260,7 @@ dependencies = [
  "generator",
  "scoped-tls",
  "serde",
- "serde_json",
+ "serde_json 1.0.59",
 ]
 
 [[package]]
@@ -3938,18 +3954,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "pallet-template"
-version = "2.0.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "sp-core",
- "sp-io",
- "sp-runtime",
 ]
 
 [[package]]
@@ -5136,7 +5140,7 @@ dependencies = [
  "sc-network",
  "sc-telemetry",
  "serde",
- "serde_json",
+ "serde_json 1.0.59",
  "sp-chain-spec",
  "sp-core",
  "sp-runtime",
@@ -5186,7 +5190,7 @@ dependencies = [
  "sc-telemetry",
  "sc-tracing",
  "serde",
- "serde_json",
+ "serde_json 1.0.59",
  "sp-blockchain",
  "sp-core",
  "sp-keyring",
@@ -5445,7 +5449,7 @@ dependencies = [
  "sc-network",
  "sc-network-gossip",
  "sc-telemetry",
- "serde_json",
+ "serde_json 1.0.59",
  "sp-api",
  "sp-application-crypto",
  "sp-arithmetic",
@@ -5490,7 +5494,7 @@ dependencies = [
  "merlin",
  "parking_lot 0.10.2",
  "rand 0.7.3",
- "serde_json",
+ "serde_json 1.0.59",
  "sp-application-crypto",
  "sp-core",
  "subtle 2.3.0",
@@ -5553,7 +5557,7 @@ dependencies = [
  "sc-client-api",
  "sc-peerset",
  "serde",
- "serde_json",
+ "serde_json 1.0.59",
  "slog",
  "slog_derive",
  "smallvec 0.6.13",
@@ -5624,7 +5628,7 @@ dependencies = [
  "futures 0.3.8",
  "libp2p",
  "log",
- "serde_json",
+ "serde_json 1.0.59",
  "sp-utils",
  "wasm-timer",
 ]
@@ -5657,7 +5661,7 @@ dependencies = [
  "sc-executor",
  "sc-keystore",
  "sc-rpc-api",
- "serde_json",
+ "serde_json 1.0.59",
  "sp-api",
  "sp-blockchain",
  "sp-chain-spec",
@@ -5688,7 +5692,7 @@ dependencies = [
  "parity-scale-codec",
  "parking_lot 0.10.2",
  "serde",
- "serde_json",
+ "serde_json 1.0.59",
  "sp-chain-spec",
  "sp-core",
  "sp-rpc",
@@ -5711,7 +5715,7 @@ dependencies = [
  "jsonrpc-ws-server",
  "log",
  "serde",
- "serde_json",
+ "serde_json 1.0.59",
  "sp-runtime",
  "substrate-prometheus-endpoint",
 ]
@@ -5754,7 +5758,7 @@ dependencies = [
  "sc-tracing",
  "sc-transaction-pool",
  "serde",
- "serde_json",
+ "serde_json 1.0.59",
  "slog",
  "sp-api",
  "sp-application-crypto",
@@ -5828,7 +5832,7 @@ dependencies = [
  "rustc-hash",
  "sc-telemetry",
  "serde",
- "serde_json",
+ "serde_json 1.0.59",
  "slog",
  "sp-tracing",
  "tracing",
@@ -6030,6 +6034,16 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
+version = "1.0.44"
+source = "git+https://github.com/Xanewok/json?branch=no-std#7954c3a363cf78bde5bbf2e875a222ff9ccafed4"
+dependencies = [
+ "alt_serde",
+ "itoa",
+ "ryu",
+]
+
+[[package]]
+name = "serde_json"
 version = "1.0.59"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dcac07dbffa1c65e7f816ab9eba78eb142c6d44410f4eeba1e26e4f5dfa56b95"
@@ -6156,7 +6170,7 @@ dependencies = [
  "chrono",
  "erased-serde",
  "serde",
- "serde_json",
+ "serde_json 1.0.59",
  "slog",
 ]
 
@@ -6362,7 +6376,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "150ce7661d02d4d0509a4a8364ab3b71a5ef2faf3f97d22d4b76bc0786d9e28b"
 dependencies = [
  "serde",
- "serde_json",
+ "serde_json 1.0.59",
 ]
 
 [[package]]
@@ -6677,7 +6691,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "643933e971979094c9d4b27b015c7250985a262e405bb9ad090336d8ceb5b2b9"
 dependencies = [
  "serde",
- "serde_json",
+ "serde_json 1.0.59",
 ]
 
 [[package]]
@@ -7553,7 +7567,7 @@ dependencies = [
  "matchers",
  "regex",
  "serde",
- "serde_json",
+ "serde_json 1.0.59",
  "sharded-slab",
  "smallvec 1.5.0",
  "thread_local",
