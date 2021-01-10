@@ -9,7 +9,7 @@ ARG GIT_BRANCH="master"
 
 RUN git clone --recursive ${GIT_REPO}
 WORKDIR /builds/kylin-node
-RUN sed -i s/localhost/kylin-data-proxy/g /builds/kylin-node/pallets/data-fetcher/src/lib.rs
+RUN sed -i s/localhost/kylin-data-proxy/g /builds/kylin-node/pallets/kylin-ocw/src/lib.rs
 RUN sed -i s/localhost/kylin-node/g /builds/kylin-node/scripts/insert_alice_key.sh
 RUN rustup default stable
 RUN rustup uninstall nightly
@@ -43,7 +43,7 @@ WORKDIR /builds/kylin-market-frontend
 RUN apt update && apt install gnupg2 curl ca-certificates -y
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
 RUN apt update && apt install yarn -y
-RUN yarn && yarn build:www
+RUN YARN_CHECKSUM_BEHAVIOR=update yarn && yarn build:www
 
 FROM ubuntu
 ENV DEBIAN_FRONTEND noninteractive
