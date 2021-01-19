@@ -66,7 +66,7 @@ Start a dev chain:
 ./target/debug/kylin-node --dev
 ```
 
-Or, start a dev chain with detailed logging:
+or, start a dev chain with detailed logging:
 
 ```bash
 RUST_LOG=debug RUST_BACKTRACE=1 ./target/debug/kylin-node -lruntime=debug --dev
