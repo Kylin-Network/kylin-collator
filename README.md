@@ -102,5 +102,5 @@ select Developer>>Extrinsics, then using priceFetchModule.addFetchDataRequest(ur
 ![pic](doc/imgs/addFetchDataRequest.png)
 
 #### Query Oracle Data
-select Developer>>Chain state, then using priceFetchModule.requestedOffchainData(u64), press **+**.
+Select Developer>>Chain state, then using priceFetchModule.requestedOffchainData(u64), press **+**.
 ![pic](doc/imgs/queryRequestedData.jpg)
