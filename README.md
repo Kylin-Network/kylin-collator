@@ -95,7 +95,7 @@ fill the config in Settings>>Developer.
 ```
 
 #### Add OCW Signer
-run `./scripts/insert_alice_key.sh` to insert OCW signer. If the OCW signer does not have enough balance, please charge money as following instructions.
+Run `./scripts/insert_alice_key.sh` to insert OCW signer. If the OCW signer does not have enough balance, please charge money as following instructions.
 
 #### Add New Oracle Service URL
 Select Developer>>Extrinsics, then using priceFetchModule.addFetchDataRequest(url), type a url encode hex format.
