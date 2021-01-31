@@ -36,48 +36,8 @@ RUN cargo +${RUST_VERSION} build --release || true && curl https://raw.githubuse
 RUN sed -i 's/1.into()/1u32.into()/g' /builds/kylin-node/pallets/kylin-oracle/src/lib.rs
 RUN sed -i 's/let one_thousand = NumberFor::<B>::from(1_000)/let one_thousand = NumberFor::<B>::from(1_000u32)/g' /usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/sc-informant-0.8.0/src/display.rs
 RUN cargo +${RUST_VERSION} build --release
-#RUN curl https://raw.githubusercontent.com/paritytech/substrate/master/primitives/arithmetic/src/fixed_point.rs > /usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/sp-arithmetic-2.0.0/src/fixed_point.rs
-#RUN sed -i 's/let public = generic_public.into()/let public: T::Public = generic_public.into()/g'  /usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/frame-system-2.0.0/src/offchain.rs
-
-#
-##RUN curl https://raw.githubusercontent.com/paritytech/substrate/master/frame/randomness-collective-flip/src/lib.rs > /usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/pallet-randomness-collective-flip-2.0.0/src/lib.rs
-
-#RUN cargo +${RUST_VERSION} build --release |
-
-#RUST_VERSION=nightly-2021-01-29;GIT_REPO="https://github.com/Kylin-Network/kylin-node.git";git clone --recursive ${GIT_REPO};cd  /builds/kylin-node;rustup uninstall nightly;rustup install ${RUST_VERSION};rustup target add wasm32-unknown-unknown --toolchain ${RUST_VERSION};
-#RUST_VERSION=nightly-2021-01-29;rustup uninstall nightly;rustup install ${RUST_VERSION};rustup target add wasm32-unknown-unknown --toolchain ${RUST_VERSION};cargo +${RUST_VERSION} build --release
 
 
-#RUN sed -i 's/1.into()/One::one()/g' /builds/kylin-node/pallets/kylin-oracle/src/lib.rs
-#RUN sed -i 's/1.into()/sp_runtime::traits::One::one()/g' /builds/kylin-node/pallets/kylin-oracle/src/lib.rs
-#
-#RUN sed -i 's/1.into()/One::one()/g' /usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/pallet-randomness-collective-flip-2.0.0/src/lib.rs
-#RUN sed -i 's/1.into()/sp_runtime::traits::One::one()/g' /usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/pallet-randomness-collective-flip-2.0.0/src/lib.rs
-#RUN sed -i 's/2.into()/sp_runtime::traits::One::one()/g' /usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/pallet-grandpa-2.0.0/src/lib.rs
-#RUN sed -i 's/2.into()/sp_runtime::traits::One::one()/g' /usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/pallet-aura-2.0.0/src/lib.rs
-#RUN sed -i 's/0.into()/sp_runtime::traits::Zero::zero()/g' /usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/pallet-timestamp-2.0.0/src/lib.rs
-#RUN sed -i 's/0.into()/sp_runtime::traits::Zero::zero()/g' /usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/pallet-aura-2.0.0/src/lib.rs
-#RUN sed -i 's/20.into()/sp_runtime::traits::One::one()/g' /usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/sc-transaction-pool-2.0.0/src/lib.rs
-#RUN sed -i 's/.into()/u32.into()/g' /usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/sc-service-0.8.0/src/chain_ops/export_blocks.rs
-#
-#
-#RUN sed -i 's/1.into()/One::one()/g' /usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/frame-executive-2.0.0/src/lib.rs
-#RUN sed -i 's/1.into()/sp_runtime::traits::One::one()/g' /usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/frame-executive-2.0.0/src/lib.rs
-#
-#
-
-
-
-
-
-
-
-
-
-#RUN wget https://raw.githubusercontent.com/paritytech/substrate/master/frame/system/src/offchain.rs /usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/frame-system-2.0.0/src/offchain.rs;cp offchain.rs /usr/local/cargo/registry/src/github.com-1ecc6299db9ec823/frame-system-2.0.0/src/offchain.rs
-
-
-#RUN cargo +${RUST_VERSION} build
 RUN cp target/${PROFILE}/kylin-node /kylin-node
 
 # build sample data fetcher
