@@ -6,8 +6,8 @@ services:
     image: kylin-node:latest
     ports:
       - "8080:8080"
-    env_file:
-      - kylin-data-proxy.env
+#    env_file:
+#      - kylin-data-proxy.env
     environment:
       - KYLIN_ES_HOST=kylin-es:9200
     command: bash -c "/data_fetcher"
