@@ -8,6 +8,8 @@ services:
       - "8080:8080"
     env_file:
       - kylin-data-proxy.env
+    environment:
+      - KYLIN_ES_HOST=kylin-es:9200
     command: bash -c "/data_fetcher"
 
   kylin-node:
@@ -27,7 +29,7 @@ services:
     command: bash -c "sleep 30 && /insert_alice_key.sh"
     depends_on:
       - kylin-node
-  
+
   kylin-market-frontend:
     container_name: kylin-market-frontend
     image: kylin-node:latest
@@ -36,4 +38,39 @@ services:
     command: bash -c "cd /apps && serve -p 3001 build"
     depends_on:
       - kylin-node
-  
+
+  kylin-es:
+    container_name: kylin-es
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.10.2
+    environment:
+      - discovery.type=single-node
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+
+  kylin-kibana:
+    container_name: kylin-kibana
+    ports:
+      - "5601:5601"
+    image: docker.elastic.co/kibana/kibana:7.10.2
+    environment:
+      ELASTICSEARCH_HOSTS: http://kylin-es:9200
+    depends_on:
+      - kylin-es
+
+  init-es-index:
+    container_name: init-es-index
+    image: kylin-node:latest
+    environment:
+      ES_HOST: http://kylin-es:9200
+      ES_INDEX_NAME: kylin_access_tracking
+      KIBANA_HOST: http://kylin-kibana:5601
+    command: /bin/bash -c "sleep 60 && /init.sh"
+    depends_on:
+      - kylin-es
+      - kylin-kibana
+
+
+volumes:
+  es-data:
+    driver: local
+
