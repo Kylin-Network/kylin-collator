@@ -55,7 +55,8 @@ COPY --from=builder /builds/kylin-node/scripts/insert_alice_key.sh /
 COPY --from=data_fetcher_builder /builds/sample-data-fetcher/target/debug/data_fetcher /data_fetcher
 COPY --from=data_fetcher_builder /builds/sample-data-fetcher/data/es_index.json /es_index.json
 COPY --from=data_fetcher_builder /builds/sample-data-fetcher/data/kibana.ndjson /kibana.ndjson
-COPY --from=data_fetcher_builder /builds/sample-data-fetcher/data/init.sh /init.sh
+COPY --from=data_fetcher_builder /builds/sample-data-fetcher/data/init_es_index.sh /init_es_index.sh
+COPY --from=data_fetcher_builder /builds/sample-data-fetcher/data/init_kibana_dashboard.sh /init_kibana_dashboard.sh
 
 COPY --from=frontend_builder /builds/kylin-market-frontend/packages/apps /apps
 
