@@ -41,11 +41,11 @@ docker run -p "9944:9944" -p "9933:9933" -p "9615:9615" -p "30333:30333" kylin-n
 
 
 ### Interact
-Using [Kylin Front End](https://github.com/Kylin-Network/kylin-front-end) which can be used to interact with Kylin Node.
+Using [Kylin Market Front End](https://github.com/Kylin-Network/kylin-market-frontend) which can be used to interact with Kylin Node.
 
 ``` bash
-git clone https://github.com/Kylin-Network/kylin-front-end.git
-cd ./kylin-front-end
+git clone https://github.com/Kylin-Network/kylin-market-frontend.git
+cd ./kylin-market-frontend
 yarn install
 ```
 
