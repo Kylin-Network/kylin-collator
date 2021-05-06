@@ -3,14 +3,11 @@ version: "3.2"
 services:
   kylin-data-proxy:
     container_name: kylin-data-proxy
-    build:
-      context: .
-      dockerfile: Dockerfile
-#    image: kylin-node:latest
+    image: kylin-node:latest
     ports:
       - "8080:8080"
-#    env_file:
-#      - kylin-data-proxy.env
+    env_file:
+      - kylin-data-proxy.env
     environment:
       - KYLIN_ES_HOST=kylin-es:9200
     command: bash -c "/data_fetcher"
@@ -20,10 +17,7 @@ services:
 
   kylin-node:
     container_name: kylin-node
-    build:
-      context: .
-      dockerfile: Dockerfile
-#    image: kylin-node:latest
+    image: kylin-node:latest
     ports:
       - "9944:9944"
       - "9933:9933"
@@ -34,9 +28,7 @@ services:
 
   insert-ocw:
     container_name: insert-ocw
-    build:
-      context: .
-      dockerfile: Dockerfile
+
     image: kylin-node:latest
     command: bash -c "sleep 30 && /insert_alice_key.sh"
     depends_on:
@@ -44,11 +36,7 @@ services:
 
   kylin-market-frontend:
     container_name: kylin-market-frontend
-    build:
-      context: .
-      dockerfile: Dockerfile
-#    image: kylin-node:latest
-
+    image: kylin-node:latest
     ports:
       - "3001:3001"
     command: bash -c "cd /apps && serve -p 3001 build"
@@ -75,10 +63,7 @@ services:
 
   init-es-index:
     container_name: init-es-index
-#    image: kylin-node:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: kylin-node:latest
     environment:
       ES_HOST: http://kylin-es:9200
       ES_INDEX_NAME: kylin_access_tracking
@@ -90,10 +75,7 @@ services:
 
   init-kibana-dashboard:
     container_name: init-kibana-dashboard
-#    image: kylin-node:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: kylin-node:latest
     environment:
       ES_HOST: http://kylin-es:9200
       ES_INDEX_NAME: kylin_access_tracking
@@ -102,8 +84,6 @@ services:
     depends_on:
       - kylin-es
       - kylin-kibana
-
-
 volumes:
   es-data:
     driver: local
