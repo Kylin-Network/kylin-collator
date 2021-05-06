@@ -31,7 +31,7 @@ RUN cargo build
 RUN cp target/${PROFILE}/data_fetcher /data_fetcher
 
 # build kylin-market-frontend
-FROM paritytech/ci-linux:3ec7097e-20201117 as frontend_builder
+FROM paritytech/ci-linux:production as frontend_builder
 
 LABEL maintainer="kylin-dev"
 ARG FRONT_REPO="https://github.com/Kylin-Network/kylin-market-frontend.git"
