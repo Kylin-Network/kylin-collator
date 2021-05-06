@@ -2,8 +2,8 @@
 FROM paritytech/ci-linux:production as builder
 
 LABEL maintainer="kylin-dev"
-ARG RUST_VERSION=nightly-2020-10-06
-ARG PROFILE=debug
+ARG RUST_VERSION=nightly-2020-10-01
+ARG PROFILE=release
 ARG GIT_REPO="https://github.com/Kylin-Network/kylin-node.git"
 ARG GIT_BRANCH="master"
 
@@ -16,7 +16,7 @@ RUN rustup uninstall nightly
 RUN rustup toolchain install ${RUST_VERSION}
 RUN rustup target add wasm32-unknown-unknown --toolchain ${RUST_VERSION}
 
-RUN cargo build
+RUN cargo +${RUST_VERSION} build --${PROFILE}
 RUN cp target/${PROFILE}/kylin-node /kylin-node
 
 # build sample data fetcher
@@ -39,6 +39,7 @@ ARG FRONT_BRANCH="master"
 
 RUN git clone --recursive ${FRONT_REPO}
 WORKDIR /builds/kylin-market-frontend
+RUN git checkout 0e69f019
 
 RUN apt update && apt install gnupg2 curl ca-certificates -y
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list

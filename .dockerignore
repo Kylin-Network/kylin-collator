@@ -13,7 +13,3 @@
 .local
 
 .idea
-
-*.env
-
-scripts/kylin-data-proxy.env
