@@ -5,10 +5,12 @@ LABEL maintainer="kylin-dev"
 ARG RUST_VERSION=nightly-2020-10-01
 ARG PROFILE=release
 ARG GIT_REPO="https://github.com/Kylin-Network/kylin-node.git"
-ARG GIT_BRANCH="master"
+ARG GIT_BRANCH="rococo-v1"
 
 RUN git clone --recursive ${GIT_REPO}
 WORKDIR /builds/kylin-node
+RUN git checkout ${GIT_BRANCH}
+
 RUN sed -i s/localhost/kylin-data-proxy/g /builds/kylin-node/pallets/kylin-ocw/src/lib.rs
 RUN sed -i s/localhost/kylin-node/g /builds/kylin-node/scripts/insert_alice_key.sh
 RUN rustup default stable
@@ -39,7 +41,6 @@ ARG FRONT_BRANCH="master"
 
 RUN git clone --recursive ${FRONT_REPO}
 WORKDIR /builds/kylin-market-frontend
-RUN git checkout 0e69f019
 
 RUN apt update && apt install gnupg2 curl ca-certificates -y
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
