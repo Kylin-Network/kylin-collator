@@ -19,7 +19,6 @@ RUN git submodule update --recursive --remote
 RUN cargo build --${PROFILE}
 
 RUN cp target/${PROFILE}/kylin-node /kylin-node
-RUN cp /builds/kylin-node/scripts/rococo_local.json /rococo_local.json
 
 # build sample data fetcher
 FROM paritytech/ci-linux:production as data_fetcher_builder
@@ -54,6 +53,7 @@ RUN apt-get update && apt-get install curl ca-certificates npm nodejs -y
 RUN npm install -g serve
 COPY --from=builder /kylin-node /
 COPY --from=builder /builds/kylin-node/scripts/insert_alice_key.sh /
+COPY --from=builder /builds/kylin-node/scripts/rococo_local.json /
 
 COPY --from=data_fetcher_builder /builds/sample-data-fetcher/target/${PROFILE}/data_fetcher /data_fetcher
 COPY --from=data_fetcher_builder /builds/sample-data-fetcher/data/es_index.json /es_index.json
