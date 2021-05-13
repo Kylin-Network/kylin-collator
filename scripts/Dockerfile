@@ -19,6 +19,7 @@ RUN git submodule update --recursive --remote
 RUN cargo build --${PROFILE}
 
 RUN cp target/${PROFILE}/kylin-node /kylin-node
+RUN cp /builds/kylin-node/scripts/rococo_local.json /rococo_local.json
 
 # build sample data fetcher
 FROM paritytech/ci-linux:production as data_fetcher_builder

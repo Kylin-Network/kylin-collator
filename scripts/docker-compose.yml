@@ -22,9 +22,8 @@ services:
       - "9944:9944"
       - "9933:9933"
       - "30333:30333"
-    command: bash -c "/kylin-node --dev --ws-external --rpc-external --rpc-methods Unsafe"
-    depends_on:
-      - kylin-data-proxy
+    command: bash -c "/kylin-node -d cumulus-parachain/alice --collator --alice --ws-port 9942 --parachain-id 1480 -- --execution wasm --chain rococo_local.json"
+
 
   insert-ocw:
     container_name: insert-ocw
