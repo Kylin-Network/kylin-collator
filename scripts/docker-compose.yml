@@ -25,7 +25,7 @@ services:
     ports:
       - "9944:9944"
       - "30333:30333"
-    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe --chain rococo_local.json   --base-path /tmp/relay-alice   --ws-port 9944   --port 30333   --alice"
+    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --rpc-external --rpc-methods Unsafe --chain rococo_local.json --base-path /tmp/relay-alice --ws-port 9944 --port 30333 --alice"
 
   validator_2:
     container_name: validator_2
@@ -33,7 +33,7 @@ services:
     ports:
       - "9955:9955"
       - "30334:30334"
-    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe --chain rococo_local.json --base-path /tmp/relay-bob --ws-port 9955 --port 30334   --bob "
+    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe --chain rococo_local.json --base-path /tmp/relay-bob --ws-port 9955 --port 30334 --bob "
 
   insert-ocw:
     container_name: insert-ocw
