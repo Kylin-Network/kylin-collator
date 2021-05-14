@@ -6,8 +6,8 @@ services:
     image: kylin-node:latest
     ports:
       - "8080:8080"
-    env_file:
-      - kylin-data-proxy.env
+#    env_file:
+#      - kylin-data-proxy.env
     environment:
       - KYLIN_ES_HOST=kylin-es:9200
     command: bash -c "/data_fetcher"
@@ -23,8 +23,8 @@ services:
       - "9933:9933"
       - "30333:30333"
     command: bash -c "/kylin-node --dev --ws-external --rpc-external --rpc-methods Unsafe"
-    depends_on:
-      - kylin-data-proxy
+#    depends_on:
+#      - kylin-data-proxy
 
   insert-ocw:
     container_name: insert-ocw
