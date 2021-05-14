@@ -17,3 +17,4 @@
 *.env
 *.lock
 scripts/kylin-data-proxy.env
+cumulus-parachain/*
