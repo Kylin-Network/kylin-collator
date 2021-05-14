@@ -16,7 +16,6 @@ RUN rustup target add wasm32-unknown-unknown --toolchain nightly
 #Build Kylin-node
 RUN git clone --recursive ${KYLIN_GIT_REPO}
 
-
 WORKDIR /builds/kylin-node
 RUN git checkout ${GIT_BRANCH}
 RUN git submodule update --recursive --remote
@@ -56,6 +55,15 @@ RUN git checkout ${FRONT_BRANCH}
 RUN apt update && apt install gnupg2 curl ca-certificates -y
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
 RUN apt update && apt install yarn -y
+RUN apt purge nodejs npm -y
+
+RUN apt-get install -y \
+    software-properties-common \
+    npm
+
+RUN npm install npm@latest -g && \
+    npm install n -g && \
+    n latest
 RUN YARN_CHECKSUM_BEHAVIOR=update yarn && yarn build:www
 
 FROM ubuntu
