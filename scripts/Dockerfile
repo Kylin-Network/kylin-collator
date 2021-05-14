@@ -31,7 +31,6 @@ WORKDIR /builds/polkadot
 RUN cargo build --${PROFILE}
 RUN cp target/${PROFILE}/polkadot /polkadot
 
-
 # build sample data fetcher
 FROM paritytech/ci-linux:production as data_fetcher_builder
 ARG DATA_FETECHER_REPO="https://github.com/Kylin-Network/sample-data-fetcher.git"
@@ -48,10 +47,11 @@ FROM paritytech/ci-linux:production as frontend_builder
 #
 LABEL maintainer="kylin-dev"
 ARG FRONT_REPO="https://github.com/Kylin-Network/kylin-market-frontend.git"
-ARG FRONT_BRANCH="master"
+ARG FRONT_BRANCH="rococo-v1"
 
 RUN git clone --recursive ${FRONT_REPO}
 WORKDIR /builds/kylin-market-frontend
+RUN git checkout ${FRONT_BRANCH}
 
 RUN apt update && apt install gnupg2 curl ca-certificates -y
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
