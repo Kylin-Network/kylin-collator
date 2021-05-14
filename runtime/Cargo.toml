@@ -89,7 +89,7 @@ std = [
     'pallet-contracts-primitives/std',
     'pallet-contracts-rpc-runtime-api/std',
     'kylin-oracle/std',
-    'kylin-ocw/std',
+#    'kylin-ocw/std',
     'sp-api/std',
     'sp-block-builder/std',
     'sp-consensus-aura/std',

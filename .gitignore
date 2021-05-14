@@ -17,3 +17,4 @@
 *.env
 
 scripts/kylin-data-proxy.env
+*.lock
