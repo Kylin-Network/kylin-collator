@@ -11,17 +11,29 @@ services:
     command: bash -c "/data_fetcher"
     depends_on:
       - init-es-index
-
-
   kylin-node:
     container_name: kylin-node
     image: kylin-node:latest
     ports:
-      - "9944:9944"
+      - "9942:9942"
       - "9933:9933"
-      - "30333:30333"
-    command: bash -c "/kylin-node --ws-external --rpc-external --rpc-methods Unsafe -d cumulus-parachain/alice --collator --alice --ws-port 9944 --parachain-id 1480 -- --execution wasm --chain rococo_local.json"
+    command: bash -c "/kylin-node --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus-parachain/alice --collator --alice --ws-port 9942 --parachain-id 1480 -- --execution wasm --chain rococo_local.json"
 
+  validator_1:
+    container_name: validator_1
+    image: kylin-node:latest
+    ports:
+      - "9944:9944"
+      - "30333:30333"
+    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe --chain rococo_local.json   --base-path /tmp/relay-alice   --ws-port 9944   --port 30333   --alice"
+
+  validator_2:
+    container_name: validator_2
+    image: kylin-node:latest
+    ports:
+      - "9955:9955"
+      - "30334:30334"
+    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe --chain rococo_local.json --base-path /tmp/relay-bob --ws-port 9955 --port 30334   --bob "
 
   insert-ocw:
     container_name: insert-ocw

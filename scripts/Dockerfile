@@ -4,7 +4,8 @@ FROM paritytech/ci-linux:production as builder
 LABEL maintainer="kylin-dev"
 ARG RUST_VERSION=1.51.0
 ARG PROFILE=release
-ARG GIT_REPO="https://github.com/Kylin-Network/kylin-node.git"
+ARG KYLIN_GIT_REPO="https://github.com/Kylin-Network/kylin-node.git"
+ARG DOT_GIT_REPO="https://github.com/paritytech/polkadot.git"
 ARG GIT_BRANCH="rococo-v1"
 
 RUN rm -rf /usr/local/rustup/toolchains/
@@ -12,13 +13,24 @@ RUN rustup default stable
 RUN rustup update nightly
 RUN rustup target add wasm32-unknown-unknown --toolchain nightly
 
-RUN git clone --recursive ${GIT_REPO}
+#Build Kylin-node
+RUN git clone --recursive ${KYLIN_GIT_REPO}
+
+
 WORKDIR /builds/kylin-node
 RUN git checkout ${GIT_BRANCH}
 RUN git submodule update --recursive --remote
 RUN cargo build --${PROFILE}
 
 RUN cp target/${PROFILE}/kylin-node /kylin-node
+
+#Build Polkadot
+WORKDIR /builds/
+RUN git clone --recursive ${DOT_GIT_REPO}
+WORKDIR /builds/polkadot
+RUN cargo build --${PROFILE}
+RUN cp target/${PROFILE}/polkadot /polkadot
+
 
 # build sample data fetcher
 FROM paritytech/ci-linux:production as data_fetcher_builder
@@ -52,6 +64,7 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && apt-get install curl ca-certificates npm nodejs -y
 RUN npm install -g serve
 COPY --from=builder /kylin-node /
+COPY --from=builder /polkadot /
 COPY --from=builder /builds/kylin-node/scripts/insert_alice_key.sh /
 COPY --from=builder /builds/kylin-node/scripts/rococo_local.json /
 
@@ -63,4 +76,4 @@ COPY --from=data_fetcher_builder /builds/sample-data-fetcher/data/init_kibana_da
 
 COPY --from=frontend_builder /builds/kylin-market-frontend/packages/apps /apps
 #
-EXPOSE 30333 9933 9944 8080 3001
+EXPOSE 30333 30334 9933 9942 9944 9955 8080 3001
