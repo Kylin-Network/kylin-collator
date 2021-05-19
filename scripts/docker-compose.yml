@@ -38,7 +38,7 @@ services:
     ports:
       - "9942:9942"
       - "9933:9933"
-    command: bash -c "/kylin-node --unsafe-ws-external --rpc-cors all --rpc-external --rpc-methods Unsafe -d cumulus-parachain/alice --collator --alice --ws-port 9942 --rpc-port 9933 --parachain-id 2400 -- --execution wasm --chain rococo_local.json"
+    command: bash -c "/kylin-node --unsafe-ws-external --rpc-cors all --rpc-external --rpc-methods Unsafe -d cumulus-parachain/alice --collator --alice --ws-port 9942 --rpc-port 9933 --parachain-id 2005 -- --execution wasm --chain rococo_local.json"
     depends_on:
       - validator_2
 
