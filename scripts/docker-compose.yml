@@ -19,7 +19,7 @@ services:
       - "9934:9934"
       - "9944:9944"
       - "30333:30333"
-    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --rpc-external --rpc-methods Unsafe --chain rococo_local.json -d cumulus_relay/alice --validator --alice --ws-port 9944 --port 30333 --rpc-port 9934"
+    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --rpc-external --rpc-methods Unsafe --chain rococo -d cumulus_relay/alice --validator --alice --ws-port 9944 --port 30333 --rpc-port 9934 --name alice"
 
   validator_2:
     container_name: validator_2
@@ -28,7 +28,7 @@ services:
       - "9935:9935"
       - "9955:9955"
       - "30334:30334"
-    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --rpc-external --rpc-methods Unsafe --chain rococo_local.json -d cumulus_relay/bob --validator --bob --ws-port 9955 --port 30334 --rpc-port 9935"
+    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --rpc-external --rpc-methods Unsafe --chain rococo -d cumulus_relay/bob --validator --bob --ws-port 9955 --port 30334 --rpc-port 9935 --name bob"
     depends_on:
       - validator_1
 
@@ -38,7 +38,7 @@ services:
     ports:
       - "9942:9942"
       - "9933:9933"
-    command: bash -c "/kylin-node --unsafe-ws-external --rpc-cors all --rpc-external --rpc-methods Unsafe -d cumulus-parachain/alice --collator --alice --ws-port 9942 --rpc-port 9933 --parachain-id 2005 -- --execution wasm --chain rococo_local.json"
+    command: bash -c "/kylin-node --unsafe-ws-external --rpc-cors all --rpc-external --rpc-methods Unsafe -d cumulus-parachain/alice --collator --alice --ws-port 9942 --rpc-port 9933 --parachain-id 2005 -- --execution wasm --chain rococo"
     depends_on:
       - validator_2
 
