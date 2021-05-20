@@ -3,7 +3,7 @@ version: "3.2"
 services:
   kylin-data-proxy:
     container_name: kylin-data-proxy
-    image: kylin-node:latest
+    image: kylinnetwork/kylin-node:latest
     ports:
       - "8080:8080"
     environment:
@@ -14,7 +14,7 @@ services:
 
   validator_1:
     container_name: validator_1
-    image: kylin-node:latest
+    image: kylinnetwork/kylin-node:latest
     ports:
       - "9934:9934"
       - "9944:9944"
@@ -23,7 +23,7 @@ services:
 
   validator_2:
     container_name: validator_2
-    image: kylin-node:latest
+    image: kylinnetwork/kylin-node:latest
     ports:
       - "9935:9935"
       - "9955:9955"
@@ -34,7 +34,7 @@ services:
 
   kylin-node:
     container_name: kylin-node
-    image: kylin-node:latest
+    image: kylinnetwork/kylin-node:latest
     ports:
       - "9942:9942"
       - "9933:9933"
@@ -44,14 +44,14 @@ services:
 
   insert-ocw:
     container_name: insert-ocw
-    image: kylin-node:latest
+    image: kylinnetwork/kylin-node:latest
     command: bash -c "sleep 30 && /insert_alice_key.sh"
     depends_on:
       - kylin-node
 
   kylin-market-frontend:
     container_name: kylin-market-frontend
-    image: kylin-node:latest
+    image: kylinnetwork/kylin-node:latest
     ports:
       - "3001:3001"
     command: bash -c "cd /apps && serve -p 3001 build"
@@ -78,7 +78,7 @@ services:
 
   init-es-index:
     container_name: init-es-index
-    image: kylin-node:latest
+    image: kylinnetwork/kylin-node:latest
     environment:
       ES_HOST: http://kylin-es:9200
       ES_INDEX_NAME: kylin_access_tracking
@@ -90,7 +90,7 @@ services:
 
   init-kibana-dashboard:
     container_name: init-kibana-dashboard
-    image: kylin-node:latest
+    image: kylinnetwork/kylin-node:latest
     environment:
       ES_HOST: http://kylin-es:9200
       ES_INDEX_NAME: kylin_access_tracking
