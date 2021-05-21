@@ -84,4 +84,4 @@ COPY --from=data_fetcher_builder /builds/sample-data-fetcher/data/init_kibana_da
 
 COPY --from=frontend_builder /builds/kylin-market-frontend/packages/apps /apps
 #
-EXPOSE 30333 30334 9933 9934 9935 9942 9944 9955 8080 3001
+EXPOSE 30333-30343 9933-9960 8080 3001
