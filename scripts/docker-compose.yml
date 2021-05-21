@@ -1,19 +1,8 @@
 version: "3.2"
 
 services:
-  kylin-data-proxy:
-    container_name: kylin-data-proxy
-    image: kylinnetwork/kylin-node:latest
-    ports:
-      - "8080:8080"
-    environment:
-      - KYLIN_ES_HOST=kylin-es:9200
-    command: bash -c "/data_fetcher"
-    depends_on:
-      - init-es-index
-
-  validator_1:
-    container_name: validator_1
+  alice:
+    container_name: alice
     image: kylinnetwork/kylin-node:latest
     ports:
       - "9934:9934"
@@ -21,8 +10,8 @@ services:
       - "30333:30333"
     command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe --chain rococo --validator --alice --ws-port 9944 --port 30333 --rpc-port 9934 --name alice "
 
-  validator_2:
-    container_name: validator_2
+  bob:
+    container_name: bob
     image: kylinnetwork/kylin-node:latest
     ports:
       - "9935:9935"
@@ -30,7 +19,7 @@ services:
       - "30334:30334"
     command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe --chain rococo -d cumulus_relay/bob --validator --bob --ws-port 9955 --port 30334 --rpc-port 9935 --name bob"
     depends_on:
-      - validator_1
+      - alice
 
   kylin-node:
     container_name: kylin-node
@@ -38,9 +27,9 @@ services:
     ports:
       - "9942:9942"
       - "9933:9933"
-    command: bash -c "/kylin-node --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe -d cumulus-parachain/alice --collator --alice --ws-port 9942 --rpc-port 9933 --parachain-id 2005 -- --execution wasm --chain rococo"
+    command: bash -c "/kylin-node --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus-parachain/alice --collator --alice --ws-port 9942 --rpc-port 9933 --parachain-id 2004 -- --wasm-execution Compiled --chain rococo"
     depends_on:
-      - validator_2
+      - alice
 
   insert-ocw:
     container_name: insert-ocw
