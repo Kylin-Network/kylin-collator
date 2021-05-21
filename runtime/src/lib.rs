@@ -381,11 +381,11 @@ where
 /*** pallet-ocw end ***/
 
 /*** kylin-data-fetcher start ***/
-impl kylin_ocw::Trait for Runtime {
-    type AuthorityId = kylin_ocw::crypto::DataFetcherAuthId;
-    type Call = Call;
-    type Event = Event;
-}
+// impl kylin_ocw::Trait for Runtime {
+//     type AuthorityId = kylin_ocw::crypto::DataFetcherAuthId;
+//     type Call = Call;
+//     type Event = Event;
+// }
 /*** kylin-data-fetcher end ***/
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -405,7 +405,7 @@ construct_runtime!(
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
         KylinOracleModule: kylin_oracle::{Module, Call, Storage, Event<T>},
         Contracts: pallet_contracts::{Module, Call, Config, Storage, Event<T>},
-        KylinOcwModule: kylin_ocw::{Module, Call, Storage, Event<T>},
+        // KylinOcwModule: kylin_ocw::{Module, Call, Storage, Event<T>},
     }
 );
 

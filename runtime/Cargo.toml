@@ -26,7 +26,7 @@ serde = { features = ['derive'], optional = true, version = '1.0.101' }
 
 # local dependencies
 kylin-oracle = { path = '../pallets/kylin-oracle', default-features = false, version = '2.0.0' }
-kylin-ocw = { path = '../pallets/kylin-ocw', version = '2.0.0', default-features = false }
+#kylin-ocw = { path = '../pallets/kylin-ocw', version = '2.0.0', default-features = false }
 
 # Substrate dependencies
 frame-benchmarking = { default-features = false, optional = true, version = '2.0.0' }
@@ -89,7 +89,7 @@ std = [
     'pallet-contracts-primitives/std',
     'pallet-contracts-rpc-runtime-api/std',
     'kylin-oracle/std',
-    'kylin-ocw/std',
+#    'kylin-ocw/std',
     'sp-api/std',
     'sp-block-builder/std',
     'sp-consensus-aura/std',

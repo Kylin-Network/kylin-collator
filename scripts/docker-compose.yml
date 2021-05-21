@@ -26,12 +26,12 @@ services:
     depends_on:
       - kylin-data-proxy
 
-  insert-ocw:
-    container_name: insert-ocw
-    image: kylin-node:latest
-    command: bash -c "sleep 30 && /insert_alice_key.sh"
-    depends_on:
-      - kylin-node
+#  insert-ocw:
+#    container_name: insert-ocw
+#    image: kylin-node:latest
+#    command: bash -c "sleep 30 && /insert_alice_key.sh"
+#    depends_on:
+#      - kylin-node
 
   kylin-market-frontend:
     container_name: kylin-market-frontend
