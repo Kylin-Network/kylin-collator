@@ -1,3 +1,19 @@
+// Copyright 2019-2021 Parity Technologies (UK) Ltd.
+// This file is part of Cumulus.
+
+// Cumulus is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Cumulus is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
+
 use crate::chain_spec;
 use sc_cli;
 use std::path::PathBuf;
@@ -46,7 +62,7 @@ pub struct ExportGenesisStateCommand {
 	/// Id of the parachain this state is for.
 	///
 	/// Default: 100
-	#[structopt(long, conflicts_with = "chain")]
+	#[structopt(long)]
 	pub parachain_id: Option<u32>,
 
 	/// Write output in binary. Default is to write in hex.
@@ -54,7 +70,7 @@ pub struct ExportGenesisStateCommand {
 	pub raw: bool,
 
 	/// The name of the chain for that the genesis state should be exported.
-	#[structopt(long, conflicts_with = "parachain-id")]
+	#[structopt(long)]
 	pub chain: Option<String>,
 }
 
@@ -75,41 +91,17 @@ pub struct ExportGenesisWasmCommand {
 }
 
 #[derive(Debug, StructOpt)]
-pub struct RunCmd {
-	#[structopt(flatten)]
-	pub base: sc_cli::RunCmd,
-
-	/// Id of the parachain this collator collates for.
-	#[structopt(long)]
-	pub parachain_id: Option<u32>,
-}
-
-impl std::ops::Deref for RunCmd {
-	type Target = sc_cli::RunCmd;
-
-	fn deref(&self) -> &Self::Target {
-		&self.base
-	}
-}
-
-#[derive(Debug, StructOpt)]
 #[structopt(settings = &[
-	structopt::clap::AppSettings::GlobalVersion,
-	structopt::clap::AppSettings::ArgsNegateSubcommands,
-	structopt::clap::AppSettings::SubcommandsNegateReqs,
+structopt::clap::AppSettings::GlobalVersion,
+structopt::clap::AppSettings::ArgsNegateSubcommands,
+structopt::clap::AppSettings::SubcommandsNegateReqs,
 ])]
 pub struct Cli {
 	#[structopt(subcommand)]
 	pub subcommand: Option<Subcommand>,
 
 	#[structopt(flatten)]
-	pub run: RunCmd,
-
-	/// Run node as collator.
-	///
-	/// Note that this is the same as running with `--validator`.
-	#[structopt(long, conflicts_with = "validator")]
-	pub collator: bool,
+	pub run: cumulus_client_cli::RunCmd,
 
 	/// Relaychain arguments
 	#[structopt(raw = true)]
