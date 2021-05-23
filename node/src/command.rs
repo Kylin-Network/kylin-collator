@@ -1,19 +1,3 @@
-// Copyright 2019-2021 Parity Technologies (UK) Ltd.
-// This file is part of Cumulus.
-
-// Cumulus is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// Cumulus is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
-
 use crate::{
 	chain_spec,
 	cli::{Cli, RelayChainCli, Subcommand},
@@ -102,7 +86,7 @@ impl SubstrateCli for Cli {
 		if use_cumulus_shell_runtime(&**chain_spec) {
 			&cumulus_shell_runtime::VERSION
 		} else {
-			&parachain_runtime::VERSION
+			&kylin_node_runtime::VERSION
 		}
 	}
 }
@@ -178,7 +162,7 @@ macro_rules! construct_async_run {
 		} else {
 			runner.async_run(|$config| {
 				let $components = new_partial::<
-					parachain_runtime::RuntimeApi,
+					kylin_node_runtime::RuntimeApi,
 					RococoParachainRuntimeExecutor,
 					_
 				>(

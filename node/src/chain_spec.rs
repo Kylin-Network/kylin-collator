@@ -1,22 +1,6 @@
-// Copyright 2019-2021 Parity Technologies (UK) Ltd.
-// This file is part of Cumulus.
-
-// Cumulus is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// Cumulus is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
-
 use cumulus_primitives_core::ParaId;
 use hex_literal::hex;
-use parachain_runtime::{AccountId, AuraId, Signature};
+use kylin_node_runtime::{AccountId, AuraId, Signature};
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
@@ -24,7 +8,7 @@ use sp_core::{crypto::UncheckedInto, sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
-pub type ChainSpec = sc_service::GenericChainSpec<parachain_runtime::GenesisConfig, Extensions>;
+pub type ChainSpec = sc_service::GenericChainSpec<kylin_node_runtime::GenesisConfig, Extensions>;
 
 /// Specialized `ChainSpec` for the shell parachain runtime.
 pub type ShellChainSpec = sc_service::GenericChainSpec<cumulus_shell_runtime::GenesisConfig, Extensions>;
@@ -158,24 +142,24 @@ fn testnet_genesis(
 	initial_authorities: Vec<AuraId>,
 	endowed_accounts: Vec<AccountId>,
 	id: ParaId,
-) -> parachain_runtime::GenesisConfig {
-	parachain_runtime::GenesisConfig {
-		frame_system: parachain_runtime::SystemConfig {
-			code: parachain_runtime::WASM_BINARY
+) -> kylin_node_runtime::GenesisConfig {
+	kylin_node_runtime::GenesisConfig {
+		frame_system: kylin_node_runtime::SystemConfig {
+			code: kylin_node_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
 			changes_trie_config: Default::default(),
 		},
-		pallet_balances: parachain_runtime::BalancesConfig {
+		pallet_balances: kylin_node_runtime::BalancesConfig {
 			balances: endowed_accounts
 				.iter()
 				.cloned()
 				.map(|k| (k, 1 << 60))
 				.collect(),
 		},
-		pallet_sudo: parachain_runtime::SudoConfig { key: root_key },
-		parachain_info: parachain_runtime::ParachainInfoConfig { parachain_id: id },
-		pallet_aura: parachain_runtime::AuraConfig {
+		pallet_sudo: kylin_node_runtime::SudoConfig { key: root_key },
+		parachain_info: kylin_node_runtime::ParachainInfoConfig { parachain_id: id },
+		pallet_aura: kylin_node_runtime::AuraConfig {
 			authorities: initial_authorities,
 		},
 		cumulus_pallet_aura_ext: Default::default(),

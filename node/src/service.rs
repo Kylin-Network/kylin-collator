@@ -1,19 +1,3 @@
-// Copyright 2019-2021 Parity Technologies (UK) Ltd.
-// This file is part of Cumulus.
-
-// Cumulus is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// Cumulus is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
-
 use cumulus_client_consensus_aura::{
 	build_aura_consensus, BuildAuraConsensusParams, SlotProportion,
 };
@@ -47,8 +31,8 @@ type Hash = sp_core::H256;
 // Native executor instance.
 native_executor_instance!(
 	pub RococoParachainRuntimeExecutor,
-	parachain_runtime::api::dispatch,
-	parachain_runtime::native_version,
+	kylin_node_runtime::api::dispatch,
+	kylin_node_runtime::native_version,
 );
 
 // Native executor instance.
@@ -326,14 +310,14 @@ async fn start_node_impl<RuntimeApi, Executor, RB, BIQ, BIC>(
 
 /// Build the import queue for the rococo parachain runtime.
 pub fn rococo_parachain_build_import_queue(
-	client: Arc<TFullClient<Block, parachain_runtime::RuntimeApi, RococoParachainRuntimeExecutor>>,
+	client: Arc<TFullClient<Block, kylin_node_runtime::RuntimeApi, RococoParachainRuntimeExecutor>>,
 	config: &Configuration,
 	telemetry: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
 ) -> Result<
 	sp_consensus::DefaultImportQueue<
 		Block,
-		TFullClient<Block, parachain_runtime::RuntimeApi, RococoParachainRuntimeExecutor>,
+		TFullClient<Block, kylin_node_runtime::RuntimeApi, RococoParachainRuntimeExecutor>,
 	>,
 	sc_service::Error,
 > {
@@ -383,9 +367,9 @@ pub async fn start_rococo_parachain_node(
 	polkadot_config: Configuration,
 	id: ParaId,
 ) -> sc_service::error::Result<
-	(TaskManager, Arc<TFullClient<Block, parachain_runtime::RuntimeApi, RococoParachainRuntimeExecutor>>)
+	(TaskManager, Arc<TFullClient<Block, kylin_node_runtime::RuntimeApi, RococoParachainRuntimeExecutor>>)
 > {
-	start_node_impl::<parachain_runtime::RuntimeApi, RococoParachainRuntimeExecutor, _, _, _>(
+	start_node_impl::<kylin_node_runtime::RuntimeApi, RococoParachainRuntimeExecutor, _, _, _>(
 		parachain_config,
 		collator_key,
 		polkadot_config,
