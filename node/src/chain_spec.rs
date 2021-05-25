@@ -81,7 +81,7 @@ pub fn get_chain_spec(id: ParaId) -> ChainSpec {
 		None,
 		None,
 		Extensions {
-			relay_chain: "westend-dev".into(),
+			relay_chain: "rococo-local".into(),
 			para_id: id.into(),
 		},
 	)
@@ -98,7 +98,7 @@ pub fn get_shell_chain_spec(id: ParaId) -> ShellChainSpec {
 		None,
 		None,
 		Extensions {
-			relay_chain: "westend-dev".into(),
+			relay_chain: "rococo-local".into(),
 			para_id: id.into(),
 		},
 	)
@@ -131,7 +131,7 @@ pub fn staging_test_net(id: ParaId) -> ChainSpec {
 		None,
 		None,
 		Extensions {
-			relay_chain: "westend-dev".into(),
+			relay_chain: "rococo-local".into(),
 			para_id: id.into(),
 		},
 	)
