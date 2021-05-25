@@ -6,7 +6,7 @@ ARG RUST_VERSION=1.51.0
 ARG PROFILE=release
 ARG KYLIN_GIT_REPO="https://github.com/Kylin-Network/kylin-node.git"
 ARG DOT_GIT_REPO="https://github.com/paritytech/polkadot.git"
-ARG GIT_BRANCH="release-v0.9.2"
+ARG GIT_BRANCH="rococo-v1"
 
 RUN rm -rf /usr/local/rustup/toolchains/
 RUN rustup default stable
@@ -22,12 +22,13 @@ RUN git submodule update --recursive --remote
 RUN cargo build --${PROFILE}
 
 RUN cp target/${PROFILE}/kylin-node /kylin-node
+ARG DOT_BRANCH="release-v0.9.2"
 
 #Build Polkadot
 WORKDIR /builds/
 RUN git clone --recursive ${DOT_GIT_REPO}
 WORKDIR /builds/polkadot
-RUN cargo build --${PROFILE}
+RUN cargo build --${DOT_BRANCH}
 RUN cp target/${PROFILE}/polkadot /polkadot
 
 # build sample data fetcher
