@@ -28,7 +28,8 @@ ARG DOT_BRANCH="release-v0.9.2"
 WORKDIR /builds/
 RUN git clone --recursive ${DOT_GIT_REPO}
 WORKDIR /builds/polkadot
-RUN cargo build --${DOT_BRANCH}
+RUN git checkout ${DOT_BRANCH}
+RUN cargo build --${PROFILE}
 RUN cp target/${PROFILE}/polkadot /polkadot
 
 # build sample data fetcher
