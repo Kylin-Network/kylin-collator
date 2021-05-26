@@ -27,7 +27,7 @@ services:
       - "9935:9935"
       - "9955:9955"
       - "30335:30335"
-    command: bash -c "sleep 30; /polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe --chain rococo_local.json -d cumulus_relay/bob --validator --bob --ws-port 9955 --port 30335 --rpc-port 9935 --name bob"
+    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe --chain rococo_local.json -d cumulus_relay/bob --validator --bob --ws-port 9955 --port 30335 --rpc-port 9935 --name bob"
     depends_on:
       - kylin-node
 
@@ -45,7 +45,7 @@ services:
   insert-ocw:
     container_name: insert-ocw
     image: kylinnetwork/kylin-node:rococo-v1
-    command: bash -c "sleep 300 && /insert_alice_key.sh"
+    command: bash -c "sleep 600 && /insert_alice_key.sh"
     depends_on:
       - kylin-node
 
