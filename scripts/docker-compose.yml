@@ -3,7 +3,7 @@ version: "3.2"
 services:
   alice:
     container_name: alice
-    image: kylinnetwork/kylin-node:latest
+    image: kylinnetwork/kylin-node:rococo-v1
     ports:
       - "9934:9934"
       - "9944:9944"
@@ -12,35 +12,35 @@ services:
 
   bob:
     container_name: bob
-    image: kylinnetwork/kylin-node:latest
+    image: kylinnetwork/kylin-node:rococo-v1
     ports:
       - "9935:9935"
       - "9955:9955"
       - "30335:30335"
-    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe --chain rococo_local.json -d cumulus_relay/bob --validator --bob --ws-port 9955 --port 30335 --rpc-port 9935 --name bob"
+    command: bash -c "sleep 30; /polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe --chain rococo_local.json -d cumulus_relay/bob --validator --bob --ws-port 9955 --port 30335 --rpc-port 9935 --name bob"
     depends_on:
-      - alice
+      - kylin-node
 
   kylin-node:
     container_name: kylin-node
-    image: kylinnetwork/kylin-node:latest
+    image: kylinnetwork/kylin-node:rococo-v1
     ports:
       - "9942:9942"
       - "9933:9933"
-    command: bash -c "/kylin-node --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus-parachain/alice --collator --alice --ws-port 9942 --rpc-port 9933 --parachain-id 2000 -- --wasm-execution Compiled --chain rococo_local.json"
+    command: bash -c "/kylin-node --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus-parachain/alice --collator --alice --force-authoring --ws-port 9942 --rpc-port 9933 --parachain-id 2000 -- --wasm-execution Compiled --chain rococo_local.json"
     depends_on:
       - alice
 
   insert-ocw:
     container_name: insert-ocw
-    image: kylinnetwork/kylin-node:latest
+    image: kylinnetwork/kylin-node:rococo-v1
     command: bash -c "sleep 30 && /insert_alice_key.sh"
     depends_on:
       - kylin-node
 
   kylin-market-frontend:
     container_name: kylin-market-frontend
-    image: kylinnetwork/kylin-node:latest
+    image: kylinnetwork/kylin-node:rococo-v1
     ports:
       - "3001:3001"
     command: bash -c "cd /apps && serve -p 3001 build"
@@ -67,7 +67,7 @@ services:
 
   init-es-index:
     container_name: init-es-index
-    image: kylinnetwork/kylin-node:latest
+    image: kylinnetwork/kylin-node:rococo-v1
     environment:
       ES_HOST: http://kylin-es:9200
       ES_INDEX_NAME: kylin_access_tracking
@@ -79,7 +79,7 @@ services:
 
   init-kibana-dashboard:
     container_name: init-kibana-dashboard
-    image: kylinnetwork/kylin-node:latest
+    image: kylinnetwork/kylin-node:rococo-v1
     environment:
       ES_HOST: http://kylin-es:9200
       ES_INDEX_NAME: kylin_access_tracking
