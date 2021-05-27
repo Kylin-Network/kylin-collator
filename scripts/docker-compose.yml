@@ -3,7 +3,7 @@ version: "3.2"
 services:
   alice:
     container_name: alice
-    image: kylinnetwork/kylin-node:rococo-v1
+    image: kylinnetwork/kylin-node:polkadot-v0.9.3
     ports:
       - "9934:9934"
       - "9944:9944"
@@ -12,7 +12,7 @@ services:
 
   kylin-node:
     container_name: kylin-node
-    image: kylinnetwork/kylin-node:rococo-v1
+    image: kylinnetwork/kylin-node:polkadot-v0.9.3
     ports:
       - "9942:9942"
       - "9933:9933"
@@ -22,7 +22,7 @@ services:
 
   bob:
     container_name: bob
-    image: kylinnetwork/kylin-node:rococo-v1
+    image: kylinnetwork/kylin-node:polkadot-v0.9.3
     ports:
       - "9935:9935"
       - "9955:9955"
@@ -33,7 +33,7 @@ services:
 
   charlie:
     container_name: charlie
-    image: kylinnetwork/kylin-node:rococo-v1
+    image: kylinnetwork/kylin-node:polkadot-v0.9.3
     ports:
       - "9936:9936"
       - "9956:9956"
@@ -44,14 +44,14 @@ services:
 
   insert-ocw:
     container_name: insert-ocw
-    image: kylinnetwork/kylin-node:rococo-v1
+    image: kylinnetwork/kylin-node:polkadot-v0.9.3
     command: bash -c "sleep 600 && /insert_alice_key.sh"
     depends_on:
       - kylin-node
 
   kylin-market-frontend:
     container_name: kylin-market-frontend
-    image: kylinnetwork/kylin-node:rococo-v1
+    image: kylinnetwork/kylin-node:polkadot-v0.9.3
     ports:
       - "3001:3001"
     command: bash -c "cd /apps && serve -p 3001 build"
@@ -78,7 +78,7 @@ services:
 
   init-es-index:
     container_name: init-es-index
-    image: kylinnetwork/kylin-node:rococo-v1
+    image: kylinnetwork/kylin-node:polkadot-v0.9.3
     environment:
       ES_HOST: http://kylin-es:9200
       ES_INDEX_NAME: kylin_access_tracking
@@ -90,7 +90,7 @@ services:
 
   init-kibana-dashboard:
     container_name: init-kibana-dashboard
-    image: kylinnetwork/kylin-node:rococo-v1
+    image: kylinnetwork/kylin-node:polkadot-v0.9.3
     environment:
       ES_HOST: http://kylin-es:9200
       ES_INDEX_NAME: kylin_access_tracking
