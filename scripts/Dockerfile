@@ -22,7 +22,7 @@ RUN git submodule update --recursive --remote
 RUN cargo build --${PROFILE}
 
 RUN cp target/${PROFILE}/kylin-node /kylin-node
-ARG DOT_BRANCH="release-v0.9.2"
+ARG DOT_BRANCH="release-v0.9.3"
 
 #Build Polkadot
 WORKDIR /builds/
