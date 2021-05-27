@@ -2,7 +2,7 @@ use crate::{
 	chain_spec,
 	cli::{Cli, RelayChainCli, Subcommand},
 };
-use codec::Encode;
+use parity_scale_codec::Encode;
 use cumulus_client_service::genesis::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
 use log::info;
@@ -136,7 +136,7 @@ fn use_cumulus_shell_runtime(chain_spec: &dyn ChainSpec) -> bool {
 	chain_spec.id().starts_with("shell")
 }
 
-use crate::service::{new_partial, RococoParachainRuntimeExecutor, ShellRuntimeExecutor};
+use crate::service::{new_partial, ParachainRuntimeExecutor, ShellRuntimeExecutor};
 
 macro_rules! construct_async_run {
 	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
@@ -154,7 +154,7 @@ macro_rules! construct_async_run {
 			runner.async_run(|$config| {
 				let $components = new_partial::<
 					kylin_node_runtime::RuntimeApi,
-					RococoParachainRuntimeExecutor,
+					ParachainRuntimeExecutor,
 					_
 				>(
 					&$config,
