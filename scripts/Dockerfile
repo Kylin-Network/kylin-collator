@@ -6,7 +6,7 @@ ARG RUST_VERSION=1.51.0
 ARG PROFILE=release
 ARG KYLIN_GIT_REPO="https://github.com/Kylin-Network/kylin-node.git"
 ARG DOT_GIT_REPO="https://github.com/paritytech/polkadot.git"
-ARG GIT_BRANCH="rococo-v1"
+ARG GIT_BRANCH="polkadot-v0.9.3"
 
 RUN rm -rf /usr/local/rustup/toolchains/
 RUN rustup default stable
