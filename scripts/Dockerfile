@@ -78,7 +78,7 @@ COPY --from=builder /polkadot /
 COPY --from=builder /builds/kylin-node/scripts/insert_alice_key.sh /
 COPY --from=builder /builds/kylin-node/scripts/rococo_local.json /
 
-COPY --from=data_fetcher_builder /builds/sample-data-fetcher/target/${PROFILE}/data_fetcher /data_fetcher
+# COPY --from=data_fetcher_builder /builds/sample-data-fetcher/target/${PROFILE}/data_fetcher /data_fetcher
 COPY --from=data_fetcher_builder /builds/sample-data-fetcher/data/es_index.json /es_index.json
 COPY --from=data_fetcher_builder /builds/sample-data-fetcher/data/kibana.ndjson /kibana.ndjson
 COPY --from=data_fetcher_builder /builds/sample-data-fetcher/data/init_es_index.sh /init_es_index.sh
@@ -86,4 +86,4 @@ COPY --from=data_fetcher_builder /builds/sample-data-fetcher/data/init_kibana_da
 
 COPY --from=frontend_builder /builds/kylin-market-frontend/packages/apps /apps
 #
-EXPOSE 30333-30343 9933-9960 8080 3001
+EXPOSE 30330-30345 9933-9960 8080 3001
