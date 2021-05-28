@@ -2,7 +2,7 @@ use crate::{
 	chain_spec,
 	cli::{Cli, RelayChainCli, Subcommand},
 };
-use parity_scale_codec::Encode;
+use codec::Encode;
 use cumulus_client_service::genesis::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
 use log::info;
@@ -23,6 +23,7 @@ fn load_spec(
 	match id {
 		"staging" => Ok(Box::new(chain_spec::staging_test_net(para_id))),
 		"shell" => Ok(Box::new(chain_spec::get_shell_chain_spec(para_id))),
+		"rococo" => Ok(Box::new(chain_spec::rococo_test_net(para_id))),
 		"" => Ok(Box::new(chain_spec::get_chain_spec(para_id))),
 		path => Ok({
 			let chain_spec = chain_spec::ChainSpec::from_json_file(
