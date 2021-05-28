@@ -1,7 +1,7 @@
 version: "3.2"
 
 services:
-  alice:
+#  alice:
 #    container_name: alice
 #    image: kylinnetwork/kylin-node:polkadot-v0.9.3
 #    ports:
