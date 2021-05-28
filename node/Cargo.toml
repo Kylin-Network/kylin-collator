@@ -24,14 +24,10 @@ runtime-benchmarks = ['kylin-node-runtime/runtime-benchmarks']
 
 [dependencies]
 derive_more = "0.15.0"
-exit-future = "0.1.4"
-futures = { version = "0.3.1", features = ["compat"] }
-log = "0.4.8"
-parking_lot = "0.10.2"
-trie-root = "0.15.2"
+log = '0.4.14'
 codec = { package = "parity-scale-codec", version = "2.0.0" }
-structopt = "0.3.3"
-serde = { version = "1.0.101", features = ["derive"] }
+structopt = '0.3.8'
+serde = { version = '1.0.119', features = ['derive'] }
 hex-literal = '0.2.1'
 
 # RPC related Dependencies
@@ -39,7 +35,6 @@ jsonrpc-core = '15.1.0'
 
 # Local Dependencies
 kylin-node-runtime = { path = '../runtime' }
-
 
 # Substrate Dependencies
 frame-benchmarking = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.3' }
@@ -76,9 +71,9 @@ sp-inherents = { git = 'https://github.com/paritytech/substrate', branch = 'polk
 sp-keystore = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.3' }
 sp-offchain = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.3', default-features = false }
 sp-runtime = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.3' }
+sp-session = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.3', default-features = false }
 sp-timestamp = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.3' }
 sp-transaction-pool = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.3' }
-sp-session = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.3', default-features = false }
 
 # Cumulus dependencies
 cumulus-client-consensus-aura = { git = 'https://github.com/paritytech/cumulus', branch = 'polkadot-v0.9.3' }
@@ -90,7 +85,7 @@ cumulus-client-network = { git = 'https://github.com/paritytech/cumulus', branch
 cumulus-client-service = { git = 'https://github.com/paritytech/cumulus', branch = 'polkadot-v0.9.3' }
 cumulus-primitives-core = { git = 'https://github.com/paritytech/cumulus', branch = 'polkadot-v0.9.3' }
 cumulus-primitives-parachain-inherent = { git = 'https://github.com/paritytech/cumulus', branch = 'polkadot-v0.9.3' }
-cumulus-shell-runtime = { git = 'https://github.com/paritytech/cumulus', branch = 'polkadot-v0.9.3' }
+#cumulus-shell-runtime = { git = 'https://github.com/paritytech/cumulus', branch = 'polkadot-v0.9.3' }
 
 # Polkadot dependencies
 polkadot-primitives = { git = 'https://github.com/paritytech/polkadot', branch = 'release-v0.9.3'}
