@@ -139,8 +139,8 @@ pub fn staging_test_net(id: ParaId) -> ChainSpec {
 
 pub fn rococo_test_net(id: ParaId) -> ChainSpec {
 	ChainSpec::from_genesis(
-		"Rococo Testnet",
-		"rococo_testnet",
+		"Kylin Rococo Testnet",
+		"kylin_rococo_testnet",
 		ChainType::Live,
 		move || {
 			testnet_genesis(
