@@ -2,14 +2,25 @@ use cumulus_primitives_core::ParaId;
 use hex_literal::hex;
 use kylin_node_runtime::{AccountId, AuraId, Signature};
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
-use sc_service::ChainType;
+use sc_service::{ChainType, Properties};
 use serde::{Deserialize, Serialize};
 use sp_core::{crypto::UncheckedInto, sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 
+
+/// Properties for Kylin.
+pub fn kylin_properties() -> Properties {
+	let mut properties = Properties::new();
+
+	properties.insert("ss58Format".into(), 31.into());
+	properties.insert("tokenDecimals".into(), 12.into());
+	properties.insert("tokenSymbol".into(), "KYL".into());
+
+	properties
+}
+
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<kylin_node_runtime::GenesisConfig, Extensions>;
-
 
 /// Helper function to generate a crypto pair from seed
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
@@ -76,8 +87,8 @@ pub fn get_chain_spec(id: ParaId) -> ChainSpec {
 		},
 		vec![],
 		None,
-		None,
-		None,
+		Some("Kylin"),
+		Some(kylin_properties()),
 		Extensions {
 			relay_chain: "rococo-local".into(),
 			para_id: id.into(),
@@ -88,9 +99,9 @@ pub fn get_chain_spec(id: ParaId) -> ChainSpec {
 pub fn local_testnet_config(id: ParaId) -> ChainSpec {
 	ChainSpec::from_genesis(
 		// Name
-		"Local Testnet",
+		"Kylin Local Testnet",
 		// ID
-		"local_testnet",
+		"kylin_local_testnet",
 		ChainType::Local,
 		move || {
 			testnet_genesis(
@@ -118,8 +129,8 @@ pub fn local_testnet_config(id: ParaId) -> ChainSpec {
 		},
 		Vec::new(),
 		None,
-		None,
-		None,
+		Some("Kylin"),
+		Some(kylin_properties()),
 		Extensions {
 			relay_chain: "rococo-dev".into(), // You MUST set this to the correct network!
 			para_id: id.into(),
@@ -184,8 +195,8 @@ pub fn rococo_test_net(id: ParaId) -> ChainSpec {
 		},
 		Vec::new(),
 		None,
-		None,
-		None,
+		Some("Kylin"),
+		Some(kylin_properties()),
 		Extensions {
 			relay_chain: "rococo".into(),
 			para_id: id.into(),
