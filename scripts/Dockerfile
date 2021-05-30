@@ -43,16 +43,15 @@ WORKDIR /builds/sample-data-fetcher
 RUN cargo build --${PROFILE}
 RUN cp target/${PROFILE}/data_fetcher /data_fetcher
 #
-# build kylin-market-frontend
+# build Polkadot JS apps
 FROM paritytech/ci-linux:production as frontend_builder
 #
 LABEL maintainer="kylin-dev"
-ARG FRONT_REPO="https://github.com/Kylin-Network/kylin-market-frontend.git"
-ARG FRONT_BRANCH="rococo-v1"
+ARG FRONT_REPO="https://github.com/Kylin-Network/apps.git"
+ARG FRONT_BRANCH="master"
 
 RUN git clone --recursive ${FRONT_REPO}
-WORKDIR /builds/kylin-market-frontend
-RUN git checkout ${FRONT_BRANCH}
+WORKDIR /builds/apps
 
 RUN apt update && apt install gnupg2 curl ca-certificates -y
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
@@ -84,6 +83,6 @@ COPY --from=data_fetcher_builder /builds/sample-data-fetcher/data/kibana.ndjson 
 COPY --from=data_fetcher_builder /builds/sample-data-fetcher/data/init_es_index.sh /init_es_index.sh
 COPY --from=data_fetcher_builder /builds/sample-data-fetcher/data/init_kibana_dashboard.sh /init_kibana_dashboard.sh
 
-COPY --from=frontend_builder /builds/kylin-market-frontend/packages/apps /apps
+COPY --from=frontend_builder /builds/apps/packages/apps /apps
 #
 EXPOSE 30330-30345 9933-9960 8080 3001
