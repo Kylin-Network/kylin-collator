@@ -132,18 +132,102 @@ pub fn local_testnet_config(id: ParaId) -> ChainSpec {
 		Some("Kylin"),
 		Some(kylin_properties()),
 		Extensions {
-			relay_chain: "rococo-dev".into(), // You MUST set this to the correct network!
+			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
 			para_id: id.into(),
 		},
 	)
 }
 
-pub fn local_westend_config(id: ParaId) -> ChainSpec {
+pub fn local_environment_config(id: ParaId, environment: &str) -> ChainSpec {
 	ChainSpec::from_genesis(
 		// Name
-		"Kylin Local Testnet",
+		format!("kylin {} testnet", environment).as_str(),
 		// ID
-		"kylin_local_testnet",
+		format!("kylin-{}-testnet", environment).as_str(),
+		ChainType::Local,
+		move || {
+			testnet_genesis(
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				vec![
+					get_from_seed::<AuraId>("Alice"),
+					get_from_seed::<AuraId>("Bob"),
+				],
+				vec![
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_account_id_from_seed::<sr25519::Public>("Bob"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie"),
+					get_account_id_from_seed::<sr25519::Public>("Dave"),
+					get_account_id_from_seed::<sr25519::Public>("Eve"),
+					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+				],
+				id,
+			)
+		},
+		Vec::new(),
+		None,
+		Some("Kylin"),
+		Some(kylin_properties()),
+		Extensions {
+			relay_chain: environment.into(), // You MUST set this to the correct network!
+			para_id: id.into(),
+		},
+	)
+}
+
+pub fn development_environment_config(id: ParaId, environment: &str) -> ChainSpec {
+	ChainSpec::from_genesis(
+		// Name
+		format!("kylin {} testnet", environment).as_str(),
+		// ID
+		format!("kylin-{}-testnet", environment).as_str(),
+		ChainType::Development,
+		move || {
+			testnet_genesis(
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				vec![
+					get_from_seed::<AuraId>("Alice"),
+					get_from_seed::<AuraId>("Bob"),
+				],
+				vec![
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_account_id_from_seed::<sr25519::Public>("Bob"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie"),
+					get_account_id_from_seed::<sr25519::Public>("Dave"),
+					get_account_id_from_seed::<sr25519::Public>("Eve"),
+					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+				],
+				id,
+			)
+		},
+		Vec::new(),
+		None,
+		Some("Kylin"),
+		Some(kylin_properties()),
+		Extensions {
+			relay_chain: environment.into(), // You MUST set this to the correct network!
+			para_id: id.into(),
+		},
+	)
+}
+
+pub fn development_westend_config(id: ParaId) -> ChainSpec {
+	ChainSpec::from_genesis(
+		// Name
+		"Kylin Westend Dev Testnet",
+		// ID
+		"kylin_westend_Dev_testnet",
 		ChainType::Local,
 		move || {
 			testnet_genesis(
@@ -204,10 +288,10 @@ pub fn staging_test_net(id: ParaId) -> ChainSpec {
 		},
 		Vec::new(),
 		None,
-		None,
-		None,
+		Some("Kylin"),
+		Some(kylin_properties()),
 		Extensions {
-			relay_chain: "rococo-local".into(),
+			relay_chain: "rococo-dev".into(),
 			para_id: id.into(),
 		},
 	)

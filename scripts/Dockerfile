@@ -75,7 +75,7 @@ RUN npm install -g serve
 COPY --from=builder /kylin-node /
 COPY --from=builder /polkadot /
 COPY --from=builder /builds/kylin-node/scripts/insert_alice_key.sh /
-COPY --from=builder /builds/kylin-node/scripts/rococo_local.json /
+COPY --from=builder /builds/kylin-node/scripts/rococo-local.json /
 
 # COPY --from=data_fetcher_builder /builds/sample-data-fetcher/target/${PROFILE}/data_fetcher /data_fetcher
 COPY --from=data_fetcher_builder /builds/sample-data-fetcher/data/es_index.json /es_index.json

@@ -8,7 +8,9 @@ services:
       - "9934:9934"
       - "9944:9944"
       - "30334:30334"
-    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe --chain rococo_local.json -d cumulus_relay/alice --validator --alice --ws-port 9944 --port 30334 --rpc-port 9934 --name alice "
+    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe -d cumulus_relay/alice --validator --alice --ws-port 9944 --port 30334 --rpc-port 9934 --name alice --chain cumulus_relay/rococo-local.json"
+    volumes:
+      - ./kylin_db/cumulus_relay:/cumulus_relay/
 
   kylin-node:
     container_name: kylin-node
@@ -29,9 +31,11 @@ services:
       - "9935:9935"
       - "9955:9955"
       - "30335:30335"
-    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe --chain rococo_local.json -d cumulus_relay/bob --validator --bob --ws-port 9955 --port 30335 --rpc-port 9935 --name bob"
+    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe -d cumulus_relay/bob --validator --bob --ws-port 9955 --port 30335 --rpc-port 9935 --name bob --chain cumulus_relay/rococo-local.json"
     depends_on:
       - alice
+    volumes:
+      - ./kylin_db/cumulus_relay:/cumulus_relay/
 
   charlie:
     container_name: charlie
@@ -40,9 +44,11 @@ services:
       - "9936:9936"
       - "9956:9956"
       - "30336:30336"
-    command: bash -c "sleep 30; /polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe --chain rococo_local.json -d cumulus_relay/charlie --validator --charlie --ws-port 9956 --port 30336 --rpc-port 9936 --name charlie"
+    command: bash -c "sleep 30; /polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe -d cumulus_relay/charlie --validator --charlie --ws-port 9956 --port 30336 --rpc-port 9936 --name charlie --chain cumulus_relay/rococo-local.json"
     depends_on:
       - bob
+    volumes:
+      - ./kylin_db/cumulus_relay:/cumulus_relay/
 
   insert-ocw:
     container_name: insert-ocw

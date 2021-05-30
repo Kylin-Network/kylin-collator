@@ -24,7 +24,13 @@ fn load_spec(
 	Ok(match id {
 		"staging" => Box::new(chain_spec::staging_test_net(para_id)),
 		"" | "local" => Box::new(chain_spec::local_testnet_config(para_id)),
-		"westend-local" => Box::new(chain_spec::local_westend_config(para_id)),
+		"westend-local" | "rococo-local" => {
+			Box::new(chain_spec::local_environment_config(para_id,id))
+		},
+		"westend-dev" | "rococo-dev" => {
+			Box::new(chain_spec::development_environment_config(para_id,id))
+		},
+
 		"rococo" => Box::new(chain_spec::rococo_test_net(para_id)),
 		path => Box::new(chain_spec::ChainSpec::from_json_file(
 			std::path::PathBuf::from(path),
