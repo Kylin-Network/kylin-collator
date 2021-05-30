@@ -138,6 +138,48 @@ pub fn local_testnet_config(id: ParaId) -> ChainSpec {
 	)
 }
 
+pub fn local_westend_config(id: ParaId) -> ChainSpec {
+	ChainSpec::from_genesis(
+		// Name
+		"Kylin Local Testnet",
+		// ID
+		"kylin_local_testnet",
+		ChainType::Local,
+		move || {
+			testnet_genesis(
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				vec![
+					get_from_seed::<AuraId>("Alice"),
+					get_from_seed::<AuraId>("Bob"),
+				],
+				vec![
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_account_id_from_seed::<sr25519::Public>("Bob"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie"),
+					get_account_id_from_seed::<sr25519::Public>("Dave"),
+					get_account_id_from_seed::<sr25519::Public>("Eve"),
+					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+				],
+				id,
+			)
+		},
+		Vec::new(),
+		None,
+		Some("Kylin"),
+		Some(kylin_properties()),
+		Extensions {
+			relay_chain: "westend-dev".into(), // You MUST set this to the correct network!
+			para_id: id.into(),
+		},
+	)
+}
+
 pub fn staging_test_net(id: ParaId) -> ChainSpec {
 	ChainSpec::from_genesis(
 		"Staging Testnet",
