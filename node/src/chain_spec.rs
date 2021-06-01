@@ -2,14 +2,16 @@ use cumulus_primitives_core::ParaId;
 use hex_literal::hex;
 use kylin_node_runtime::{AccountId, AuraId, Signature};
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
+use std::str::FromStr;
 use sc_service::{ChainType, Properties};
 use serde::{Deserialize, Serialize};
 use sp_core::{crypto::UncheckedInto, sr25519, Pair, Public};
-use sp_runtime::traits::{IdentifyAccount, Verify};
+use sp_runtime::{AccountId32, traits::{IdentifyAccount, Verify}};
 
 
 /// Properties for Kylin.
 pub fn kylin_properties() -> Properties {
+
 	let mut properties = Properties::new();
 
 	properties.insert("ss58Format".into(), 31.into());
@@ -53,6 +55,8 @@ pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
 	where
 		AccountPublic: From<<TPublic::Pair as Pair>::Public>,
 {
+
+
 	AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
 }
 
@@ -97,6 +101,8 @@ pub fn get_chain_spec(id: ParaId) -> ChainSpec {
 }
 
 pub fn local_testnet_config(id: ParaId) -> ChainSpec {
+
+
 	ChainSpec::from_genesis(
 		// Name
 		"Kylin Local Testnet",
@@ -153,6 +159,7 @@ pub fn local_environment_config(id: ParaId, environment: &str) -> ChainSpec {
 					get_from_seed::<AuraId>("Bob"),
 				],
 				vec![
+					sp_runtime::AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					get_account_id_from_seed::<sr25519::Public>("Bob"),
 					get_account_id_from_seed::<sr25519::Public>("Charlie"),
@@ -195,6 +202,7 @@ pub fn development_environment_config(id: ParaId, environment: &str) -> ChainSpe
 					get_from_seed::<AuraId>("Bob"),
 				],
 				vec![
+					AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					get_account_id_from_seed::<sr25519::Public>("Bob"),
 					get_account_id_from_seed::<sr25519::Public>("Charlie"),
@@ -231,12 +239,13 @@ pub fn development_westend_config(id: ParaId) -> ChainSpec {
 		ChainType::Local,
 		move || {
 			testnet_genesis(
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
 				vec![
 					get_from_seed::<AuraId>("Alice"),
 					get_from_seed::<AuraId>("Bob"),
 				],
 				vec![
+					AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					get_account_id_from_seed::<sr25519::Public>("Bob"),
 					get_account_id_from_seed::<sr25519::Public>("Charlie"),
@@ -271,7 +280,7 @@ pub fn staging_test_net(id: ParaId) -> ChainSpec {
 		ChainType::Live,
 		move || {
 			testnet_genesis(
-				hex!["9ed7705e3c7da027ba0583a22a3212042f7e715d3c168ba14f1424e2bc111d00"].into(),
+				AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
 				vec![
 					// $secret//one
 					hex!["aad9fa2249f87a210a0f93400b7f90e47b810c6d65caa0ca3f5af982904c2a33"]
@@ -281,6 +290,7 @@ pub fn staging_test_net(id: ParaId) -> ChainSpec {
 						.unchecked_into(),
 				],
 				vec![
+					AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
 					hex!["9ed7705e3c7da027ba0583a22a3212042f7e715d3c168ba14f1424e2bc111d00"].into(),
 				],
 				id,
@@ -304,7 +314,7 @@ pub fn rococo_test_net(id: ParaId) -> ChainSpec {
 		ChainType::Live,
 		move || {
 			testnet_genesis(
-				hex!["9ed7705e3c7da027ba0583a22a3212042f7e715d3c168ba14f1424e2bc111d00"].into(),
+				AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
 				vec![
 					// $secret//one
 					hex!["aad9fa2249f87a210a0f93400b7f90e47b810c6d65caa0ca3f5af982904c2a33"]
@@ -314,6 +324,7 @@ pub fn rococo_test_net(id: ParaId) -> ChainSpec {
 						.unchecked_into(),
 				],
 				vec![
+					AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
 					hex!["9ed7705e3c7da027ba0583a22a3212042f7e715d3c168ba14f1424e2bc111d00"].into(),
 				],
 				id,
@@ -347,7 +358,7 @@ fn testnet_genesis(
 			balances: endowed_accounts
 				.iter()
 				.cloned()
-				.map(|k| (k, 1 << 60))
+				.map(|k| (k, 10 << 60))
 				.collect(),
 		},
 		pallet_sudo: kylin_node_runtime::SudoConfig { key: root_key },
