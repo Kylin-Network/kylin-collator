@@ -11,9 +11,7 @@ use sp_runtime::{AccountId32, traits::{IdentifyAccount, Verify}};
 
 /// Properties for Kylin.
 pub fn kylin_properties() -> Properties {
-
 	let mut properties = Properties::new();
-
 	properties.insert("ss58Format".into(), 31.into());
 	properties.insert("tokenDecimals".into(), 12.into());
 	properties.insert("tokenSymbol".into(), "KYL".into());
@@ -55,8 +53,6 @@ pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
 	where
 		AccountPublic: From<<TPublic::Pair as Pair>::Public>,
 {
-
-
 	AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
 }
 
@@ -101,8 +97,6 @@ pub fn get_chain_spec(id: ParaId) -> ChainSpec {
 }
 
 pub fn local_testnet_config(id: ParaId) -> ChainSpec {
-
-
 	ChainSpec::from_genesis(
 		// Name
 		"Kylin Local Testnet",
