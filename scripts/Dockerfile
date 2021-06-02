@@ -32,6 +32,10 @@ RUN git checkout ${DOT_BRANCH}
 RUN cargo build --${PROFILE}
 RUN cp target/${PROFILE}/polkadot /polkadot
 
+# build subkey
+RUN cargo install --force subkey --git https://github.com/paritytech/substrate --branch polkadot-v0.9.3  --locked
+RUN cp /subkey /subkey
+
 # build sample data fetcher
 FROM paritytech/ci-linux:production as data_fetcher_builder
 ARG DATA_FETECHER_REPO="https://github.com/Kylin-Network/sample-data-fetcher.git"
@@ -42,6 +46,7 @@ RUN git clone --recursive ${DATA_FETECHER_REPO}
 WORKDIR /builds/sample-data-fetcher
 RUN cargo build --${PROFILE}
 RUN cp target/${PROFILE}/data_fetcher /data_fetcher
+
 #
 # build Polkadot JS apps
 FROM paritytech/ci-linux:production as frontend_builder
@@ -74,6 +79,7 @@ RUN apt-get update && apt-get install curl ca-certificates npm nodejs -y
 RUN npm install -g serve
 COPY --from=builder /kylin-node /
 COPY --from=builder /polkadot /
+COPY --from=builder /subkey /
 COPY --from=builder /builds/kylin-node/scripts/insert_alice_key.sh /
 COPY --from=builder /builds/kylin-node/scripts/rococo-local.json /
 
