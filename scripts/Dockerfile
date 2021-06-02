@@ -34,7 +34,7 @@ RUN cp target/${PROFILE}/polkadot /polkadot
 
 # build subkey
 RUN cargo install --force subkey --git https://github.com/paritytech/substrate --branch polkadot-v0.9.3  --locked
-RUN cp /subkey /subkey;echo 'subkey copied;
+RUN cp /subkey /subkey;echo 'subkey copied';
 
 # build sample data fetcher
 FROM paritytech/ci-linux:production as data_fetcher_builder

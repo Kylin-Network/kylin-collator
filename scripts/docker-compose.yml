@@ -7,8 +7,8 @@ services:
     ports:
       - "9934:9934"
       - "9944:9944"
-      - "30334:30334"
-    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe -d cumulus_relay/alice --validator --alice --ws-port 9944 --port 30334 --rpc-port 9934 --name alice --chain rococo-local.json"
+      - "30335:30335"
+    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe -d cumulus_relay/alice --validator --alice --ws-port 9944 --port 30335 --rpc-port 9934 --name alice --chain rococo-local.json"
     volumes:
       - ./kylin_db/cumulus_relay:/cumulus_relay/
 
@@ -18,7 +18,8 @@ services:
     ports:
       - "9942:9942"
       - "9933:9933"
-    command: bash -c "/kylin-node --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus_parachain/alice --collator --alice --force-authoring --ws-port 9942 --rpc-port 9933 --parachain-id 2011 --chain rococo -- --wasm-execution Compiled --chain rococo"
+      - "30334:30334"
+    command: bash -c "/kylin-node --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus_parachain/alice --collator --alice --force-authoring --ws-port 9942  --port 30334 --rpc-port 9933 --parachain-id 2011 --chain rococo -- --wasm-execution Compiled --chain rococo"
     volumes:
       - ./kylin_db/cumulus_parachain:/cumulus_parachain/
 #    depends_on:
@@ -30,8 +31,8 @@ services:
 #    ports:
 #      - "9935:9935"
 #      - "9955:9955"
-#      - "30335:30335"
-#    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe -d cumulus_relay/bob --validator --bob --ws-port 9955 --port 30335 --rpc-port 9935 --name bob --chain rococo-local.json"
+#      - "30336:30336"
+#    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe -d cumulus_relay/bob --validator --bob --ws-port 9955 --port 30336 --rpc-port 9935 --name bob --chain rococo-local.json"
 #    depends_on:
 #      - alice
 #    volumes:
