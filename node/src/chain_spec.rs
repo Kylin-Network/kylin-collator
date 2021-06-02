@@ -107,10 +107,15 @@ pub fn local_testnet_config(id: ParaId) -> ChainSpec {
 			testnet_genesis(
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				vec![
+					hex!["7c11cea2901e72fe525d7335e99d48bdf8dea2a983ac92fa3ab20508a438af73"]
+						.unchecked_into(),
+					hex!["287f278af79ef7f1b2a2b3d5a7c76a047e248232d13f0a5ec744789a96dc824d"]
+						.unchecked_into(),
 					get_from_seed::<AuraId>("Alice"),
 					get_from_seed::<AuraId>("Bob"),
 				],
 				vec![
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					get_account_id_from_seed::<sr25519::Public>("Bob"),
 					get_account_id_from_seed::<sr25519::Public>("Charlie"),
@@ -149,8 +154,10 @@ pub fn local_environment_config(id: ParaId, environment: &str) -> ChainSpec {
 			testnet_genesis(
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				vec![
-					get_from_seed::<AuraId>("Alice"),
-					get_from_seed::<AuraId>("Bob"),
+					hex!["7c11cea2901e72fe525d7335e99d48bdf8dea2a983ac92fa3ab20508a438af73"]
+						.unchecked_into(),
+					hex!["287f278af79ef7f1b2a2b3d5a7c76a047e248232d13f0a5ec744789a96dc824d"]
+						.unchecked_into(),
 				],
 				vec![
 					sp_runtime::AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
@@ -308,8 +315,10 @@ pub fn rococo_test_net(id: ParaId) -> ChainSpec {
 			testnet_genesis(
 				AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
 				vec![
-					get_from_seed::<AuraId>("Alice"),
-					get_from_seed::<AuraId>("Bob"),
+					hex!["aad9fa2249f87a210a0f93400b7f90e47b810c6d65caa0ca3f5af982904c2a33"]
+						.unchecked_into(),
+					hex!["d47753f0cca9dd8da00c70e82ec4fc5501a69c49a5952a643d18802837c88212"]
+						.unchecked_into(),
 				],
 				vec![
 					AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
