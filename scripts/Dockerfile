@@ -1,5 +1,5 @@
 # build kylin-node
-FROM paritytech/ci-linux:production as builder
+FROM kylinnetwork/polkadot:polkadot-v0.9.3 as builder
 
 LABEL maintainer="kylin-dev"
 ARG RUST_VERSION=1.51.0
@@ -7,12 +7,7 @@ ARG PROFILE=release
 ARG KYLIN_GIT_REPO="https://github.com/Kylin-Network/kylin-node.git"
 ARG DOT_GIT_REPO="https://github.com/paritytech/polkadot.git"
 ARG GIT_BRANCH="polkadot-v0.9.3"
-
-RUN rm -rf /usr/local/rustup/toolchains/
-RUN rustup default stable
-RUN rustup update nightly
-RUN rustup target add wasm32-unknown-unknown --toolchain nightly
-
+WORKDIR /builds/
 #Build Kylin-node
 RUN git clone --recursive ${KYLIN_GIT_REPO}
 
@@ -20,57 +15,7 @@ WORKDIR /builds/kylin-node
 RUN git checkout ${GIT_BRANCH}
 RUN git submodule update --recursive --remote
 RUN cargo build --${PROFILE}
-
 RUN cp target/${PROFILE}/kylin-node /kylin-node
-ARG DOT_BRANCH="release-v0.9.3"
-
-#Build Polkadot
-WORKDIR /builds/
-RUN git clone --recursive ${DOT_GIT_REPO}
-WORKDIR /builds/polkadot
-RUN git checkout ${DOT_BRANCH}
-RUN cargo build --${PROFILE}
-RUN cp target/${PROFILE}/polkadot /polkadot
-
-# build subkey
-RUN cargo install --force subkey --git https://github.com/paritytech/substrate --branch polkadot-v0.9.3  --locked
-RUN cp /subkey /subkey;echo 'subkey copied';
-
-# build sample data fetcher
-FROM paritytech/ci-linux:production as data_fetcher_builder
-ARG DATA_FETECHER_REPO="https://github.com/Kylin-Network/sample-data-fetcher.git"
-ARG DATA_FETECHER_BRANCH="master"
-ARG PROFILE="release"
-
-RUN git clone --recursive ${DATA_FETECHER_REPO}
-WORKDIR /builds/sample-data-fetcher
-RUN cargo build --${PROFILE}
-RUN cp target/${PROFILE}/data_fetcher /data_fetcher
-
-#
-# build Polkadot JS apps
-FROM paritytech/ci-linux:production as frontend_builder
-#
-LABEL maintainer="kylin-dev"
-ARG FRONT_REPO="https://github.com/Kylin-Network/apps.git"
-ARG FRONT_BRANCH="master"
-
-RUN git clone --recursive ${FRONT_REPO}
-WORKDIR /builds/apps
-
-RUN apt update && apt install gnupg2 curl ca-certificates -y
-RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
-RUN apt update && apt install yarn -y
-RUN apt purge nodejs npm -y
-
-RUN apt-get install -y \
-    software-properties-common \
-    npm
-
-RUN npm install npm@latest -g && \
-    npm install n -g && \
-    n latest
-RUN YARN_CHECKSUM_BEHAVIOR=update yarn && yarn build:www
 
 FROM ubuntu
 ARG PROFILE="release"
@@ -82,13 +27,11 @@ COPY --from=builder /polkadot /
 COPY --from=builder /subkey /
 COPY --from=builder /builds/kylin-node/scripts/insert_alice_key.sh /
 COPY --from=builder /builds/kylin-node/scripts/rococo-local.json /
+COPY --from=builder /builds/sample-data-fetcher/data/es_index.json /es_index.json
+COPY --from=builder /builds/sample-data-fetcher/data/kibana.ndjson /kibana.ndjson
+COPY --from=builder /builds/sample-data-fetcher/data/init_es_index.sh /init_es_index.sh
+COPY --from=builder /builds/sample-data-fetcher/data/init_kibana_dashboard.sh /init_kibana_dashboard.sh
 
-# COPY --from=data_fetcher_builder /builds/sample-data-fetcher/target/${PROFILE}/data_fetcher /data_fetcher
-COPY --from=data_fetcher_builder /builds/sample-data-fetcher/data/es_index.json /es_index.json
-COPY --from=data_fetcher_builder /builds/sample-data-fetcher/data/kibana.ndjson /kibana.ndjson
-COPY --from=data_fetcher_builder /builds/sample-data-fetcher/data/init_es_index.sh /init_es_index.sh
-COPY --from=data_fetcher_builder /builds/sample-data-fetcher/data/init_kibana_dashboard.sh /init_kibana_dashboard.sh
-
-COPY --from=frontend_builder /builds/apps/packages/apps /apps
+COPY --from=builder /builds/apps/packages/apps /apps
 #
 EXPOSE 30330-30345 9933-9960 8080 3001

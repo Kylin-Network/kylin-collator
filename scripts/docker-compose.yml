@@ -1,16 +1,16 @@
 version: "3.2"
 
 services:
-  alice:
-    container_name: alice
-    image: kylinnetwork/kylin-node:polkadot-v0.9.3
-    ports:
-      - "9934:9934"
-      - "9944:9944"
-      - "30335:30335"
-    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe -d cumulus_relay/alice --validator --alice --ws-port 9944 --port 30335 --rpc-port 9934 --name alice --chain rococo-local.json"
-    volumes:
-      - ./kylin_db/cumulus_relay:/cumulus_relay/
+#  alice:
+#    container_name: alice
+#    image: kylinnetwork/kylin-node:polkadot-v0.9.3
+#    ports:
+#      - "9934:9934"
+#      - "9944:9944"
+#      - "30335:30335"
+#    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe -d cumulus_relay/alice --validator --alice --ws-port 9944 --port 30335 --rpc-port 9934 --name alice --chain rococo-local.json"
+#    volumes:
+#      - ./kylin_db/cumulus_relay:/cumulus_relay/
 
   kylin-node:
     container_name: kylin-node
@@ -19,7 +19,7 @@ services:
       - "9942:9942"
       - "9933:9933"
       - "30334:30334"
-    command: bash -c "/kylin-node --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus_parachain/alice --collator --alice --force-authoring --ws-port 9942  --port 30334 --rpc-port 9933 --parachain-id 2011 --chain rococo -- --wasm-execution Compiled --chain rococo"
+    command: bash -c "sleep 30;/kylin-node --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus_parachain/alice --collator --alice --force-authoring --ws-port 9942 --port 30333 --rpc-port 9933 --parachain-id 2013 --chain kylin-rococo -- --wasm-execution Compiled --port 30334 --chain rococo"
     volumes:
       - ./kylin_db/cumulus_parachain:/cumulus_parachain/
 #    depends_on:
@@ -32,11 +32,12 @@ services:
 #      - "9935:9935"
 #      - "9955:9955"
 #      - "30336:30336"
-#    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe -d cumulus_relay/bob --validator --bob --ws-port 9955 --port 30336 --rpc-port 9935 --name bob --chain rococo-local.json"
-#    depends_on:
-#      - alice
+#    command: bash -c "sleep 30;/polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe -d cumulus_relay/bob --validator --bob --ws-port 9955 --port 30336 --rpc-port 9935 --name bob --chain rococo-local.json"
 #    volumes:
 #      - ./kylin_db/cumulus_relay:/cumulus_relay/
+#    depends_on:
+#      - alice
+
 #
 #  charlie:
 #    container_name: charlie
