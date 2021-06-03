@@ -242,7 +242,7 @@ fn testnet_genesis(
 			balances: endowed_accounts
 				.iter()
 				.cloned()
-				.map(|k| (k, 100 << 80))
+				.map(|k| (k, 10 << 60))
 				.collect(),
 		},
 		pallet_sudo: kylin_node_runtime::SudoConfig { key: root_key },
