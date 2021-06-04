@@ -22,10 +22,18 @@ fn load_spec(
 	para_id: ParaId,
 ) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
+		// Rococo
 		"" | "local"   => Box::new(chain_spec::local_environment_config(para_id,"rococo-local")),
 		"kylin-rococo-dev" => Box::new(chain_spec::development_environment_config(para_id,"rococo-dev")),
-		"kylin-westend-dev" => Box::new(chain_spec::development_environment_config(para_id,"westend-dev")),
 		"kylin-rococo" => Box::new(chain_spec::rococo_test_net(para_id)),
+
+		// Westend
+		"kylin-westend-local" => Box::new(chain_spec::local_environment_config(para_id,"westend-local")),
+		"kylin-westend-dev" => Box::new(chain_spec::development_environment_config(para_id,"westend-dev")),
+
+		// Kusama
+		"kylin-kusama-local" => Box::new(chain_spec::local_environment_config(para_id,"kusama-local")),
+		"kylin-kusama-dev" => Box::new(chain_spec::development_environment_config(para_id,"kusama-dev")),
 		path => Box::new(chain_spec::ChainSpec::from_json_file(
 			std::path::PathBuf::from(path),
 		)?),

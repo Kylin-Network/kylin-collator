@@ -626,7 +626,8 @@ construct_runtime!(
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 52,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 53,
 
-        KylinOraclePallet: kylin_oracle::{Pallet, Call, Storage, Event<T>},
+        // Kylin Pallets
+        KylinOraclePallet: kylin_oracle::{Pallet, Call, Storage, Event<T>} = 54,
 	}
 );
 
