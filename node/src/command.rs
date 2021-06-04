@@ -140,7 +140,7 @@ macro_rules! construct_async_run {
 				_
 			>(
 				&$config,
-				crate::service::rococo_parachain_build_import_queue,
+				crate::service::parachain_build_import_queue,
 			)?;
 			let task_manager = $components.task_manager;
 			{ $( $code )* }.map(|v| (v, task_manager))
@@ -250,8 +250,6 @@ pub fn run() -> Result<()> {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 			runner.run_node_until_exit(|config| async move {
 				// TODO
-				let key = sp_core::Pair::generate().0;
-
 				let para_id =
 					chain_spec::Extensions::try_get(&*config.chain_spec).map(|e| e.para_id);
 
@@ -287,7 +285,7 @@ pub fn run() -> Result<()> {
 						"no"
 					}
 				);
-				crate::service::start_rococo_parachain_node(config, key, polkadot_config, id)
+				crate::service::start_node(config, polkadot_config, id)
 					.await
 					.map(|r| r.0)
 					.map_err(Into::into)

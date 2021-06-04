@@ -284,13 +284,15 @@ impl pallet_timestamp::Config for Runtime {
 }
 
 parameter_types! {
-	/// Same as Polkadot Relay Chain.
-	pub const ExistentialDeposit: Balance = 500;
+	pub const ExistentialDeposit: u128 = 1 * MILLIROC;
+	pub const TransferFee: u128 = 1 * MILLIROC;
+	pub const CreationFee: u128 = 1 * MILLIROC;
+	pub const TransactionByteFee: u128 = 1 * MICROROC;
 	pub const MaxLocks: u32 = 50;
+	pub const MaxReserves: u32 = 50;
 }
 
 impl pallet_balances::Config for Runtime {
-    type MaxLocks = MaxLocks;
     /// The type for recording an account's balance.
     type Balance = Balance;
     /// The ubiquitous event type.
@@ -298,11 +300,10 @@ impl pallet_balances::Config for Runtime {
     type DustRemoval = ();
     type ExistentialDeposit = ExistentialDeposit;
     type AccountStore = System;
-    type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
-}
-
-parameter_types! {
-	pub const TransactionByteFee: Balance = 1 ;
+    type WeightInfo = ();
+    type MaxLocks = MaxLocks;
+    type MaxReserves = MaxReserves;
+    type ReserveIdentifier = [u8; 8];
 }
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -526,55 +527,6 @@ impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for R
         Some((call, (address, signature, extra)))
     }
 }
-
-
-
-// impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime where
-//     Call: From<LocalCall>,
-// {
-//     fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
-//         call: Call,
-//         public: <Signature as Verify>::Signer,
-//         account: AccountId,
-//         nonce: <Runtime as frame_system::Config>::Index,
-//     ) ->Option<(Call, <UncheckedExtrinsic as ExtrinsicT>::SignaturePayload)> {
-//         use sp_runtime::traits::StaticLookup;
-//         // take the biggest period possible.
-//         let period = BlockHashCount::get()
-//             .checked_next_power_of_two()
-//             .map(|c| c / 2)
-//             .unwrap_or(2) as u64;
-//
-//         let current_block = System::block_number()
-//             // The `System::block_number` is initialized with `n+1`,
-//             // so the actual block number is `n`.
-//             .saturating_sub(1);
-//         let tip = 0;
-//         let extra: SignedExtra = (
-//             frame_system::CheckSpecVersion::<Runtime>::new(),
-//             frame_system::CheckTxVersion::<Runtime>::new(),
-//             frame_system::CheckGenesis::<Runtime>::new(),
-//             frame_system::CheckMortality::<Runtime>::from(generic::Era::mortal(period, current_block.into())),
-//             frame_system::CheckNonce::<Runtime>::from(nonce),
-//             frame_system::CheckWeight::<Runtime>::new(),
-//             pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
-//         );
-//         let raw_payload = SignedPayload::new(call, extra).map_err(|e| {
-//             log::warn!("Unable to create signed payload: {:?}", e);
-//         }).ok()?;
-//
-//         let signature = raw_payload.using_encoded(|payload| {
-//             C::sign(payload, public)
-//         })?;
-//         let (call, extra, _) = raw_payload.deconstruct();
-//         let address = <Runtime as frame_system::Config>::Lookup::unlookup(account);
-//         Some((call, (address, signature, extra)))
-//     }
-// }
-
-
-
-
 
 parameter_types! {
 	pub const AssetDeposit: Balance = 1 * ROC;
