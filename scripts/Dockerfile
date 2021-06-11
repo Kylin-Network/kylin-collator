@@ -1,5 +1,5 @@
 # build kylin-node
-FROM kylinnetwork/polkadot:polkadot-master as builder
+FROM kylinnetwork/polkadot:latest as builder
 
 LABEL maintainer="kylin-dev"
 ARG RUST_VERSION=1.51.0
