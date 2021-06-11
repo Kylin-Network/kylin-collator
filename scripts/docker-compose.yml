@@ -36,9 +36,9 @@ services:
     volumes:
       - ./kylin_db/cumulus_relay:/cumulus_relay/
     depends_on:
-      - alice
+      -  kylin-node
 
-#
+
 #  charlie:
 #    container_name: charlie
 #    image: kylinnetwork/kylin-node:polkadot-master

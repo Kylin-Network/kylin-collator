@@ -17,6 +17,7 @@ RUN git submodule update --recursive --remote
 RUN cargo build --${PROFILE}
 RUN cp target/${PROFILE}/kylin-node /kylin-node
 
+RUN /polkadot build-spec --chain rococo-local --disable-default-bootnode --raw > rococo-local.json
 FROM ubuntu
 ARG PROFILE="release"
 ENV DEBIAN_FRONTEND noninteractive
@@ -26,7 +27,7 @@ COPY --from=builder /kylin-node /
 COPY --from=builder /polkadot /
 COPY --from=builder /subkey /
 COPY --from=builder /builds/kylin-node/scripts/insert_alice_key.sh /
-COPY --from=builder /builds/kylin-node/scripts/rococo-local.json /
+COPY --from=builder /builds/kylin-node/rococo-local.json /
 COPY --from=builder /builds/sample-data-fetcher/data/es_index.json /es_index.json
 COPY --from=builder /builds/sample-data-fetcher/data/kibana.ndjson /kibana.ndjson
 COPY --from=builder /builds/sample-data-fetcher/data/init_es_index.sh /init_es_index.sh

@@ -185,25 +185,25 @@ fn testnet_genesis(
 	id: ParaId,
 ) -> kylin_node_runtime::GenesisConfig {
 	kylin_node_runtime::GenesisConfig {
-		frame_system: kylin_node_runtime::SystemConfig {
+		system: kylin_node_runtime::SystemConfig {
 			code: kylin_node_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
 			changes_trie_config: Default::default(),
 		},
-		pallet_balances: kylin_node_runtime::BalancesConfig {
+		balances: kylin_node_runtime::BalancesConfig {
 			balances: endowed_accounts
 				.iter()
 				.cloned()
 				.map(|k| (k, 10 << 60))
 				.collect(),
 		},
-		pallet_sudo: kylin_node_runtime::SudoConfig { key: root_key },
+		sudo: kylin_node_runtime::SudoConfig { key: root_key },
 		parachain_info: kylin_node_runtime::ParachainInfoConfig { parachain_id: id },
-		pallet_aura: kylin_node_runtime::AuraConfig {
+		aura: kylin_node_runtime::AuraConfig {
 			authorities: initial_authorities,
 		},
-		cumulus_pallet_aura_ext: Default::default(),
+		aura_ext: Default::default(),
 	}
 }
 
