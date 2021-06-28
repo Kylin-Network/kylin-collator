@@ -74,6 +74,7 @@ use sp_core::{OpaqueMetadata};
 use sp_runtime::traits::{
     IdentifyAccount, Verify,
 };
+
 use sp_runtime::{
     MultiSignature,
 };
@@ -306,6 +307,7 @@ impl pallet_balances::Config for Runtime {
     type ReserveIdentifier = [u8; 8];
 }
 
+
 impl pallet_transaction_payment::Config for Runtime {
     type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
     type TransactionByteFee = TransactionByteFee;
@@ -333,7 +335,6 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
     type XcmpMessageHandler = XcmpQueue;
     type ReservedXcmpWeight = ReservedXcmpWeight;
 }
-
 
 impl parachain_info::Config for Runtime {}
 
@@ -460,8 +461,6 @@ impl pallet_xcm::Config for Runtime {
 }
 
 
-
-
 impl cumulus_pallet_xcm::Config for Runtime {
     type Event = Event;
     type XcmExecutor = XcmExecutor<XcmConfig>;
@@ -479,11 +478,14 @@ impl cumulus_pallet_dmp_queue::Config for Runtime {
     type XcmExecutor = XcmExecutor<XcmConfig>;
     type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
 }
+impl pallet_randomness_collective_flip::Config for Runtime {}
 
 impl kylin_oracle::Config for Runtime {
     type Event = Event;
     type AuthorityId = kylin_oracle::crypto::TestAuthId;
     type Call = Call;
+    type Origin = Origin;
+    type XcmSender = XcmRouter;
 }
 
 impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime where
@@ -561,10 +563,10 @@ construct_runtime!(
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>},
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Call, Storage},
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 
-		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>, ValidateUnsigned} = 20,
+		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>} = 20,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 21,
 
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 30,
@@ -574,12 +576,14 @@ construct_runtime!(
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 50,
-		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 51,
+		// PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 51,
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 52,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 53,
 
         // Kylin Pallets
         KylinOraclePallet: kylin_oracle::{Pallet, Call, Storage, Event<T>} = 54,
+        XcmPallet: pallet_xcm::{Pallet, Call, Storage, Event<T>, Origin} = 99,
+
 	}
 );
 
@@ -700,14 +704,28 @@ impl_runtime_apis! {
 		}
 	}
 }
+
+
 struct CheckInherents;
 
 impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
     fn check_inherents(
-        _: &[UncheckedExtrinsic],
-        _: &cumulus_pallet_parachain_system::RelayChainStateProof,
+        block: &Block,
+        relay_state_proof: &cumulus_pallet_parachain_system::RelayChainStateProof,
     ) -> sp_inherents::CheckInherentsResult {
-        sp_inherents::CheckInherentsResult::new()
+        let relay_chain_slot = relay_state_proof
+            .read_slot()
+            .expect("Could not read the relay chain slot from the proof");
+
+        let inherent_data =
+            cumulus_primitives_timestamp::InherentDataProvider::from_relay_chain_slot_and_duration(
+                relay_chain_slot,
+                sp_std::time::Duration::from_secs(6),
+            )
+                .create_inherent_data()
+                .expect("Could not create the timestamp inherent data");
+
+        inherent_data.check_extrinsics(&block)
     }
 }
 
@@ -715,5 +733,5 @@ impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
 cumulus_pallet_parachain_system::register_validate_block!(
 	Runtime = Runtime,
 	BlockExecutor = cumulus_pallet_aura_ext::BlockExecutor::<Runtime, Executive>,
-    CheckInherents = CheckInherents,
+	CheckInherents = CheckInherents,
 );

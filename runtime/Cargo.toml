@@ -59,6 +59,7 @@ cumulus-pallet-dmp-queue  = { git = 'https://github.com/paritytech/cumulus', bra
 cumulus-pallet-xcm = { git = 'https://github.com/paritytech/cumulus', branch = 'master', default-features = false }
 cumulus-pallet-xcmp-queue = { git = 'https://github.com/paritytech/cumulus', branch = 'master', default-features = false }
 cumulus-primitives-core = { git = 'https://github.com/paritytech/cumulus', branch = 'master', default-features = false }
+cumulus-primitives-timestamp = { git = 'https://github.com/paritytech/cumulus', branch = 'master', default-features = false }
 cumulus-primitives-utility = { git = 'https://github.com/paritytech/cumulus', branch = 'master', default-features = false }
 parachain-info = { git = 'https://github.com/paritytech/cumulus', branch = 'master', default-features = false }
 

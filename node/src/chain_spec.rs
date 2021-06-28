@@ -204,6 +204,6 @@ fn testnet_genesis(
 			authorities: initial_authorities,
 		},
 		aura_ext: Default::default(),
+		parachain_system: Default::default(),
 	}
 }
-

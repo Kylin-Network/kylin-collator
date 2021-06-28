@@ -107,7 +107,7 @@ pub fn new_partial<RuntimeApi, Executor, BIQ>(
 		config.transaction_pool.clone(),
 		config.role.is_authority().into(),
 		config.prometheus_registry(),
-		task_manager.spawn_handle(),
+		task_manager.spawn_essential_handle(),
 		client.clone(),
 	);
 
@@ -398,10 +398,10 @@ pub async fn start_node(
 				_,
 				_,
 				_,
-			>(BuildAuraConsensusParams {
-				proposer_factory,
-				create_inherent_data_providers: move |_, (relay_parent, validation_data)| {
-					let parachain_inherent =
+				>(BuildAuraConsensusParams {
+					proposer_factory,
+					create_inherent_data_providers: move |_, (relay_parent, validation_data)| {
+						let parachain_inherent =
 						cumulus_primitives_parachain_inherent::ParachainInherentData::create_at_with_client(
 							relay_parent,
 							&relay_chain_client,
@@ -437,6 +437,7 @@ pub async fn start_node(
 				slot_duration,
 				// We got around 500ms for proposing
 				block_proposal_slot_portion: SlotProportion::new(1f32 / 24f32),
+				max_block_proposal_slot_portion: Some(SlotProportion::new(1f32 / 16f32)),
 				telemetry,
 			}))
 		},
