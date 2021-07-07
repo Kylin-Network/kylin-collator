@@ -32,15 +32,17 @@ use sp_runtime::{
     transaction_validity::{TransactionSource, TransactionValidity},
     ApplyExtrinsicResult,
 };
-use sp_std::prelude::*;
+use sp_std::{marker::PhantomData, prelude::*};
+
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
+    ensure,
     construct_runtime, parameter_types, log, match_type,
-    traits::{Randomness, IsInVec, All},
+    traits::{Contains,Randomness, IsInVec, All},
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
         DispatchClass, IdentityFee, Weight,
@@ -57,7 +59,7 @@ use crate::sp_api_hidden_includes_IMPL_RUNTIME_APIS::sp_api::Encode;
 
 // XCM imports
 use polkadot_parachain::primitives::Sibling;
-use xcm::v0::{MultiAsset, MultiLocation, MultiLocation::*, Junction::*, BodyId, NetworkId};
+use xcm::v0::{MultiAsset, MultiLocation, MultiLocation::*, Order, Junction::*, BodyId, NetworkId};
 use xcm_builder::{
     AccountId32Aliases, CurrencyAdapter, LocationInverter, ParentIsDefault, RelayChainAsNative,
     SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
@@ -65,7 +67,7 @@ use xcm_builder::{
     AllowTopLevelPaidExecutionFrom, TakeWeightCredit, FixedWeightBounds, IsConcrete, NativeAsset,
     UsingComponents,
 };
-use xcm_executor::{Config, XcmExecutor};
+use xcm_executor::{Config,traits::{OnResponse, ShouldExecute}, XcmExecutor};
 use pallet_xcm::{EnsureXcm, IsMajorityOfBody};
 use xcm::v0::Xcm;
 
@@ -406,11 +408,29 @@ parameter_types! {
 	pub AllowUnpaidFrom: Vec<MultiLocation> = vec![ MultiLocation::X2(Junction::Parent, Junction::Parachain(2013)) ];
 }
 
+
 pub type Barrier = (
     TakeWeightCredit,
+    AllowAnyPaidExecutionFrom<All<MultiLocation>>,
     // AllowUnpaidExecutionFrom<IsInVec<AllowUnpaidFrom>>,	// <- Parent gets free execution
-    AllowUnpaidExecutionFrom<All<MultiLocation>>,
 );
+
+
+pub struct AllowAnyPaidExecutionFrom<T>(PhantomData<T>);
+impl<T: Contains<MultiLocation>> ShouldExecute for AllowAnyPaidExecutionFrom<T> {
+	fn should_execute<Call>(
+		origin: &MultiLocation,
+		top_level: bool,
+		message: &Xcm<Call>,
+		shallow_weight: Weight,
+		_weight_credit: &mut Weight,
+	) -> Result<(), ()> {
+		ensure!(T::contains(origin), ());
+		Ok(())
+	}
+}
+
+
 
 pub struct XcmConfig;
 impl Config for XcmConfig {
