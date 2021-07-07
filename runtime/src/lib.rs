@@ -408,9 +408,9 @@ parameter_types! {
 
 pub type Barrier = (
     TakeWeightCredit,
-    AllowUnpaidExecutionFrom<IsInVec<AllowUnpaidFrom>>,	// <- Parent gets free execution
+    // AllowUnpaidExecutionFrom<IsInVec<AllowUnpaidFrom>>,	// <- Parent gets free execution
+    AllowUnpaidExecutionFrom<All<MultiLocation>>,
 );
-
 
 pub struct XcmConfig;
 impl Config for XcmConfig {
