@@ -35,7 +35,7 @@ services:
       - "9935:9935"
       - "9955:9955"
       - "30336:30336"
-    command: bash -c "sleep 45;/polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe -d cumulus_relay/validator-2 --validator --ws-port 9955 --port 30336 --rpc-port 9935 --name kylin-validator-2 --chain rococo-chachacha.json"
+    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe -d cumulus_relay/validator-2 --validator --ws-port 9955 --port 30336 --rpc-port 9935 --name kylin-validator-2 --chain rococo-chachacha.json"
     volumes:
       - ./kylin_db/cumulus_relay:/cumulus_relay/
       - ./rococo-chachacha.json:/rococo-chachacha.json
