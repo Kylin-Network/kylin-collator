@@ -1,0 +1,103 @@
+{
+	"relaychain": {
+		"bin": "/polkadot",
+		"chain": "rococo-local",
+		"nodes": [
+			{
+				"name": "alice",
+				"wsPort": 9944,
+				"port": 30444,
+				"flags": [ "--wasm-execution=Compiled"]
+			},
+			{
+				"name": "bob",
+				"wsPort": 9955,
+				"port": 30555,
+				"flags": [ "--wasm-execution=Compiled"]
+			},
+			{
+				"name": "charlie",
+				"wsPort": 9966,
+				"port": 30666,
+				"flags": [ "--wasm-execution=Compiled"]
+			},
+			{
+				"name": "dave",
+				"wsPort": 9977,
+				"port": 30777,
+				"flags": [ "--wasm-execution=Compiled"]
+			},
+			{
+				"name": "eve",
+				"wsPort": 9988,
+				"port": 30888,
+				"flags": [ "--wasm-execution=Compiled"]
+			},
+			{
+				"name": "ferdie",
+				"wsPort": 9999,
+				"port": 30999,
+				"flags": [ "--wasm-execution=Compiled"]
+			}
+		],
+		"genesis": {
+			"runtime": {
+				"runtime_genesis_config": {
+					"parachainsConfiguration": {
+						"config": {
+							"validation_upgrade_frequency": 1,
+							"validation_upgrade_delay": 1
+						}
+					}
+				}
+			}
+		}
+	},
+	"parachains": [
+		{
+			"bin": "/kylin-node",
+			"id": "2000",
+			"balance": "1000000000000000000000",
+			"nodes": [
+				{
+					"wsPort": 9943,
+					"port": 31200,
+					"name": "alice",
+					"flags": ["--", "--execution=wasm","--wasm-execution=Compiled"]
+				}
+			]
+		},
+		{
+			"bin": "/kylin-node",
+			"id": "2013",
+			"balance": "1000000000000000000000",
+			"nodes": [
+				{
+					"wsPort": 9942,
+					"port": 31201,
+					"name": "alice",
+					"flags": ["--", "--execution=wasm","--wasm-execution=Compiled"]
+				}
+			]
+		}
+	],
+	"hrmpChannels": [
+		{
+			"sender": 2000,
+			"recipient": 2013,
+			"maxCapacity": 8,
+			"maxMessageSize": 512
+		},
+		{
+			"sender": 2013,
+			"recipient": 2000,
+			"maxCapacity": 8,
+			"maxMessageSize": 512
+		}
+	],
+	"types": {"HrmpChannelId": {
+		"sender": "u32",
+		"receiver": "u32"
+	}},
+	"finalization": false
+}
