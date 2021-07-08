@@ -45,7 +45,7 @@ services:
         - "9935:9935"
         - "9955:9955"
         - "30335:30335"
-      command: bash -c "sleep 40;/polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe -d cumulus_relay/bob --validator --bob --ws-port 9955 --port 30335 --rpc-port 9935 --name bob --chain rococo-local"
+      command: bash -c "sleep 40;/polkadot --unsafe-ws-external --rpc-cors all --rpc-methods Unsafe --rpc-external  --wasm-execution Compiled  -d cumulus_relay/bob --validator --bob --ws-port 9955 --port 30335 --rpc-port 9935 --name bob --chain rococo-local"
       volumes:
         - ./kylin_db/cumulus_relay:/cumulus_relay/
       depends_on:
