@@ -15,9 +15,9 @@ services:
     container_name: validator-2
     image: centrifugeio/polkadot:chachacha
     ports:
-      - "9935:9935"
-      - "9955:9955"
-      - "30336:30336"
+      - "9935:9934"
+      - "9955:9944"
+      - "30336:30335"
     command: bash -c "polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe --validator --name kylin-validator-2 --ws-port 9944 --port 30335 --rpc-port 9934 --chain rococo"
     volumes:
       - "polkadot_validator_2:/data"
