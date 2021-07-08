@@ -7,37 +7,37 @@
 				"name": "alice",
 				"wsPort": 9944,
 				"port": 30444,
-				"flags": [ "-unsafe-ws-external","--rpc-cors all"," --rpc-methods Unsafe","--rpc-external","--wasm-execution=Compiled"]
+				"flags": [ "--unsafe-ws-external","--rpc-cors=all","--wasm-execution=Compiled", "--rpc-external","--rpc-methods=Unsafe"]
 			},
 			{
 				"name": "bob",
 				"wsPort": 9955,
 				"port": 30555,
-				"flags": [ "-unsafe-ws-external","--rpc-cors all"," --rpc-methods Unsafe","--rpc-external","--wasm-execution=Compiled"]
+				"flags": [ "--unsafe-ws-external","--rpc-cors=all","--wasm-execution=Compiled", "--rpc-external","--rpc-methods=Unsafe"]
 			},
 			{
 				"name": "charlie",
 				"wsPort": 9966,
 				"port": 30666,
-				"flags": [ "-unsafe-ws-external","--rpc-cors all"," --rpc-methods Unsafe","--rpc-external","--wasm-execution=Compiled"]
+				"flags": [ "--unsafe-ws-external","--rpc-cors=all","--wasm-execution=Compiled", "--rpc-external","--rpc-methods=Unsafe"]
 			},
 			{
 				"name": "dave",
 				"wsPort": 9977,
 				"port": 30777,
-				"flags": [ "-unsafe-ws-external","--rpc-cors all"," --rpc-methods Unsafe","--rpc-external","--wasm-execution=Compiled"]
+				"flags": [ "--unsafe-ws-external","--rpc-cors=all","--wasm-execution=Compiled", "--rpc-external","--rpc-methods=Unsafe"]
 			},
 			{
 				"name": "eve",
 				"wsPort": 9988,
 				"port": 30888,
-				"flags": [ "-unsafe-ws-external","--rpc-cors all"," --rpc-methods Unsafe","--rpc-external","--wasm-execution=Compiled"]
+				"flags": [ "--unsafe-ws-external","--rpc-cors=all","--wasm-execution=Compiled", "--rpc-external","--rpc-methods=Unsafe"]
 			},
 			{
 				"name": "ferdie",
 				"wsPort": 9999,
 				"port": 30999,
-				"flags": [ "-unsafe-ws-external","--rpc-cors all"," --rpc-methods Unsafe","--rpc-external","--wasm-execution=Compiled"]
+				"flags": [ "--unsafe-ws-external","--rpc-cors=all","--wasm-execution=Compiled", "--rpc-external","--rpc-methods=Unsafe"]
 			}
 		],
 		"genesis": {
@@ -63,7 +63,7 @@
 					"wsPort": 9943,
 					"port": 31200,
 					"name": "alice",
-					"flags": ["-unsafe-ws-external","--rpc-cors all"," --rpc-methods Unsafe","--rpc-external","--wasm-execution=Compiled","--", "--execution=wasm","--wasm-execution=Compiled"]
+					"flags": ["--unsafe-ws-external","--rpc-cors=all","--wasm-execution=Compiled", "--rpc-external","--rpc-methods=Unsafe","--", "--execution=wasm","--wasm-execution=Compiled"]
 				}
 			]
 		},
@@ -76,7 +76,7 @@
 					"wsPort": 9942,
 					"port": 31201,
 					"name": "alice",
-					"flags": ["-unsafe-ws-external","--rpc-cors all"," --rpc-methods Unsafe","--rpc-external","--wasm-execution=Compiled","--", "--execution=wasm","--wasm-execution=Compiled"]
+					"flags": ["--unsafe-ws-external","--rpc-cors=all","--wasm-execution=Compiled", "--rpc-external","--rpc-methods=Unsafe","--", "--execution=wasm","--wasm-execution=Compiled"]
 				}
 			]
 		}

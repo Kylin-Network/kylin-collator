@@ -66,7 +66,6 @@ COPY --from=builder /builds/sample-data-fetcher/data/kibana.ndjson /kibana.ndjso
 COPY --from=builder /builds/sample-data-fetcher/data/init_es_index.sh /init_es_index.sh
 COPY --from=builder /builds/sample-data-fetcher/data/init_kibana_dashboard.sh /init_kibana_dashboard.sh
 COPY --from=builder /builds/polkadot-launch/ polkadot-launch/
-COPY --from=builder /builds/kylin-node/scripts/kylinPolkadotLaunchConfig.json /
 
 COPY --from=builder /builds/apps/packages/apps /apps
 WORKDIR /
