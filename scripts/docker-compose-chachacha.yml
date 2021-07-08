@@ -3,15 +3,26 @@ version: "3.2"
 services:
   validator-1:
     container_name: validator-1
-    image: kylinnetwork/kylin-node:polkadot-master
+    image: centrifugeio/polkadot:chachacha
     ports:
       - "9934:9934"
       - "9944:9944"
       - "30335:30335"
-    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe -d cumulus_relay/validator-1 --validator --ws-port 9944 --port 30335 --rpc-port 9934 --name kylin-validator-1 --chain rococo-chachacha.json"
+    command: bash -c "polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe --validator --name kylin-validator-1 --ws-port 9944 --port 30335 --rpc-port 9934 --chain rococo"
     volumes:
-      - ./kylin_db/cumulus_relay:/cumulus_relay/
-      - ./rococo-chachacha.json:/rococo-chachacha.json
+      - "polkadot_validator_1:/data"
+  validator-2:
+    container_name: validator-2
+    image: kylinnetwork/kylin-node:polkadot-master
+    ports:
+      - "9935:9935"
+      - "9955:9955"
+      - "30336:30336"
+    command: bash -c "polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe --validator --name kylin-validator-2 --ws-port 9944 --port 30335 --rpc-port 9934 --chain rococo"
+    volumes:
+      - "polkadot_validator_2:/data"
+    depends_on:
+      - validator-1
 
   kylin-node:
     container_name: kylin-node
@@ -27,27 +38,6 @@ services:
       - ./rococo-chachacha.json:/rococo-chachacha.json
     depends_on:
       - validator-1
-
-  validator-2:
-    container_name: validator-2
-    image: kylinnetwork/kylin-node:polkadot-master
-    ports:
-      - "9935:9935"
-      - "9955:9955"
-      - "30336:30336"
-    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe -d cumulus_relay/validator-2 --validator --ws-port 9955 --port 30336 --rpc-port 9935 --name kylin-validator-2 --chain rococo-chachacha.json"
-    volumes:
-      - ./kylin_db/cumulus_relay:/cumulus_relay/
-      - ./rococo-chachacha.json:/rococo-chachacha.json
-    depends_on:
-      - validator-1
-      
-  insert-ocw:
-    container_name: insert-ocw
-    image: kylinnetwork/kylin-node:polkadot-master
-    command: bash -c "sleep 600 && /insert_alice_key.sh"
-    depends_on:
-      - kylin-node
 
   kylin-market-frontend:
     container_name: kylin-market-frontend
@@ -100,6 +90,8 @@ services:
       - kylin-es
       - kylin-kibana
 volumes:
+  polkadot_validator_1:
+  polkadot_validator_2:
   es-data:
     driver: local
 
