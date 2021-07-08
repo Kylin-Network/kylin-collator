@@ -13,7 +13,7 @@ services:
       - "polkadot_validator_1:/data"
   validator-2:
     container_name: validator-2
-    image: kylinnetwork/kylin-node:polkadot-master
+    image: centrifugeio/polkadot:chachacha
     ports:
       - "9935:9935"
       - "9955:9955"
