@@ -59,15 +59,15 @@ use crate::sp_api_hidden_includes_IMPL_RUNTIME_APIS::sp_api::Encode;
 
 // XCM imports
 use polkadot_parachain::primitives::Sibling;
-use xcm::v0::{MultiAsset, MultiLocation, MultiLocation::*, Order, Junction::*, BodyId, NetworkId};
+use xcm::v0::{MultiAsset, MultiLocation, MultiLocation::*, Junction::*, BodyId, NetworkId};
 use xcm_builder::{
     AccountId32Aliases, CurrencyAdapter, LocationInverter, ParentIsDefault, RelayChainAsNative,
     SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
-    SovereignSignedViaLocation, EnsureXcmOrigin, AllowUnpaidExecutionFrom, ParentAsSuperuser,
-    AllowTopLevelPaidExecutionFrom, TakeWeightCredit, FixedWeightBounds, IsConcrete, NativeAsset,
+    SovereignSignedViaLocation, EnsureXcmOrigin,  ParentAsSuperuser,
+     TakeWeightCredit, FixedWeightBounds, IsConcrete, NativeAsset,
     UsingComponents,
 };
-use xcm_executor::{Config,traits::{OnResponse, ShouldExecute}, XcmExecutor};
+use xcm_executor::{Config,traits::ShouldExecute, XcmExecutor};
 use pallet_xcm::{EnsureXcm, IsMajorityOfBody};
 use xcm::v0::Xcm;
 
@@ -420,9 +420,9 @@ pub struct AllowAnyPaidExecutionFrom<T>(PhantomData<T>);
 impl<T: Contains<MultiLocation>> ShouldExecute for AllowAnyPaidExecutionFrom<T> {
 	fn should_execute<Call>(
 		origin: &MultiLocation,
-		top_level: bool,
-		message: &Xcm<Call>,
-		shallow_weight: Weight,
+		_top_level: bool,
+		_message: &Xcm<Call>,
+		_shallow_weight: Weight,
 		_weight_credit: &mut Weight,
 	) -> Result<(), ()> {
 		ensure!(T::contains(origin), ());
