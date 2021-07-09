@@ -56,6 +56,7 @@ RUN git clone --recursive ${POLKADOT_LAUNCH_REPO}
 WORKDIR /builds/polkadot-launch
 RUN yarn global add polkadot-launch
 
+WORKDIR /
 COPY --from=builder /kylin-node /
 COPY --from=builder /polkadot /
 COPY --from=builder /subkey /
@@ -68,6 +69,5 @@ COPY --from=builder /builds/sample-data-fetcher/data/init_kibana_dashboard.sh /i
 COPY --from=builder /builds/polkadot-launch/ polkadot-launch/
 
 COPY --from=builder /builds/apps/packages/apps /apps
-WORKDIR /
-#
+
 EXPOSE 30330-30345 9933-9960 8080 3001
