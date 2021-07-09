@@ -19,20 +19,7 @@ services:
       - "9943:9943"
       - "9933:9933"
       - "30334:30334"
-    command: bash -c "sleep 40;/kylin-node --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus_parachain/alice --collator --alice --force-authoring --ws-port 9943 --port 30333 --rpc-port 9933 --parachain-id 2013 --chain local -- --wasm-execution Compiled --port 30334 --chain rococo-local.json"
-    volumes:
-      - ./kylin_db/cumulus_parachain:/cumulus_parachain/
-    depends_on:
-      - alice
-
-  kylin-node-2:
-    container_name: kylin-node-2
-    image: kylinnetwork/kylin-node:polkadot-master
-    ports:
-      - "9942:9942"
-      - "9932:9932"
-      - "30332:30332"
-    command: bash -c "sleep 40;/kylin-node --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus_parachain/alice2 --collator --alice --force-authoring --ws-port 9942 --port 30332 --rpc-port 9932 --parachain-id 2013 --chain local -- --wasm-execution Compiled --port 30332 --chain rococo-local.json"
+    command: bash -c "sleep 20;/kylin-node --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus_parachain/alice --collator --alice --force-authoring --ws-port 9943 --port 30333 --rpc-port 9933 --parachain-id 2000 --chain local -- --wasm-execution Compiled --port 30334 --chain rococo-local.json"
     volumes:
       - ./kylin_db/cumulus_parachain:/cumulus_parachain/
     depends_on:

@@ -60,7 +60,7 @@
 			"balance": "1000000000000000000000",
 			"nodes": [
 				{
-					"wsPort": 9943,
+					"wsPort": 9942,
 					"port": 31200,
 					"name": "alice",
 					"flags": ["--unsafe-ws-external","--rpc-cors=all","--wasm-execution=Compiled", "--rpc-external","--rpc-methods=Unsafe","--", "--execution=wasm","--wasm-execution=Compiled"]
@@ -73,9 +73,9 @@
 			"balance": "1000000000000000000000",
 			"nodes": [
 				{
-					"wsPort": 9942,
+					"wsPort": 9943,
 					"port": 31201,
-					"name": "alice",
+					"name": "bob",
 					"flags": ["--unsafe-ws-external","--rpc-cors=all","--wasm-execution=Compiled", "--rpc-external","--rpc-methods=Unsafe","--", "--execution=wasm","--wasm-execution=Compiled"]
 				}
 			]
