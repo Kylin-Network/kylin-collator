@@ -4,7 +4,9 @@ use kylin_node_runtime::{AccountId, AuraId, Signature};
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use std::str::FromStr;
 use sc_service::{ChainType, Properties};
+use sc_telemetry::TelemetryEndpoints;
 use serde::{Deserialize, Serialize};
+
 use sp_core::{crypto::UncheckedInto, sr25519, Pair, Public};
 use sp_runtime::{AccountId32, traits::{IdentifyAccount, Verify}};
 
@@ -20,7 +22,9 @@ pub fn kylin_properties() -> Properties {
 }
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
-pub type ChainSpec = sc_service::GenericChainSpec<kylin_node_runtime::GenesisConfig, Extensions>;
+pub type KylinChainSpec = sc_service::GenericChainSpec<kylin_node_runtime::GenesisConfig>;
+
+const POLKADOT_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
 /// Helper function to generate a crypto pair from seed
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
@@ -56,8 +60,49 @@ pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
 	AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
 }
 
-pub fn local_environment_config(id: ParaId, environment: &str) -> ChainSpec {
-	ChainSpec::from_genesis(
+
+pub fn local_environment_config(id: ParaId, environment: &str) -> KylinChainSpec {
+	KylinChainSpec::from_genesis(
+		// Name
+		format!("kylin {} testnet", environment).as_str(),
+		// ID
+		format!("kylin-{}-testnet", environment).as_str(),
+		ChainType::Development,
+		move || {
+			testnet_genesis(
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				vec![
+					get_from_seed::<AuraId>("Alice"),
+					get_from_seed::<AuraId>("Bob"),
+				],
+				vec![
+					AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_account_id_from_seed::<sr25519::Public>("Bob"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie"),
+					get_account_id_from_seed::<sr25519::Public>("Dave"),
+					get_account_id_from_seed::<sr25519::Public>("Eve"),
+					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+				],
+				id,
+			)
+		},
+		Vec::new(),
+		None,
+		Some("Kylin"),
+		Some(kylin_properties()),
+		Default::default()
+	)
+}
+
+pub fn development_environment_config(id: ParaId, environment: &str) -> KylinChainSpec {
+	KylinChainSpec::from_genesis(
 		// Name
 		format!("kylin {} testnet", environment).as_str(),
 		// ID
@@ -96,58 +141,13 @@ pub fn local_environment_config(id: ParaId, environment: &str) -> ChainSpec {
 		None,
 		Some("Kylin"),
 		Some(kylin_properties()),
-		Extensions {
-			relay_chain: environment.into(), // You MUST set this to the correct network!
-			para_id: id.into(),
-		},
+		Default::default()
+
 	)
 }
 
-pub fn development_environment_config(id: ParaId, environment: &str) -> ChainSpec {
-	ChainSpec::from_genesis(
-		// Name
-		format!("kylin {} testnet", environment).as_str(),
-		// ID
-		format!("kylin-{}-testnet", environment).as_str(),
-		ChainType::Development,
-		move || {
-			testnet_genesis(
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				vec![
-					get_from_seed::<AuraId>("Alice"),
-					get_from_seed::<AuraId>("Bob"),
-				],
-				vec![
-					AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					get_account_id_from_seed::<sr25519::Public>("Bob"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie"),
-					get_account_id_from_seed::<sr25519::Public>("Dave"),
-					get_account_id_from_seed::<sr25519::Public>("Eve"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-				],
-				id,
-			)
-		},
-		Vec::new(),
-		None,
-		Some("Kylin"),
-		Some(kylin_properties()),
-		Extensions {
-			relay_chain: environment.into(), // You MUST set this to the correct network!
-			para_id: id.into(),
-		},
-	)
-}
-
-pub fn rococo_test_net(id: ParaId) -> ChainSpec {
-	ChainSpec::from_genesis(
+pub fn rococo_staging_network(id: ParaId) -> KylinChainSpec {
+	KylinChainSpec::from_genesis(
 		"Kylin Rococo Testnet",
 		"kylin_rococo_testnet",
 		ChainType::Live,
@@ -168,13 +168,13 @@ pub fn rococo_test_net(id: ParaId) -> ChainSpec {
 			)
 		},
 		Vec::new(),
-		None,
+		Some(
+			TelemetryEndpoints::new(vec![(POLKADOT_TELEMETRY_URL.to_string(), 0)])
+				.expect("Polkadot telemetry url is valid; qed"),
+		),
 		Some("Kylin"),
 		Some(kylin_properties()),
-		Extensions {
-			relay_chain: "rococo".into(),
-			para_id: id.into(),
-		},
+		Default::default()
 	)
 }
 

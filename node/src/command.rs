@@ -25,7 +25,7 @@ fn load_spec(
 		// Rococo
 		"" | "local"   => Box::new(chain_spec::local_environment_config(para_id,"rococo-local")),
 		"kylin-rococo-dev" => Box::new(chain_spec::development_environment_config(para_id,"rococo-dev")),
-		"kylin-rococo" => Box::new(chain_spec::rococo_test_net(para_id)),
+		"kylin-rococo" | "kylin-chachacha" => Box::new(chain_spec::rococo_staging_network(para_id)),
 
 		// Westend
 		"kylin-westend-local" => Box::new(chain_spec::local_environment_config(para_id,"westend-local")),
@@ -34,7 +34,7 @@ fn load_spec(
 		// Kusama
 		"kylin-kusama-local" => Box::new(chain_spec::local_environment_config(para_id,"kusama-local")),
 		"kylin-kusama-dev" => Box::new(chain_spec::development_environment_config(para_id,"kusama-dev")),
-		path => Box::new(chain_spec::ChainSpec::from_json_file(
+		path => Box::new(chain_spec::KylinChainSpec::from_json_file(
 			std::path::PathBuf::from(path),
 		)?),
 	})
