@@ -22,7 +22,7 @@ RUN /polkadot build-spec --chain rococo-local --disable-default-bootnode --raw >
 
 FROM ubuntu
 ENV DEBIAN_FRONTEND noninteractive
-RUN apt update && apt install git gnupg2 curl ca-certificates vim npm nodejs -y
+RUN apt update && apt install git gnupg2 curl ca-certificates vim npm nodejs wget awscli -y
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
 
 LABEL maintainer="kylin-dev"
