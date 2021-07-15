@@ -504,6 +504,7 @@ impl kylin_oracle::Config for Runtime {
     type Call = Call;
     type Origin = Origin;
     type XcmSender = XcmRouter;
+    type UnsignedPriority = UnsignedPriority;
 }
 
 impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime where
@@ -584,8 +585,10 @@ construct_runtime!(
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 
-		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>} = 20,
-		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 21,
+		ParachainSystem: cumulus_pallet_parachain_system::{
+			Pallet, Call, Config, Storage, Inherent, Event<T>, ValidateUnsigned,
+		} = 20,
+        ParachainInfo: parachain_info::{Pallet, Storage, Config} = 21,
 
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 30,
 
@@ -599,7 +602,7 @@ construct_runtime!(
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 53,
 
         // Kylin Pallets
-        KylinOraclePallet: kylin_oracle::{Pallet, Call, Storage, Event<T>} = 54,
+        KylinOraclePallet: kylin_oracle::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 54,
         XcmPallet: pallet_xcm::{Pallet, Call, Storage, Event<T>, Origin} = 99,
 
 	}
