@@ -1,8 +1,10 @@
 [profile.release]
-panic = 'unwind'
+panic = 'abort'
+debug = true
 
 [workspace]
 members = [
     'node',
+    'pallets/*',
     'runtime',
 ]

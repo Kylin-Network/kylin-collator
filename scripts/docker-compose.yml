@@ -1,46 +1,108 @@
 version: "3.2"
 
 services:
-#  kylin-data-proxy:
-#    container_name: kylin-data-proxy
-#    image: kylinnetwork/kylin-node:local-test-net
-#    ports:
-#      - "8080:8080"
-##    env_file:
-##      - kylin-data-proxy.env
-#    environment:
-#      - KYLIN_ES_HOST=kylin-es:9200
-#    command: bash -c "/data_fetcher"
-#    depends_on:
-#      - init-es-index
-
+  alice:
+    container_name: alice
+    image: kylinnetwork/kylin-node:main
+    ports:
+      - "9934:9934"
+      - "9944:9944"
+      - "30331:30331"
+    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe -d cumulus_relay/alice --validator --alice --ws-port 9944 --port 30331 --rpc-port 9934 --name alice --chain rococo-local"
+    volumes:
+      - ./kylin_db/cumulus_relay:/cumulus_relay/
 
   kylin-node:
     container_name: kylin-node
-    image: kylinnetwork/kylin-node:local-test-net
+    image: kylinnetwork/kylin-node:main
     ports:
-      - "9944:9944"
+      - "9943:9943"
       - "9933:9933"
-      - "30333:30333"
-    command: bash -c "/kylin-node --dev --ws-external --rpc-external --rpc-methods Unsafe"
-#    depends_on:
-#      - kylin-data-proxy
+      - "30334:30334"
+    command: bash -c "sleep 20;/kylin-node --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus_parachain/alice --collator --alice --force-authoring --ws-port 9943 --port 30333 --rpc-port 9933 --parachain-id 2000 --chain local -- --wasm-execution Compiled --port 30334 --chain rococo-local.json"
+    volumes:
+      - ./kylin_db/cumulus_parachain:/cumulus_parachain/
+    depends_on:
+      - alice
 
+  bob:
+      container_name: bob
+      image: kylinnetwork/kylin-node:main
+      ports:
+        - "9935:9935"
+        - "9955:9955"
+        - "30335:30335"
+      command: bash -c "sleep 40;/polkadot --unsafe-ws-external --rpc-cors all --rpc-methods Unsafe --rpc-external  --wasm-execution Compiled  -d cumulus_relay/bob --validator --bob --ws-port 9955 --port 30335 --rpc-port 9935 --name bob --chain rococo-local"
+      volumes:
+        - ./kylin_db/cumulus_relay:/cumulus_relay/
+      depends_on:
+        -  kylin-node
+
+  charlie:
+      container_name: charlie
+      image: kylinnetwork/kylin-node:main
+      ports:
+        - "9936:9936"
+        - "9956:9956"
+        - "30336:30336"
+      command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe -d cumulus_relay/charlie --validator --charlie --ws-port 9956 --port 30336 --rpc-port 9936 --name charlie --chain rococo-local.json"
+      depends_on:
+        - bob
+      volumes:
+        - ./kylin_db/cumulus_relay:/cumulus_relay/
+
+  dave:
+    container_name: dave
+    image: kylinnetwork/kylin-node:main
+    ports:
+        - "9937:9937"
+        - "9957:9957"
+        - "30337:30337"
+    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe -d cumulus_relay/dave --validator --dave --name dave --ws-port 9957 --port 30337 --rpc-port 9937  --chain rococo-local.json"
+    depends_on:
+      - bob
+    volumes:
+      - ./kylin_db/cumulus_relay:/cumulus_relay/
+
+  eve:
+    container_name: eve
+    image: kylinnetwork/kylin-node:main
+    ports:
+      - "9938:9938"
+      - "9958:9958"
+      - "30338:30338"
+    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe -d cumulus_relay/eve --validator --eve --name eve --ws-port 9958 --port 30338 --rpc-port 9938 --chain rococo-local.json"
+    depends_on:
+      - bob
+    volumes:
+      - ./kylin_db/cumulus_relay:/cumulus_relay/
+   
+  ferdie:
+    container_name: ferdie
+    image: kylinnetwork/kylin-node:main
+    ports:
+      - "9939:9939"
+      - "9959:9959"
+      - "30339:30339"
+    command: bash -c "/polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe -d cumulus_relay/ferdie --validator --ferdie --name ferdie --ws-port 9959 --port 30339 --rpc-port 9939  --chain rococo-local.json"
+    depends_on:
+      - bob
+    volumes:
+      - ./kylin_db/cumulus_relay:/cumulus_relay/
+       
   insert-ocw:
     container_name: insert-ocw
-    image: kylinnetwork/kylin-node:local-test-net
-    command: bash -c "sleep 45 && /insert_alice_key.sh"
+    image: kylinnetwork/kylin-node:main
+    command: bash -c "sleep 600 && /insert_alice_key.sh"
     depends_on:
       - kylin-node
 
-  kylin-market-frontend:
-    container_name: kylin-market-frontend
-    image: kylinnetwork/kylin-node:local-test-net
+  frontend:
+    container_name: frontend
+    image: kylinnetwork/kylin-node:main
     ports:
       - "3001:3001"
     command: bash -c "cd /apps && serve -p 3001 build"
-    depends_on:
-      - kylin-node
 
   kylin-es:
     container_name: kylin-es
@@ -62,7 +124,7 @@ services:
 
   init-es-index:
     container_name: init-es-index
-    image: kylinnetwork/kylin-node:local-test-net
+    image: kylinnetwork/kylin-node:main
     environment:
       ES_HOST: http://kylin-es:9200
       ES_INDEX_NAME: kylin_access_tracking
@@ -74,7 +136,7 @@ services:
 
   init-kibana-dashboard:
     container_name: init-kibana-dashboard
-    image: kylinnetwork/kylin-node:local-test-net
+    image: kylinnetwork/kylin-node:main
     environment:
       ES_HOST: http://kylin-es:9200
       ES_INDEX_NAME: kylin_access_tracking
@@ -86,4 +148,5 @@ services:
 volumes:
   es-data:
     driver: local
+
 

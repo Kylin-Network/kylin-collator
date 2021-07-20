@@ -17,3 +17,5 @@
 *.env
 
 scripts/kylin-data-proxy.env
+scripts/kylin_db/
+cumulus-parachain/*

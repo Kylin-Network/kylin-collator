@@ -1,64 +1,72 @@
 # build kylin-node
-FROM paritytech/ci-linux:production as builder
+FROM kylinnetwork/polkadot:latest as builder
 
 LABEL maintainer="kylin-dev"
-ARG RUST_VERSION=nightly-2020-10-01
+ARG RUST_VERSION=1.51.0
 ARG PROFILE=release
-ARG GIT_REPO="https://github.com/Kylin-Network/kylin-node.git"
-ARG GIT_BRANCH="master"
+ARG KYLIN_GIT_REPO="https://github.com/Kylin-Network/kylin-node.git"
+ARG DOT_GIT_REPO="https://github.com/paritytech/polkadot.git"
+ARG GIT_BRANCH="main"
+WORKDIR /builds/
 
-RUN git clone --recursive ${GIT_REPO}
+#Build Kylin-node
+RUN git clone --recursive ${KYLIN_GIT_REPO}
+
 WORKDIR /builds/kylin-node
-RUN sed -i s/localhost/kylin-data-proxy/g /builds/kylin-node/pallets/kylin-ocw/src/lib.rs
-RUN sed -i s/localhost/kylin-node/g /builds/kylin-node/scripts/insert_alice_key.sh
-RUN rustup default stable
-RUN rustup uninstall nightly
-RUN rustup toolchain install ${RUST_VERSION}
-RUN rustup target add wasm32-unknown-unknown --toolchain ${RUST_VERSION}
-
-RUN cargo +${RUST_VERSION} build --${PROFILE}
+RUN git checkout ${GIT_BRANCH}
+RUN git submodule update --recursive --remote
+RUN cargo build --${PROFILE}
 RUN cp target/${PROFILE}/kylin-node /kylin-node
 
-# build sample data fetcher
-FROM paritytech/ci-linux:production as data_fetcher_builder
-ARG DATA_FETECHER_REPO="https://github.com/Kylin-Network/sample-data-fetcher.git"
-ARG DATA_FETECHER_BRANCH="master"
-ARG PROFILE="debug"
-
-RUN git clone --recursive ${DATA_FETECHER_REPO}
-WORKDIR /builds/sample-data-fetcher
-RUN cargo build
-RUN cp target/${PROFILE}/data_fetcher /data_fetcher
-
-# build kylin-market-frontend
-FROM paritytech/ci-linux:production as frontend_builder
-
-LABEL maintainer="kylin-dev"
-ARG FRONT_REPO="https://github.com/Kylin-Network/kylin-market-frontend.git"
-ARG FRONT_BRANCH="master"
-
-RUN git clone --recursive ${FRONT_REPO}
-WORKDIR /builds/kylin-market-frontend
-RUN git checkout 0e69f019
-
-RUN apt update && apt install gnupg2 curl ca-certificates -y
-RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
-RUN apt update && apt install yarn -y
-RUN YARN_CHECKSUM_BEHAVIOR=update yarn && yarn build:www
+RUN /polkadot build-spec --chain rococo-local --disable-default-bootnode --raw > rococo-local.json
 
 FROM ubuntu
 ENV DEBIAN_FRONTEND noninteractive
-RUN apt-get update && apt-get install curl ca-certificates npm nodejs -y
+RUN apt update && apt install git gnupg2 curl ca-certificates vim npm nodejs wget awscli -y
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+
+LABEL maintainer="kylin-dev"
+ARG FRONT_REPO="https://github.com/Kylin-Network/apps.git"
+ARG FRONT_BRANCH="master"
+
+WORKDIR /builds/
+RUN git clone --recursive ${FRONT_REPO}
+WORKDIR /builds/apps
+
+
+RUN apt update && apt install yarn -y
+RUN apt purge nodejs npm -y
+
+RUN apt-get install -y \
+    software-properties-common \
+    npm
+
+RUN npm install npm@latest -g && \
+    npm install n -g && \
+    n latest
+RUN YARN_CHECKSUM_BEHAVIOR=update yarn && yarn build:www
+
 RUN npm install -g serve
+
+ARG POLKADOT_LAUNCH_REPO="https://github.com/Kylin-Network/polkadot-launch.git"
+ARG DATA_FETECHER_BRANCH="master"
+
+WORKDIR /builds/
+RUN git clone --recursive ${POLKADOT_LAUNCH_REPO}
+WORKDIR /builds/polkadot-launch
+RUN yarn global add polkadot-launch
+
+WORKDIR /
 COPY --from=builder /kylin-node /
+COPY --from=builder /polkadot /
+COPY --from=builder /subkey /
 COPY --from=builder /builds/kylin-node/scripts/insert_alice_key.sh /
+COPY --from=builder /builds/kylin-node/rococo-local.json /
+COPY --from=builder /builds/sample-data-fetcher/data/es_index.json /es_index.json
+COPY --from=builder /builds/sample-data-fetcher/data/kibana.ndjson /kibana.ndjson
+COPY --from=builder /builds/sample-data-fetcher/data/init_es_index.sh /init_es_index.sh
+COPY --from=builder /builds/sample-data-fetcher/data/init_kibana_dashboard.sh /init_kibana_dashboard.sh
+COPY --from=builder /builds/kylin-node/scripts/kylinPolkadotLaunchConfig.json /
+COPY --from=builder /builds/apps/packages/apps /apps
 
-COPY --from=data_fetcher_builder /builds/sample-data-fetcher/target/debug/data_fetcher /data_fetcher
-COPY --from=data_fetcher_builder /builds/sample-data-fetcher/data/es_index.json /es_index.json
-COPY --from=data_fetcher_builder /builds/sample-data-fetcher/data/kibana.ndjson /kibana.ndjson
-COPY --from=data_fetcher_builder /builds/sample-data-fetcher/data/init_es_index.sh /init_es_index.sh
-COPY --from=data_fetcher_builder /builds/sample-data-fetcher/data/init_kibana_dashboard.sh /init_kibana_dashboard.sh
-
-COPY --from=frontend_builder /builds/kylin-market-frontend/packages/apps /apps
-
-EXPOSE 30333 9933 9944 8080 3001
+EXPOSE 30330-30345 9933-9960 8080 3001

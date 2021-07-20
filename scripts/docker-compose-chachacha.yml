@@ -1,0 +1,98 @@
+version: "3.2"
+
+services:
+  validator-1:
+    container_name: validator-1
+    image: centrifugeio/polkadot:chachacha
+    ports:
+      - "9934:9934"
+      - "9944:9944"
+      - "30335:30335"
+    command: bash -c "polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe --validator --name kylin-validator-1 --ws-port 9944 --port 30335 --rpc-port 9934 --chain rococo"
+    volumes:
+      - "polkadot_validator_1:/data"
+  validator-2:
+    container_name: validator-2
+    image: centrifugeio/polkadot:chachacha
+    ports:
+      - "9935:9934"
+      - "9955:9944"
+      - "30336:30335"
+    command: bash -c "polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe --validator --name kylin-validator-2 --ws-port 9944 --port 30335 --rpc-port 9934 --chain rococo"
+    volumes:
+      - "polkadot_validator_2:/data"
+    depends_on:
+      - validator-1
+
+  kylin-node:
+    container_name: kylin-node
+    image: kylinnetwork/kylin-node:main
+    ports:
+      - "9942:9942"
+      - "9933:9933"
+      - "30333:30333"
+      - "30334:30334"
+    command: bash -c "/kylin-node --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus_parachain/kylin-collator-1 --collator --name kylin-collator-1 --force-authoring --ws-port 9942 --port 30333 --rpc-port 9933 --parachain-id 2000 --chain kylin-chachacha -- --wasm-execution Compiled --port 30334 --chain rococo-chachacha.json"
+    volumes:
+      - ./kylin_db/cumulus_parachain:/cumulus_parachain/
+      - ./rococo-chachacha.json:/rococo-chachacha.json
+    depends_on:
+      - validator-1
+
+  kylin-market-frontend:
+    container_name: kylin-market-frontend
+    image: kylinnetwork/kylin-node:main
+    ports:
+      - "3001:3001"
+    command: bash -c "cd /apps && serve -p 3001 build"
+    depends_on:
+      - kylin-node
+
+  kylin-es:
+    container_name: kylin-es
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.8.1
+    environment:
+      - discovery.type=single-node
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+
+  kylin-kibana:
+    container_name: kylin-kibana
+    ports:
+      - "5601:5601"
+    image: docker.elastic.co/kibana/kibana:7.8.1
+    environment:
+      ELASTICSEARCH_HOSTS: http://kylin-es:9200
+    depends_on:
+      - kylin-es
+
+  init-es-index:
+    container_name: init-es-index
+    image: kylinnetwork/kylin-node:main
+    environment:
+      ES_HOST: http://kylin-es:9200
+      ES_INDEX_NAME: kylin_access_tracking
+      KIBANA_HOST: http://kylin-kibana:5601
+    command: /bin/bash -c "sleep 60 && /init_es_index.sh"
+    depends_on:
+      - kylin-es
+      - kylin-kibana
+
+  init-kibana-dashboard:
+    container_name: init-kibana-dashboard
+    image: kylinnetwork/kylin-node:main
+    environment:
+      ES_HOST: http://kylin-es:9200
+      ES_INDEX_NAME: kylin_access_tracking
+      KIBANA_HOST: http://kylin-kibana:5601
+    command: /bin/bash -c "sleep 120 && /init_kibana_dashboard.sh"
+    depends_on:
+      - kylin-es
+      - kylin-kibana
+volumes:
+  polkadot_validator_1:
+  polkadot_validator_2:
+  es-data:
+    driver: local
+
+
