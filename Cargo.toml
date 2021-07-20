@@ -1,7 +1,6 @@
 [profile.release]
 panic = 'abort'
 debug = true
-lto = true
 
 [workspace]
 members = [

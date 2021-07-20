@@ -505,6 +505,7 @@ impl kylin_oracle::Config for Runtime {
     type Origin = Origin;
     type XcmSender = XcmRouter;
     type UnsignedPriority = UnsignedPriority;
+    type UnixTime = Timestamp;
 }
 
 impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime where
