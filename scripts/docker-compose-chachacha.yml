@@ -26,7 +26,7 @@ services:
 
   kylin-node:
     container_name: kylin-node
-    image: kylinnetwork/kylin-node:polkadot-master
+    image: kylinnetwork/kylin-node:main
     ports:
       - "9942:9942"
       - "9933:9933"
@@ -41,7 +41,7 @@ services:
 
   kylin-market-frontend:
     container_name: kylin-market-frontend
-    image: kylinnetwork/kylin-node:polkadot-master
+    image: kylinnetwork/kylin-node:main
     ports:
       - "3001:3001"
     command: bash -c "cd /apps && serve -p 3001 build"
@@ -68,7 +68,7 @@ services:
 
   init-es-index:
     container_name: init-es-index
-    image: kylinnetwork/kylin-node:polkadot-master
+    image: kylinnetwork/kylin-node:main
     environment:
       ES_HOST: http://kylin-es:9200
       ES_INDEX_NAME: kylin_access_tracking
@@ -80,7 +80,7 @@ services:
 
   init-kibana-dashboard:
     container_name: init-kibana-dashboard
-    image: kylinnetwork/kylin-node:polkadot-master
+    image: kylinnetwork/kylin-node:main
     environment:
       ES_HOST: http://kylin-es:9200
       ES_INDEX_NAME: kylin_access_tracking

@@ -5,4 +5,4 @@
 [submodule "pallets"]
 	path = pallets
 	url = https://github.com/Kylin-Network/kylin-ocw-module.git
-	branch = polkadot-master
+	branch = main

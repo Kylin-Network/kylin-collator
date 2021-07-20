@@ -3,7 +3,7 @@ version: "3.2"
 services:
   launch:
     container_name: launch
-    image: kylinnetwork/kylin-node:polkadot-master
+    image: kylinnetwork/kylin-node:main
     ports:
       - "30330-30345:30330-30345"
       - "9933-9960:9933-9960"
@@ -14,14 +14,14 @@ services:
        
   insert-ocw:
     container_name: insert-ocw
-    image: kylinnetwork/kylin-node:polkadot-master
+    image: kylinnetwork/kylin-node:main
     command: bash -c "sleep 600 && /insert_alice_key.sh"
     depends_on:
       - launch
 
   frontend:
     container_name: frontend
-    image: kylinnetwork/kylin-node:polkadot-master
+    image: kylinnetwork/kylin-node:main
     ports:
       - "3001:3001"
     command: bash -c "cd /apps && serve -p 3001 build"
@@ -46,7 +46,7 @@ services:
 
   init-es-index:
     container_name: init-es-index
-    image: kylinnetwork/kylin-node:polkadot-master
+    image: kylinnetwork/kylin-node:main
     environment:
       ES_HOST: http://kylin-es:9200
       ES_INDEX_NAME: kylin_access_tracking
@@ -58,7 +58,7 @@ services:
 
   init-kibana-dashboard:
     container_name: init-kibana-dashboard
-    image: kylinnetwork/kylin-node:polkadot-master
+    image: kylinnetwork/kylin-node:main
     environment:
       ES_HOST: http://kylin-es:9200
       ES_INDEX_NAME: kylin_access_tracking
