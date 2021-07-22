@@ -33,19 +33,16 @@ WORKDIR /builds/
 RUN git clone --recursive ${FRONT_REPO}
 WORKDIR /builds/apps
 
-
 RUN apt update && apt install yarn -y
 RUN apt purge nodejs npm -y
 
 RUN apt-get install -y \
     software-properties-common \
     npm
-
 RUN npm install npm@latest -g && \
     npm install n -g && \
     n latest
 RUN YARN_CHECKSUM_BEHAVIOR=update yarn && yarn build:www
-
 RUN npm install -g serve
 
 ARG POLKADOT_LAUNCH_REPO="https://github.com/Kylin-Network/polkadot-launch.git"
@@ -67,5 +64,8 @@ COPY --from=builder /builds/sample-data-fetcher/data/kibana.ndjson /kibana.ndjso
 COPY --from=builder /builds/sample-data-fetcher/data/init_es_index.sh /init_es_index.sh
 COPY --from=builder /builds/sample-data-fetcher/data/init_kibana_dashboard.sh /init_kibana_dashboard.sh
 COPY --from=builder /builds/kylin-node/scripts/kylinPolkadotLaunchConfig.json /
+# COPY --from=builder /builds/apps/ /
+RUN mv /builds/apps/packages/apps /
+RUN rm -rf /builds/apps/
 
 EXPOSE 30330-30345 9933-9960 8080 3001

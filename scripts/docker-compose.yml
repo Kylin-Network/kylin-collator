@@ -24,7 +24,7 @@ services:
     image: kylinnetwork/kylin-node:main
     ports:
       - "3001:3001"
-    command: bash -c "cd /builds/apps/packages/apps && serve -p 3001 build"
+    command: bash -c "cd /apps && serve -p 3001 build"
 
   kylin-es:
     container_name: kylin-es
