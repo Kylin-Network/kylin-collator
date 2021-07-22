@@ -1,46 +1,20 @@
 version: "3.2"
 
 services:
-  validator-1:
-    container_name: validator-1
-    image: centrifugeio/polkadot:chachacha
-    ports:
-      - "9934:9934"
-      - "9944:9944"
-      - "30335:30335"
-    command: bash -c "polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe --validator --name kylin-validator-1 --ws-port 9944 --port 30335 --rpc-port 9934 --chain rococo"
-    volumes:
-      - "polkadot_validator_1:/data"
-  validator-2:
-    container_name: validator-2
-    image: centrifugeio/polkadot:chachacha
-    ports:
-      - "9935:9934"
-      - "9955:9944"
-      - "30336:30335"
-    command: bash -c "polkadot --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe --validator --name kylin-validator-2 --ws-port 9944 --port 30335 --rpc-port 9934 --chain rococo"
-    volumes:
-      - "polkadot_validator_2:/data"
-    depends_on:
-      - validator-1
-
   kylin-node:
     container_name: kylin-node
     image: kylinnetwork/kylin-node:main
     ports:
       - "9942:9942"
-      - "9933:9933"
+      - "9930:9930"
       - "30333:30333"
       - "30334:30334"
-    command: bash -c "/kylin-node --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus_parachain/kylin-collator-1 --collator --name kylin-collator-1 --force-authoring --ws-port 9942 --port 30333 --rpc-port 9933 --parachain-id 2000 --chain kylin-chachacha -- --wasm-execution Compiled --port 30334 --chain rococo-chachacha.json"
+    command: bash -c "wget https://raw.githubusercontent.com/centrifuge/polkadot/chachacha/node/service/res/rococo-chachacha.json;/kylin-node --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus_parachain/kylin-collator-1 --collator --name kylin-collator-1 --force-authoring --ws-port 9942 --port 30333 --rpc-port 9930 --parachain-id 2000 --chain kylin-chachacha -- --wasm-execution Compiled --port 30334 --chain rococo-chachacha.json"
     volumes:
       - ./kylin_db/cumulus_parachain:/cumulus_parachain/
-      - ./rococo-chachacha.json:/rococo-chachacha.json
-    depends_on:
-      - validator-1
 
   kylin-market-frontend:
-    container_name: kylin-market-frontend
+    container_name: frontend
     image: kylinnetwork/kylin-node:main
     ports:
       - "3001:3001"
@@ -90,8 +64,6 @@ services:
       - kylin-es
       - kylin-kibana
 volumes:
-  polkadot_validator_1:
-  polkadot_validator_2:
   es-data:
     driver: local
 
