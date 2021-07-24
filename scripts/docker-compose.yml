@@ -7,10 +7,9 @@ services:
     ports:
       - "30330-30345:30330-30345"
       - "9933-9960:9933-9960"
-    command: bash -c "polkadot-launch kylinPolkadotLaunchConfig.json"
+    command: bash -c "cd polkadot_launch; rm *.log; polkadot-launch kylinPolkadotLaunchConfig.json"
     volumes:
-      - ./kylin_db/cumulus_relay:/cumulus_relay/
-      - ./kylinPolkadotLaunchConfig.json:/kylinPolkadotLaunchConfig.json
+      - ./polkadot_launch/:/polkadot_launch/
        
   insert-ocw:
     container_name: insert-ocw
