@@ -1,5 +1,7 @@
 # Kylin Node
 
+This repository is set up to use `docker`. Launching your chain with docker will automatically start two validators and launches the full user interface on port 3001. However, you can build from source if you prefer.
+
 ## Local Development
 
 Follow these steps to prepare a local development environment :hammer_and_wrench:
@@ -8,24 +10,25 @@ Follow these steps to prepare a local development environment :hammer_and_wrench
 [Rust development environment](https://substrate.dev/docs/en/knowledgebase/getting-started).
 
 
-### Build
+## Build
 
 Checkout code
 ```bash
 git clone --recursive https://github.com/Kylin-Network/kylin-node.git
+
+cd kylin-node
+git submodule update --recursive --remote
 ```
 
 Build debug version
 
 ```bash
-cd kylin-node
 cargo build
 ```
 
 Build release version
 
 ```bash
-cd kylin-node
 cargo build --release
 ```
 
@@ -38,66 +41,57 @@ cd scripts
 docker-compose up -d
 ```
 
-Check if the parachain and relay chains are running.
-1. kylin-node should be visible
-2. alice, bob & charlie should be visible
-
+Ensure docker containers are running.
 ```bash
 docker ps
 ``````
-
-
-
-
-### Interact
-Using [Kylin Market Front End](https://github.com/Kylin-Network/kylin-market-frontend) which can be used to interact with Kylin Node.
-
-``` bash
-git clone https://github.com/Kylin-Network/kylin-market-frontend.git
-cd ./kylin-market-frontend
-yarn install
-```
-
+- These container names should have a status of 'up':
+    - launch
+    - frontend
 
 ## Run
 
-### Lauch Relay chain. clone polkadot here and generate rococo-local.json. Check [the cumulus ](https://substrate.dev/cumulus-workshop/#/en/2-relay-chain/1-launch)
+### Launch Relay Chain
 
-### Access the frontend & Setup Sudo Access
-1. visit https://<hostname>:3001
-2. change endpoint to a custom endpoint replacing localhost with the IP of the machine if you're not running the instance locally.
-3. Add an account with a mnemonice seed. Provide an Account and a Password
-4. Under Developer tab, the Sudo option will be available
-
-
-### Genesis & WASM Filess
-
-1.
+#### Build Polkadot Node
 ```bash
-/target/release/kylin-node export-genesis-state --parachain-id 2013 > para-2013-genesis-local
-/target/release/kylin-node export-genesis-state --parachain-id 2013 > para-2013-wasm-local
+git clone https://github.com/paritytech/polkadot.git
+
+cd polkadot
+cargo build --release
 ```
 
+#### Create Chain Spec
+```bash
+# Generate rococo-local.json spec file
+target/release/polkadot build-spec --chain rococo-local --disable-default-bootnode > rococo-custom-plain.json
 
-### Register the chain
-1. Switch custom endpoint to 9944
-2. Developer -> Sudo
-3. Submit the following change
-paraSudoWrapper -> `sudoScheduleParaInitializeId`
-4. Use the paraid of the kylin-node based on the Docker yaml file
-5. Copy the exported files (genesis & wasm) out and upload them to the genesisHead (genesis files) and validationCode (wasm file)
+# Generate final 'raw' spec file
+target/release/polkadot build-spec --chain rococo-custom-plain.json --raw --disable-default-bootnode > rococo-custom.json
+```
 
+#### Start Relay Chain Validators
+```bash
+# Start Alice
+target/release/polkadot --alice --validator --base-path cumulus_relay/alice --chain rococo-custom.json --port 30333 --ws-port 9944
 
-### Validate the parachain is registered
-1. 
+# Start Bob
+target/release/polkadot --bob --validator --base-path cumulus_relay/bob --chain rococo-custom.json --port 30334 --ws-port 9945
+```
 
+#### Create Genesis & WASM Files
+```bash
+# Genesis file
+target/debug/kylin-node export-genesis-state --parachain-id 2000 > para-genesis-local
 
+# WASM file
+target/release/kylin-node export-genesis-wasm > para-wasm-local
+```
 
-### Using polkadot.js
-visit <https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/settings/developer>.
-
-
-fill the config in Settings>>Developer.
+### Interact
+#### Polkadot.js
+1. Navigate to polkadot.js
+2. Fill in config in `Settings` -> `Developer`
 ```js
 {
   "Address": "MultiAddress",
@@ -118,5 +112,29 @@ fill the config in Settings>>Developer.
 }
 ```
 
+#### Register the parachain
+1. Switch to Alice endpoint `9944` for Sudo access
+2. Select `Developer` -> `Sudo`
+3. Submit the following transaction
+    - `paraSudoWrapper` -> `sudoScheduleParaInitializeId`
+        - `paraid` -> use value passed as `--parachain-id` for kylin-node in yml file
+        - Upload or paste Genesis and WASM data from exported files
+            - `genesisHead` -> para-genesis-local
+            - `validationCode` -> para-wasm-local
+        - `parachain` -> True
 
-### Add data request the new way (from main branch using the `request_price_feed` extrinsic)
+#### Validate the parachain is registered
+1. Verify parathread is registered
+    - On custom endpoint 9944, select `Network` -> `Parachains`
+    - On the `parathreads` tab you should see your `paraid` with a `lifecycle` status of 'Onboarding'
+    - After onboarding is complete you will see your parachain registered on the `Overview` tab
+2. Verify parachain is producing blocks
+    - Navigate to custom endpoint 9942
+    - Select `Network` -> `Explorer`
+    - New blocks are being created if the value of `best` and `finalized` are incrementing higher
+
+
+#### Submit data requests
+1. Navigate to kylin-node custom endpoint `9942`
+2. Submit a price request
+    - ![submitting price request](./doc/imgs/requestPriceFeed.png)
