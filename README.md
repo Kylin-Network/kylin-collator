@@ -1,6 +1,6 @@
 # Kylin Node
 
-This repository is set up to use `docker`. Launching your chain with docker will automatically start two validators and launches the full user interface on port 3001. However, you can build from source if you prefer.
+This repository is set up to use [Docker](https://www.docker.com/). Launching your chain with docker will automatically start two validators and launches the full user interface on port 3001. However, you can build from source if you prefer.
 
 ## Local Development
 
@@ -64,33 +64,41 @@ cargo build --release
 #### Create Chain Spec
 ```bash
 # Generate rococo-local.json spec file
-target/release/polkadot build-spec --chain rococo-local --disable-default-bootnode > rococo-custom-plain.json
+./target/release/polkadot build-spec --chain rococo-local --disable-default-bootnode > rococo-plain.json
 
 # Generate final 'raw' spec file
-target/release/polkadot build-spec --chain rococo-custom-plain.json --raw --disable-default-bootnode > rococo-custom.json
+./target/release/polkadot build-spec --chain rococo-plain.json --raw --disable-default-bootnode > rococo-local.json
 ```
 
 #### Start Relay Chain Validators
 ```bash
 # Start Alice
-target/release/polkadot --alice --validator --base-path cumulus_relay/alice --chain rococo-custom.json --port 30333 --ws-port 9944
+./target/release/polkadot --alice --validator --base-path cumulus_relay/alice --chain rococo-local.json --port 30333 --ws-port 9944
 
 # Start Bob
-target/release/polkadot --bob --validator --base-path cumulus_relay/bob --chain rococo-custom.json --port 30334 --ws-port 9945
+./target/release/polkadot --bob --validator --base-path cumulus_relay/bob --chain rococo-local.json --port 30334 --ws-port 9943
 ```
 
 #### Create Genesis & WASM Files
 ```bash
-# Genesis file
-target/debug/kylin-node export-genesis-state --parachain-id 2000 > para-genesis-local
+# Genesis
+./target/release/kylin-node export-genesis-state --parachain-id 2000 > para-2000-genesis-local
 
-# WASM file
-target/release/kylin-node export-genesis-wasm > para-wasm-local
+# WASM
+./target/release/kylin-node export-genesis-wasm > para-wasm-local
 ```
+
+#### Start the Collator Node
+```bash
+./target/release/kylin-node --alice --collator --force-authoring --parachain-id 2000 --base-path cumulus_relay/kylin-node --port 40333 --ws-port 8844 -- --execution wasm --chain rococo-local.json --port 30343 --ws-port 9942
+```
+You should see your collator node running and peering with the already running relay chain nodes.  
+Your parachain will not begin authoring blocks until you have registered it on the relay chain.
+
 
 ### Interact
 #### Polkadot.js
-1. Navigate to polkadot.js
+1. Navigate to [polkadot.js](https://polkadot.js.org/apps/#/explorer)
 2. Fill in config in `Settings` -> `Developer`
 ```js
 {
@@ -113,28 +121,28 @@ target/release/kylin-node export-genesis-wasm > para-wasm-local
 ```
 
 #### Register the parachain
-1. Switch to Alice endpoint `9944` for Sudo access
+1. Switch to Alice endpoint 9944 for Sudo access
 2. Select `Developer` -> `Sudo`
 3. Submit the following transaction
     - `paraSudoWrapper` -> `sudoScheduleParaInitializeId`
-        - `paraid` -> use value passed as `--parachain-id` for kylin-node in yml file
-        - Upload or paste Genesis and WASM data from exported files
-            - `genesisHead` -> para-genesis-local
-            - `validationCode` -> para-wasm-local
-        - `parachain` -> True
+        - 'paraid' -> 2000
+        - Upload or paste genesis and wasm files
+            - 'genesisHead' -> para-2000-genesis-local
+            - 'validationCode' -> para-wasm-local
+        - 'parachain' -> True
 
 #### Validate the parachain is registered
 1. Verify parathread is registered
     - On custom endpoint 9944, select `Network` -> `Parachains`
-    - On the `parathreads` tab you should see your `paraid` with a `lifecycle` status of 'Onboarding'
-    - After onboarding is complete you will see your parachain registered on the `Overview` tab
+    - On the parathreads tab you should see your paraid with a lifecycle status of `Onboarding`
+    - After onboarding is complete you will see your parachain registered on the Overview tab
 2. Verify parachain is producing blocks
-    - Navigate to custom endpoint 9942
+    - Navigate to the collator node's custom endpoint 9942
     - Select `Network` -> `Explorer`
     - New blocks are being created if the value of `best` and `finalized` are incrementing higher
 
-
-#### Submit data requests
-1. Navigate to kylin-node custom endpoint `9942`
-2. Submit a price request
-    - ![submitting price request](./doc/imgs/requestPriceFeed.png)
+#### Submit data request
+- Ensure you are on the parachain's custom endpoint, 9942
+- Submit a price request using the `requestPriceFeed` extrinsic 
+![submitting price request](./doc/imgs/requestPriceFeed.png)
+    
