@@ -73,10 +73,10 @@ cargo build --release
 #### Start Relay Chain Validators
 ```bash
 # Start Alice
-./target/release/polkadot --alice --validator --base-path cumulus_relay/alice --chain rococo-local.json --port 30333 --ws-port 9944
+./target/release/polkadot --alice --validator --base-path cumulus_relay/alice --chain <path to 'rococo-local.json' file> --port 30333 --ws-port 9944
 
 # Start Bob
-./target/release/polkadot --bob --validator --base-path cumulus_relay/bob --chain rococo-local.json --port 30334 --ws-port 9943
+./target/release/polkadot --bob --validator --base-path cumulus_relay/bob --chain <path to 'rococo-local.json' file> --port 30334 --ws-port 9943
 ```
 
 #### Create Genesis & WASM Files
