@@ -90,7 +90,7 @@ cargo build --release
 
 #### Start the Collator Node
 ```bash
-./target/release/kylin-node --alice --collator --force-authoring --parachain-id 2000 --base-path cumulus_relay/kylin-node --port 40333 --ws-port 8844 -- --execution wasm --chain rococo-local.json --port 30343 --ws-port 9942
+./target/release/kylin-node --alice --collator --force-authoring --parachain-id 2000 --base-path cumulus_relay/kylin-node --port 40333 --ws-port 8844 -- --execution wasm --chain <path to 'rococo-local.json' file> --port 30343 --ws-port 9942
 ```
 You should see your collator node running and peering with the already running relay chain nodes.  
 Your parachain will not begin authoring blocks until you have registered it on the relay chain.
@@ -125,11 +125,11 @@ Your parachain will not begin authoring blocks until you have registered it on t
 2. Select `Developer` -> `Sudo`
 3. Submit the following transaction
     - `paraSudoWrapper` -> `sudoScheduleParaInitializeId`
-        - 'paraid' -> 2000
+        - paraid -> 2000
         - Upload or paste genesis and wasm files
-            - 'genesisHead' -> para-2000-genesis-local
-            - 'validationCode' -> para-wasm-local
-        - 'parachain' -> True
+            - genesisHead -> para-2000-genesis-local
+            - validationCode -> para-wasm-local
+        - parachain -> True
 
 #### Validate the parachain is registered
 1. Verify parathread is registered
@@ -142,7 +142,7 @@ Your parachain will not begin authoring blocks until you have registered it on t
     - New blocks are being created if the value of `best` and `finalized` are incrementing higher
 
 #### Submit data request
-- Ensure you are on the parachain's custom endpoint, 9942
-- Submit a price request using the `requestPriceFeed` extrinsic 
+1. Ensure you are on the parachain's custom endpoint, 9942
+2. Submit a price request using the `requestPriceFeed` extrinsic 
 ![submitting price request](./doc/imgs/requestPriceFeed.png)
     
