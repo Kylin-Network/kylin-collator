@@ -61,22 +61,19 @@ cd polkadot
 cargo build --release
 ```
 
-#### Create Chain Spec
+#### Create Local Chain Spec
 ```bash
-# Generate rococo-local.json spec file
-./target/release/polkadot build-spec --chain rococo-local --disable-default-bootnode > rococo-plain.json
-
-# Generate final 'raw' spec file
-./target/release/polkadot build-spec --chain rococo-plain.json --raw --disable-default-bootnode > rococo-local.json
+# Generate rococo-local spec file
+./target/release/polkadot build-spec --chain rococo-local --raw --disable-default-bootnode > rococo-local.json
 ```
 
 #### Start Relay Chain Validators
 ```bash
 # Start Alice
-./target/release/polkadot --alice --validator --base-path cumulus_relay/alice --chain <path to 'rococo-local.json' file> --port 30333 --ws-port 9944
+./target/release/polkadot --alice --validator --base-path cumulus_relay/alice --chain rococo-local.json --port 30333 --ws-port 9944
 
 # Start Bob
-./target/release/polkadot --bob --validator --base-path cumulus_relay/bob --chain <path to 'rococo-local.json' file> --port 30334 --ws-port 9943
+./target/release/polkadot --bob --validator --base-path cumulus_relay/bob --chain rococo-local.json --port 30334 --ws-port 9943
 ```
 
 #### Create Genesis & WASM Files
@@ -92,9 +89,10 @@ cd kylin-node
 
 #### Start the Collator Node
 ```bash
+# Customize the --chain flag for the path to your 'rococo-local.json' file
 ./target/release/kylin-node --alice --collator --force-authoring --parachain-id 2000 --base-path cumulus_relay/kylin-node --port 40333 --ws-port 8844 -- --execution wasm --chain <path to 'rococo-local.json' file> --port 30343 --ws-port 9942
 ```
-You should see your collator node running and peering with the already running relay chain nodes.  
+If all goes well, you should see your collator node running and peering with the already running relay chain nodes.  
 Your parachain will not begin authoring blocks until you have registered it on the relay chain.
 
 ### Interact
