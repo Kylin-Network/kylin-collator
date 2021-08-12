@@ -81,6 +81,8 @@ cargo build --release
 
 #### Create Genesis & WASM Files
 ```bash
+cd kylin-node
+
 # Genesis
 ./target/release/kylin-node export-genesis-state --parachain-id 2000 > para-2000-genesis-local
 
@@ -94,7 +96,6 @@ cargo build --release
 ```
 You should see your collator node running and peering with the already running relay chain nodes.  
 Your parachain will not begin authoring blocks until you have registered it on the relay chain.
-
 
 ### Interact
 #### Polkadot.js
