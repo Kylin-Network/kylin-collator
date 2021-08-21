@@ -1,5 +1,7 @@
 # Kylin Node
 
+This repository is set up to use [Docker](https://www.docker.com/). Composing up with Docker will automatically launch a local network containing multiple validators (polkadot nodes) and collators (kylin nodes) as well as the full user interface on port 3001. However, you can build your network from source if you prefer.
+
 ## Local Development
 
 Follow these steps to prepare a local development environment :hammer_and_wrench:
@@ -7,100 +9,130 @@ Follow these steps to prepare a local development environment :hammer_and_wrench
 ### Setup
 [Rust development environment](https://substrate.dev/docs/en/knowledgebase/getting-started).
 
-
-### Build
+## Build
 
 Checkout code
 ```bash
 git clone --recursive https://github.com/Kylin-Network/kylin-node.git
+
+cd kylin-node
+git submodule update --recursive --remote
 ```
+### Docker
 
 Build debug version
 
 ```bash
-cd kylin-node
+docker-compose -f scripts/docker-compose.yml up -d
+```
+- The `scripts` directory contains multiple compose files which can be used to launch various network configurations.  
+
+Ensure docker containers are running
+```bash
+docker ps
+``````
+- These container names should have a status of `up`:
+    - launch
+    - frontend  
+
+You can access your network's secure user interface at port `3001`.
+
+### From source
+#### Build kylin node
+
+```bash
 cargo build
 ```
 
 Build release version
 
 ```bash
-cd kylin-node
 cargo build --release
 ```
 
-### Docker
-
-Build debug version
-
+#### Build polkadot node
 ```bash
-docker build -f Dockerfile -t kylin-node .
-docker run -p "9944:9944" -p "9933:9933" -p "9615:9615" -p "30333:30333" kylin-node:latest bash -c "/kylin-node --dev --ws-external --rpc-external --rpc-methods Unsafe"
+git clone https://github.com/paritytech/polkadot.git
+
+cd polkadot
+cargo build --release
 ```
 
-
-
-### Interact
-Using [Kylin Market Front End](https://github.com/Kylin-Network/kylin-market-frontend) which can be used to interact with Kylin Node.
-
-``` bash
-git clone https://github.com/Kylin-Network/kylin-market-frontend.git
-cd ./kylin-market-frontend
-yarn install
-```
-
-
-## Run
-
-### Development Chain
-
-Purge any existing dev chain state:
-
+#### Create local chain spec
 ```bash
-./target/debug/kylin-node purge-chain --dev
+# Generate rococo-local spec file
+./target/release/polkadot build-spec --chain rococo-local --raw --disable-default-bootnode > rococo-local.json
 ```
 
-Start a dev chain:
-
+#### Start relay chain validators
 ```bash
-./target/debug/kylin-node --dev
+# Start Alice
+./target/release/polkadot --alice --validator --base-path cumulus_relay/alice --chain rococo-local.json --port 30333 --ws-port 9944
+
+# Start Bob
+./target/release/polkadot --bob --validator --base-path cumulus_relay/bob --chain rococo-local.json --port 30334 --ws-port 9943
 ```
 
-or, start a dev chain with detailed logging:
-
+#### Create genesis & WASM files
 ```bash
-RUST_LOG=debug RUST_BACKTRACE=1 ./target/debug/kylin-node -lruntime=debug --dev
+cd kylin-node
+
+# Genesis
+./target/release/kylin-node export-genesis-state --parachain-id 2000 > para-2000-genesis-local
+
+# WASM
+./target/release/kylin-node export-genesis-wasm > para-wasm-local
 ```
 
-### Use `release` version
+#### Start a collator node
+```bash
+# Customize the --chain flag for the path to your 'rococo-local.json' file
+./target/release/kylin-node --alice --collator --force-authoring --parachain-id 2000 --base-path cumulus_relay/kylin-node --port 40333 --ws-port 8844 -- --execution wasm --chain <path to 'rococo-local.json' file> --port 30343 --ws-port 9942
+```
+- You should see your collator node running and peering with the already running relay chain nodes.    
+- Your parachain will not begin authoring blocks until you have registered it on the relay chain.
 
-replace `debug` with `release`.
-
-**Caution! Donot try to run `release` version everytime, it will take lots of time.**
-
-
-### Using polkadot.js
-visit <https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/settings/developer>.
-
-fill the config in Settings>>Developer.
+#### Interact
+#### Polkadot.js
+1. Connect to polkadot.js using a secure frontend connection like [apps](https://github.com/Kylin-Network/apps) or our pre-built ```frontend``` Docker container.
+2. Fill in config in `Settings` -> `Developer`
 ```js
 {
-  "Address": "<AccountId>",
-  "LookupSource": "<AccountId>",
+  "Address": "MultiAddress",
+  "LookupSource": "MultiAddress",
   "DataInfo": {
     "url": "Text",
     "data": "Text"
+  },
+  "PriceFeedingData": {
+    "para_id": "ParaId",
+    "currencies": "Text",
+    "requested_block_number": "BlockNumber",
+    "processed_block_number": "Option<BlockNumber>",
+    "requested_timestamp": "u128",
+    "processed_timestamp": "Option<u128>",
+    "payload": "Text"
   }
 }
 ```
 
-#### Add OCW Signer
-Run `./scripts/insert_alice_key.sh` to insert OCW signer. If the OCW signer does not have enough balance, please charge money as following instructions.
+#### Register the parachain
+1. Switch to custom endpoint 9944 for sudo access
+2. Select `Developer` -> `Sudo`
+3. Submit the following transaction to register your parachain
+![example of registering a parachain](./doc/imgs/registerParachain.png)
 
-#### Add New Oracle Service URL
-Select Developer>>Extrinsics, then using priceFetchModule.addFetchDataRequest(url), type a url encode hex format.
-![pic](doc/imgs/addFetchDataRequest.png)
+#### Validate the parachain is registered
+1. Verify parathread is registered
+    - On custom endpoint 9944, select `Network` -> `Parachains`
+    - On the parathreads tab you should see your paraid with a lifecycle status of `Onboarding`
+    - After onboarding is complete you will see your parachain registered on the Overview tab
+2. Verify parachain is producing blocks
+    - Navigate to the collator node's custom endpoint 9942
+    - Select `Network` -> `Explorer`
+    - New blocks are being created if the value of `best` and `finalized` are incrementing higher
 
-#### Query Oracle Data
-Select Developer>>Chain state, then using priceFetchModule.requestedOffchainData(u64), press **+**.
-![pic](doc/imgs/queryRequestedData.jpg)
+#### Submit data request
+1. Ensure you are on a collator's custom endpoint, either 9942 or 9943
+2. Submit a price request using the `requestPriceFeed` extrinsic 
+![example of submitting a price request](./doc/imgs/requestPriceFeed.png)
