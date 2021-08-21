@@ -1,6 +1,6 @@
 # Kylin Node
 
-This repository is set up to use [Docker](https://www.docker.com/). Launching your chain with docker will automatically start two validators and launches the full user interface on port 3001. However, you can build from source if you prefer.
+This repository is set up to use [Docker](https://www.docker.com/). Composing up with Docker will automatically launch a local network containing six validators (polkadot nodes), two collators (kylin nodes) and the full user interface on port 3001. However, you can build your network from source if you prefer.
 
 ## Local Development
 
@@ -8,7 +8,6 @@ Follow these steps to prepare a local development environment :hammer_and_wrench
 
 ### Setup
 [Rust development environment](https://substrate.dev/docs/en/knowledgebase/getting-started).
-
 
 ## Build
 
@@ -19,8 +18,27 @@ git clone --recursive https://github.com/Kylin-Network/kylin-node.git
 cd kylin-node
 git submodule update --recursive --remote
 ```
+### Docker
 
 Build debug version
+
+```bash
+docker-compose -f scripts/docker-compose.yml up -d
+```
+- The `scripts` directory contains multiple compose files which can be used to launch various network configurations.  
+
+Ensure docker containers are running
+```bash
+docker ps
+``````
+- These container names should have a status of `up`:
+    - launch
+    - frontend  
+
+You can access your network's secure user interface at port `3001`.
+
+### From source
+#### Build kylin node
 
 ```bash
 cargo build
@@ -32,28 +50,7 @@ Build release version
 cargo build --release
 ```
 
-### Docker
-
-Build debug version
-
-```bash
-cd scripts
-docker-compose up -d
-```
-
-Ensure docker containers are running.
-```bash
-docker ps
-``````
-- These container names should have a status of 'up':
-    - launch
-    - frontend
-
-## Run
-
-### Launch Relay Chain
-
-#### Build Polkadot Node
+#### Build polkadot node
 ```bash
 git clone https://github.com/paritytech/polkadot.git
 
@@ -61,13 +58,13 @@ cd polkadot
 cargo build --release
 ```
 
-#### Create Local Chain Spec
+#### Create local chain spec
 ```bash
 # Generate rococo-local spec file
 ./target/release/polkadot build-spec --chain rococo-local --raw --disable-default-bootnode > rococo-local.json
 ```
 
-#### Start Relay Chain Validators
+#### Start relay chain validators
 ```bash
 # Start Alice
 ./target/release/polkadot --alice --validator --base-path cumulus_relay/alice --chain rococo-local.json --port 30333 --ws-port 9944
@@ -76,7 +73,7 @@ cargo build --release
 ./target/release/polkadot --bob --validator --base-path cumulus_relay/bob --chain rococo-local.json --port 30334 --ws-port 9943
 ```
 
-#### Create Genesis & WASM Files
+#### Create genesis & WASM files
 ```bash
 cd kylin-node
 
@@ -87,17 +84,17 @@ cd kylin-node
 ./target/release/kylin-node export-genesis-wasm > para-wasm-local
 ```
 
-#### Start the Collator Node
+#### Start a collator node
 ```bash
 # Customize the --chain flag for the path to your 'rococo-local.json' file
 ./target/release/kylin-node --alice --collator --force-authoring --parachain-id 2000 --base-path cumulus_relay/kylin-node --port 40333 --ws-port 8844 -- --execution wasm --chain <path to 'rococo-local.json' file> --port 30343 --ws-port 9942
 ```
-If all goes well, you should see your collator node running and peering with the already running relay chain nodes.  
-Your parachain will not begin authoring blocks until you have registered it on the relay chain.
+- You should see your collator node running and peering with the already running relay chain nodes.    
+- Your parachain will not begin authoring blocks until you have registered it on the relay chain.
 
-### Interact
+#### Interact
 #### Polkadot.js
-1. Navigate to [polkadot.js](https://polkadot.js.org/apps/#/explorer)
+1. Connect to polkadot.js using a secure frontend connection like [apps](https://github.com/Kylin-Network/apps). 
 2. Fill in config in `Settings` -> `Developer`
 ```js
 {
@@ -120,15 +117,10 @@ Your parachain will not begin authoring blocks until you have registered it on t
 ```
 
 #### Register the parachain
-1. Switch to Alice endpoint 9944 for Sudo access
+1. Switch to custom endpoint 9944 for sudo access
 2. Select `Developer` -> `Sudo`
-3. Submit the following transaction
-    - `paraSudoWrapper` -> `sudoScheduleParaInitializeId`
-        - paraid -> 2000
-        - Upload or paste genesis and wasm files
-            - genesisHead -> para-2000-genesis-local
-            - validationCode -> para-wasm-local
-        - parachain -> True
+3. Submit the following transaction to register your parachain
+![example of registering a parachain](./doc/imgs/registerParachain.png)
 
 #### Validate the parachain is registered
 1. Verify parathread is registered
@@ -141,7 +133,6 @@ Your parachain will not begin authoring blocks until you have registered it on t
     - New blocks are being created if the value of `best` and `finalized` are incrementing higher
 
 #### Submit data request
-1. Ensure you are on the parachain's custom endpoint, 9942
+1. Ensure you are on a collator's custom endpoint, either 9942 or 9943
 2. Submit a price request using the `requestPriceFeed` extrinsic 
-![submitting price request](./doc/imgs/requestPriceFeed.png)
-    
+![example of submitting a price request](./doc/imgs/requestPriceFeed.png)
