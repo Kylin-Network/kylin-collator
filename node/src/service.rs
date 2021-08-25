@@ -13,6 +13,8 @@
 
 // You should have received a copy of the GNU General Public License
 // along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
+
+use crate::rpc;
 use cumulus_client_consensus_aura::{
 	build_aura_consensus, BuildAuraConsensusParams, SlotProportion,
 };
@@ -29,10 +31,7 @@ use cumulus_primitives_core::{
 };
 use polkadot_service::NativeExecutionDispatch;
 
-use crate::{
-	chain_spec,
-	rpc
-};
+
 pub use parachains_common::{AccountId, Balance, Block, Hash, Header, Index as Nonce};
 
 use cumulus_client_consensus_relay_chain::Verifier as RelayChainVerifier;
@@ -577,7 +576,7 @@ where
 }
 
 /// Build the import queue for the rococo parachain runtime.
-pub fn rococo_parachain_build_import_queue(
+pub fn parachain_build_import_queue(
 	client: Arc<
 		TFullClient<
 			Block,
@@ -651,7 +650,7 @@ pub async fn start_rococo_parachain_node(
 		polkadot_config,
 		id,
 		|_| Ok(Default::default()),
-		rococo_parachain_build_import_queue,
+		parachain_build_import_queue,
 		|client,
 		 prometheus_registry,
 		 telemetry,

@@ -55,7 +55,7 @@
 	},
 	"parachains": [
 		{
-			"bin": "/kylin-node",
+			"bin": "/kylin-collator",
 			"id": "2000",
 			"balance": "1000000000000000000000",
 			"nodes": [
@@ -68,7 +68,7 @@
 			]
 		},
 		{
-			"bin": "/kylin-node",
+			"bin": "/kylin-collator",
 			"id": "2013",
 			"balance": "1000000000000000000000",
 			"nodes": [

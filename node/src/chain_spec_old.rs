@@ -22,10 +22,7 @@ pub fn kylin_properties() -> Properties {
 }
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
-pub type ChainSpec = sc_service::GenericChainSpec<kylin_collator_runtime::GenesisConfig>;
-/// Specialized `ChainSpec` for the shell parachain runtime.
-pub type ShellChainSpec = sc_service::GenericChainSpec<shell_runtime::GenesisConfig, Extensions>;
-
+pub type KylinChainSpec = sc_service::GenericChainSpec<kylin_collator_runtime::GenesisConfig>;
 
 const POLKADOT_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
@@ -63,39 +60,9 @@ pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
 	AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
 }
 
-fn shell_testnet_genesis(parachain_id: ParaId) -> shell_runtime::GenesisConfig {
-	shell_runtime::GenesisConfig {
-		system: shell_runtime::SystemConfig {
-			code: shell_runtime::WASM_BINARY
-				.expect("WASM binary was not build, please build it!")
-				.to_vec(),
-			changes_trie_config: Default::default(),
-		},
-		parachain_info: shell_runtime::ParachainInfoConfig { parachain_id },
-		parachain_system: Default::default(),
-	}
-}
 
-
-pub fn get_shell_chain_spec(id: ParaId) -> ShellChainSpec {
-	ShellChainSpec::from_genesis(
-		"Shell Local Testnet",
-		"shell_local_testnet",
-		ChainType::Local,
-		move || shell_testnet_genesis(id),
-		vec![],
-		None,
-		None,
-		None,
-		Extensions {
-			relay_chain: "westend".into(),
-			para_id: id.into(),
-		},
-	)
-}
-
-pub fn local_environment_config(id: ParaId, environment: &str) -> ChainSpec {
-	ChainSpec::from_genesis(
+pub fn local_environment_config(id: ParaId, environment: &str) -> KylinChainSpec {
+	KylinChainSpec::from_genesis(
 		// Name
 		format!("kylin {} testnet", environment).as_str(),
 		// ID
@@ -134,8 +101,8 @@ pub fn local_environment_config(id: ParaId, environment: &str) -> ChainSpec {
 	)
 }
 
-pub fn development_environment_config(id: ParaId, environment: &str) -> ChainSpec {
-	ChainSpec::from_genesis(
+pub fn development_environment_config(id: ParaId, environment: &str) -> KylinChainSpec {
+	KylinChainSpec::from_genesis(
 		// Name
 		format!("kylin {} testnet", environment).as_str(),
 		// ID
@@ -179,8 +146,8 @@ pub fn development_environment_config(id: ParaId, environment: &str) -> ChainSpe
 	)
 }
 
-pub fn rococo_staging_network(id: ParaId) -> ChainSpec {
-	ChainSpec::from_genesis(
+pub fn rococo_staging_network(id: ParaId) -> KylinChainSpec {
+	KylinChainSpec::from_genesis(
 		"Kylin Rococo Testnet",
 		"kylin_rococo_testnet",
 		ChainType::Live,
