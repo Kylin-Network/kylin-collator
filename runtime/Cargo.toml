@@ -3,8 +3,8 @@ authors = ['Kylin <https://github.com/kylin-network>']
 edition = '2018'
 homepage = 'https://kylin.network'
 license = 'Apache 2.0'
-name = 'kylin-node-runtime'
-repository = 'https://github.com/kylin-network/kylin-node/'
+name = 'kylin-collator-runtime'
+repository = 'https://github.com/kylin-network/kylin-collator/'
 version = '2.0.0'
 
 [package.metadata.docs.rs]

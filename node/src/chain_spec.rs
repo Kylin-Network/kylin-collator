@@ -1,6 +1,6 @@
 use cumulus_primitives_core::ParaId;
 use hex_literal::hex;
-use kylin_node_runtime::{AccountId, AuraId, Signature};
+use kylin_collator_runtime::{AccountId, AuraId, Signature};
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use std::str::FromStr;
 use sc_service::{ChainType, Properties};
@@ -22,7 +22,7 @@ pub fn kylin_properties() -> Properties {
 }
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
-pub type KylinChainSpec = sc_service::GenericChainSpec<kylin_node_runtime::GenesisConfig>;
+pub type KylinChainSpec = sc_service::GenericChainSpec<kylin_collator_runtime::GenesisConfig>;
 
 const POLKADOT_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
@@ -183,24 +183,24 @@ fn testnet_genesis(
 	initial_authorities: Vec<AuraId>,
 	endowed_accounts: Vec<AccountId>,
 	id: ParaId,
-) -> kylin_node_runtime::GenesisConfig {
-	kylin_node_runtime::GenesisConfig {
-		system: kylin_node_runtime::SystemConfig {
-			code: kylin_node_runtime::WASM_BINARY
+) -> kylin_collator_runtime::GenesisConfig {
+	kylin_collator_runtime::GenesisConfig {
+		system: kylin_collator_runtime::SystemConfig {
+			code: kylin_collator_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
 			changes_trie_config: Default::default(),
 		},
-		balances: kylin_node_runtime::BalancesConfig {
+		balances: kylin_collator_runtime::BalancesConfig {
 			balances: endowed_accounts
 				.iter()
 				.cloned()
 				.map(|k| (k, 10 << 60))
 				.collect(),
 		},
-		sudo: kylin_node_runtime::SudoConfig { key: root_key },
-		parachain_info: kylin_node_runtime::ParachainInfoConfig { parachain_id: id },
-		aura: kylin_node_runtime::AuraConfig {
+		sudo: kylin_collator_runtime::SudoConfig { key: root_key },
+		parachain_info: kylin_collator_runtime::ParachainInfoConfig { parachain_id: id },
+		aura: kylin_collator_runtime::AuraConfig {
 			authorities: initial_authorities,
 		},
 		aura_ext: Default::default(),

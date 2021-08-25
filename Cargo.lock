@@ -3362,7 +3362,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "kylin-node"
+name = "kylin-collator"
 version = "2.0.0"
 dependencies = [
  "assert_cmd",
@@ -3383,7 +3383,7 @@ dependencies = [
  "futures 0.3.16",
  "hex-literal 0.2.1",
  "jsonrpc-core",
- "kylin-node-runtime",
+ "kylin-collator-runtime",
  "log",
  "nix",
  "pallet-transaction-payment-rpc",
@@ -3410,6 +3410,7 @@ dependencies = [
  "sc-transaction-pool",
  "sc-transaction-pool-api",
  "serde",
+ "shell-runtime",
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
@@ -3434,7 +3435,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "kylin-node-runtime"
+name = "kylin-collator-runtime"
 version = "2.0.0"
 dependencies = [
  "cumulus-pallet-aura-ext",
@@ -9036,6 +9037,41 @@ checksum = "7b4921be914e16899a80adefb821f8ddb7974e3f1250223575a44ed994882127"
 dependencies = [
  "lazy_static",
  "loom",
+]
+
+[[package]]
+name = "shell-runtime"
+version = "0.1.0"
+source = "git+https://github.com/paritytech/cumulus?branch=master#52bc169b523604b226107e062135d814c7959c0b"
+dependencies = [
+ "cumulus-pallet-dmp-queue",
+ "cumulus-pallet-parachain-system",
+ "cumulus-pallet-xcm",
+ "cumulus-primitives-core",
+ "cumulus-primitives-utility",
+ "frame-executive",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parachain-info",
+ "parity-scale-codec",
+ "polkadot-parachain",
+ "serde",
+ "sp-api",
+ "sp-block-builder",
+ "sp-core",
+ "sp-inherents",
+ "sp-io",
+ "sp-offchain",
+ "sp-runtime",
+ "sp-session",
+ "sp-std",
+ "sp-transaction-pool",
+ "sp-version",
+ "substrate-wasm-builder",
+ "xcm",
+ "xcm-builder",
+ "xcm-executor",
 ]
 
 [[package]]
