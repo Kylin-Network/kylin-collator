@@ -19,7 +19,7 @@ use cumulus_client_consensus_aura::{
 	build_aura_consensus, BuildAuraConsensusParams, SlotProportion,
 };
 use cumulus_client_consensus_common::{
-	ParachainBlockImport, ParachainCandidate, ParachainConsensus,
+	 ParachainCandidate, ParachainConsensus,
 };
 use cumulus_client_network::build_block_announce_validator;
 use cumulus_client_service::{
@@ -34,11 +34,10 @@ use polkadot_service::NativeExecutionDispatch;
 
 pub use parachains_common::{AccountId, Balance, Block, Hash, Header, Index as Nonce};
 
-use cumulus_client_consensus_relay_chain::Verifier as RelayChainVerifier;
 use futures::lock::Mutex;
 use sc_client_api::ExecutorProvider;
 use sc_consensus::{
-	import_queue::{BasicQueue, Verifier as VerifierT},
+	import_queue::{ Verifier as VerifierT},
 	BlockImportParams,
 };
 use sc_executor::NativeElseWasmExecutor;
@@ -85,7 +84,6 @@ impl sc_executor::NativeExecutionDispatch for ShellRuntimeExecutor {
 		shell_runtime::native_version()
 	}
 }
-
 
 /// Starts a `ServiceBuilder` for a full service.
 ///
@@ -494,7 +492,15 @@ where
 			block_announce_validator_builder: Some(Box::new(|_| block_announce_validator)),
 			warp_sync: None,
 		})?;
-
+		
+	if parachain_config.offchain_worker.enabled {
+		sc_service::build_offchain_workers(
+			&parachain_config,
+			task_manager.spawn_handle(),
+			client.clone(),
+			network.clone(),
+		);
+	}
 	let rpc_extensions_builder = {
 		let client = client.clone();
 		let transaction_pool = transaction_pool.clone();

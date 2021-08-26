@@ -18,7 +18,7 @@ use crate::{
 	chain_spec,
 	cli::{Cli, RelayChainCli, Subcommand},
 	service::{
-		new_partial,ParachainRuntimeExecutor, ShellRuntimeExecutor, Block,
+		new_partial,ParachainRuntimeExecutor, ShellRuntimeExecutor,
 	},
 };
 use codec::Encode;
