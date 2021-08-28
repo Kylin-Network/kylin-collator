@@ -34,7 +34,7 @@ async-trait = "0.1.42"
 
 # Parachain runtimes
 kylin-collator-runtime = { path = '../runtime' }
-shell-runtime  = { git = 'https://github.com/Kylin-Network/cumulus', branch = 'upgrade_tokio' }
+shell-runtime  = { git = 'https://github.com/paritytech/cumulus', branch = 'upgrade_tokio' }
 
 # Substrate dependencies
 frame-benchmarking = { git = 'https://github.com/paritytech/substrate', branch = "master" }
@@ -75,16 +75,16 @@ frame-rpc-system = { package = "substrate-frame-rpc-system", git = "https://gith
 pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrate", branch = "master" }
 
 # Cumulus dependencies
-cumulus-client-cli  = { git = 'https://github.com/Kylin-Network/cumulus', branch = 'upgrade_tokio' }
-cumulus-client-consensus-aura = { git = 'https://github.com/Kylin-Network/cumulus', branch = 'upgrade_tokio' }
-cumulus-client-consensus-relay-chain = { git = 'https://github.com/Kylin-Network/cumulus', branch = 'upgrade_tokio' }
-cumulus-client-consensus-common = { git = 'https://github.com/Kylin-Network/cumulus', branch = 'upgrade_tokio' }
-cumulus-client-collator = { git = 'https://github.com/Kylin-Network/cumulus', branch = 'upgrade_tokio' }
-cumulus-client-service = { git = 'https://github.com/Kylin-Network/cumulus', branch = 'upgrade_tokio' }
-cumulus-client-network = { git = 'https://github.com/Kylin-Network/cumulus', branch = 'upgrade_tokio' }
-cumulus-primitives-core = { git = 'https://github.com/Kylin-Network/cumulus', branch = 'upgrade_tokio' }
-cumulus-primitives-parachain-inherent = { git = 'https://github.com/Kylin-Network/cumulus', branch = 'upgrade_tokio' }
-parachains-common  = { git = 'https://github.com/Kylin-Network/cumulus', branch = 'upgrade_tokio' }
+cumulus-client-cli  = { git = 'https://github.com/paritytech/cumulus', branch = 'upgrade_tokio' }
+cumulus-client-consensus-aura = { git = 'https://github.com/paritytech/cumulus', branch = 'upgrade_tokio' }
+cumulus-client-consensus-relay-chain = { git = 'https://github.com/paritytech/cumulus', branch = 'upgrade_tokio' }
+cumulus-client-consensus-common = { git = 'https://github.com/paritytech/cumulus', branch = 'upgrade_tokio' }
+cumulus-client-collator = { git = 'https://github.com/paritytech/cumulus', branch = 'upgrade_tokio' }
+cumulus-client-service = { git = 'https://github.com/paritytech/cumulus', branch = 'upgrade_tokio' }
+cumulus-client-network = { git = 'https://github.com/paritytech/cumulus', branch = 'upgrade_tokio' }
+cumulus-primitives-core = { git = 'https://github.com/paritytech/cumulus', branch = 'upgrade_tokio' }
+cumulus-primitives-parachain-inherent = { git = 'https://github.com/paritytech/cumulus', branch = 'upgrade_tokio' }
+parachains-common  = { git = 'https://github.com/paritytech/cumulus', branch = 'upgrade_tokio' }
 
 # Polkadot dependencies
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "master" }
