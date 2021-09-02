@@ -83,7 +83,7 @@ We will discuss both the approaches in detail.
     cargo build --release
     ```
 
-### 2a)Launch using Polkadot-Launch Configuration
+### 2a) Launch using Polkadot-Launch Configuration
 
 we can use the `polkadot-launch` utility script to launch our network very simply by provding the custom json configuration file.
 
@@ -133,10 +133,7 @@ You must wait for the prompt
 
 ### 2b) Launch manually
 
-We need to make sure that the prerequisite steps has been done
-[Here](#-Prerequisite-for-both-the-approaches)
-          prerequsite<a name="Prerequisite for both the approaches"></a>   
-
+We need to make sure that the prerequisite have been built for the binaries. Follow the steps below to launch the network
 #### Create local chain spec
 
 ```bash
