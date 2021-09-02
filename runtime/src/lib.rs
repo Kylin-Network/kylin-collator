@@ -80,7 +80,6 @@ use sp_runtime::{
     MultiSignature,
 };
 
-
 // A few exports that help ease life for downstream crates.
 pub use pallet_balances::Call as BalancesCall;
 #[cfg(any(feature = "std", test))]
@@ -153,7 +152,6 @@ pub const ROC: Balance = 1_000_000_000_000;
 pub const MILLIROC: Balance = 1_000_000_000;
 pub const MICROROC: Balance = 1_000_000;
 
-
 // 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
 pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
 
@@ -209,10 +207,8 @@ parameter_types! {
 	pub const SS58Prefix: u8 = 0;
 }
 
-
 /// A majority of the Unit body from Rococo over XCM is our required administration origin.
 pub type AdminOrigin = EnsureXcm<IsMajorityOfBody<RocLocation, UnitBody>>;
-
 
 impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
@@ -220,7 +216,6 @@ impl pallet_aura::Config for Runtime {
 }
 
 // Configure FRAME pallets to include in runtime.
-
 impl frame_system::Config for Runtime {
 	/// The identifier used to distinguish between accounts.
 	type AccountId = AccountId;
@@ -295,7 +290,6 @@ impl pallet_balances::Config for Runtime {
     type ReserveIdentifier = [u8; 8];
 }
 
-
 impl pallet_transaction_payment::Config for Runtime {
     type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
     type TransactionByteFee = TransactionByteFee;
@@ -334,7 +328,6 @@ parameter_types! {
 	pub RelayChainOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 }
-
 
 /// Type for specifying how a `MultiLocation` can be converted into an `AccountId`. This is used
 /// when determining ownership of accounts for asset transacting and when attempting to use XCM
@@ -386,7 +379,6 @@ pub type XcmOriginToTransactDispatchOrigin = (
 	XcmPassthrough<Origin>,
 );
 
-
 parameter_types! {
 	// One XCM operation is 1_000_000 weight - almost certainly a conservative estimate.
 	pub UnitWeightCost: Weight = 1_000_000;
@@ -395,7 +387,6 @@ parameter_types! {
 	pub const MaxInstructions: u32 = 100;
 
 }
-
 
 pub type Barrier = (
     TakeWeightCredit,
@@ -417,8 +408,6 @@ impl<T: Contains<MultiLocation>> ShouldExecute for AllowAnyPaidExecutionFrom<T> 
 		Ok(())
 	}
 }
-
-
 
 pub struct XcmConfig;
 impl Config for XcmConfig {
@@ -595,7 +584,6 @@ construct_runtime!(
 
         // Kylin Pallets
         KylinOraclePallet: kylin_oracle::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 54,
-
 	}
 );
 

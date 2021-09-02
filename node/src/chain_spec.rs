@@ -85,8 +85,8 @@ pub fn get_shell_chain_spec(id: ParaId) -> ShellChainSpec {
 		move || shell_testnet_genesis(id),
 		vec![],
 		None,
-		None,
-		None,
+		Some("Kylin"),
+		Some(kylin_properties()),
 		Extensions {
 			relay_chain: "westend".into(),
 			para_id: id.into(),
@@ -103,10 +103,14 @@ pub fn local_environment_config(id: ParaId, environment: &str) -> ChainSpec {
 		ChainType::Development,
 		move || {
 			testnet_genesis(
-				AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				vec![
 					get_from_seed::<AuraId>("Alice"),
 					get_from_seed::<AuraId>("Bob"),
+					hex!["7c11cea2901e72fe525d7335e99d48bdf8dea2a983ac92fa3ab20508a438af73"]
+					.unchecked_into(),
+					hex!["287f278af79ef7f1b2a2b3d5a7c76a047e248232d13f0a5ec744789a96dc824d"]
+					.unchecked_into()
 				],
 				vec![
 					AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
