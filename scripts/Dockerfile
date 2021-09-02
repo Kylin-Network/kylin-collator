@@ -1,22 +1,22 @@
-# build kylin-node
+# build kylin-collator
 FROM kylinnetwork/polkadot:latest as builder
 
 LABEL maintainer="kylin-dev"
 ARG RUST_VERSION=1.51.0
 ARG PROFILE=release
-ARG KYLIN_GIT_REPO="https://github.com/Kylin-Network/kylin-node.git"
+ARG KYLIN_GIT_REPO="https://github.com/Kylin-Network/kylin-collator.git"
 ARG DOT_GIT_REPO="https://github.com/paritytech/polkadot.git"
 ARG GIT_BRANCH="main"
 WORKDIR /builds/
 
-#Build Kylin-node
+#Build kylin-collator
 RUN git clone --recursive ${KYLIN_GIT_REPO}
 
-WORKDIR /builds/kylin-node
+WORKDIR /builds/kylin-collator
 RUN git checkout ${GIT_BRANCH}
 RUN git submodule update --recursive --remote
 RUN cargo build --${PROFILE}
-RUN cp target/${PROFILE}/kylin-node /kylin-node
+RUN cp target/${PROFILE}/kylin-collator /kylin-collator
 
 RUN /polkadot build-spec --chain rococo-local --disable-default-bootnode --raw > rococo-local.json
 
@@ -54,11 +54,11 @@ WORKDIR /builds/polkadot-launch
 RUN yarn global add polkadot-launch
 
 WORKDIR /
-COPY --from=builder /kylin-node /
+COPY --from=builder /kylin-collator /
 COPY --from=builder /polkadot /
 COPY --from=builder /subkey /
-COPY --from=builder /builds/kylin-node/scripts/insert_alice_key.sh /
-COPY --from=builder /builds/kylin-node/rococo-local.json /
+COPY --from=builder /builds/kylin-collator/scripts/insert_alice_key.sh /
+COPY --from=builder /builds/kylin-collator/rococo-local.json /
 COPY --from=builder /builds/sample-data-fetcher/data/es_index.json /es_index.json
 COPY --from=builder /builds/sample-data-fetcher/data/kibana.ndjson /kibana.ndjson
 COPY --from=builder /builds/sample-data-fetcher/data/init_es_index.sh /init_es_index.sh

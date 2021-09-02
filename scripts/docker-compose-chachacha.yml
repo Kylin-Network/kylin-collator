@@ -1,26 +1,26 @@
 version: "3.2"
 
 services:
-  kylin-node:
-    container_name: kylin-node
-    image: kylinnetwork/kylin-node:main
+  kylin-collator:
+    container_name: kylin-collator
+    image: kylinnetwork/kylin-collator:main
     ports:
       - "9942:9942"
       - "9930:9930"
       - "30333:30333"
       - "30334:30334"
-    command: bash -c "wget https://raw.githubusercontent.com/centrifuge/polkadot/chachacha/node/service/res/rococo-chachacha.json;/kylin-node --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus_parachain/kylin-collator-1 --collator --name kylin-collator-1 --force-authoring --ws-port 9942 --port 30333 --rpc-port 9930 --parachain-id 2000 --chain kylin-chachacha -- --wasm-execution Compiled --port 30334 --chain rococo-chachacha.json"
+    command: bash -c "wget https://raw.githubusercontent.com/centrifuge/polkadot/chachacha/node/service/res/rococo-chachacha.json;/kylin-collator --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus_parachain/kylin-collator-1 --collator --name kylin-collator-1 --force-authoring --ws-port 9942 --port 30333 --rpc-port 9930 --parachain-id 2000 --chain kylin-chachacha -- --wasm-execution Compiled --port 30334 --chain rococo-chachacha.json --sync fast"
     volumes:
       - ./kylin_db/cumulus_parachain:/cumulus_parachain/
 
   kylin-market-frontend:
     container_name: frontend
-    image: kylinnetwork/kylin-node:main
+    image: kylinnetwork/kylin-collator:main
     ports:
       - "3001:3001"
     command: bash -c "cd /apps && serve -p 3001 build"
     depends_on:
-      - kylin-node
+      - kylin-collator
 
   kylin-es:
     container_name: kylin-es
@@ -42,7 +42,7 @@ services:
 
   init-es-index:
     container_name: init-es-index
-    image: kylinnetwork/kylin-node:main
+    image: kylinnetwork/kylin-collator:main
     environment:
       ES_HOST: http://kylin-es:9200
       ES_INDEX_NAME: kylin_access_tracking
@@ -54,7 +54,7 @@ services:
 
   init-kibana-dashboard:
     container_name: init-kibana-dashboard
-    image: kylinnetwork/kylin-node:main
+    image: kylinnetwork/kylin-collator:main
     environment:
       ES_HOST: http://kylin-es:9200
       ES_INDEX_NAME: kylin_access_tracking

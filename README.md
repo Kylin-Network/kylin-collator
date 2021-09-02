@@ -153,20 +153,20 @@ We need to make sure that the prerequisite have been built for the binaries. Fol
 #### Create genesis & WASM files
 
 ```bash
-cd kylin-node
+cd kylin-collator
 
 # Genesis
-./target/release/kylin-node export-genesis-state --parachain-id 2000 > para-2000-genesis-local
+./target/release/kylin-collator export-genesis-state --parachain-id 2000 > para-2000-genesis-local
 
 # WASM
-./target/release/kylin-node export-genesis-wasm > para-wasm-local
+./target/release/kylin-collator export-genesis-wasm > para-wasm-local
 ```
 
 #### Start a collator node
 
 ```bash
 # Customize the --chain flag for the path to your 'rococo-local.json' file
-./target/release/kylin-node --alice --collator --force-authoring --parachain-id 2000 --base-path cumulus_relay/kylin-node --port 40333 --ws-port 8844 -- --execution wasm --chain <path to 'rococo-local.json' file> --port 30343 --ws-port 9942
+./target/release/kylin-collator --alice --collator --force-authoring --parachain-id 2000 --base-path cumulus_relay/kylin-collator --port 40333 --ws-port 8844 -- --execution wasm --chain <path to 'rococo-local.json' file> --port 30343 --ws-port 9942
 ```
 
 - You should see your collator node running and peering with the already running relay chain nodes.

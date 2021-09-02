@@ -3,7 +3,7 @@ version: "3.2"
 services:
   alice:
     container_name: alice
-    image: kylinnetwork/kylin-node:main
+    image: kylinnetwork/kylin-collator:main
     ports:
       - "9934:9934"
       - "9944:9944"
@@ -12,14 +12,14 @@ services:
     volumes:
       - ./kylin_db/cumulus_relay:/cumulus_relay/
 
-  kylin-node:
-    container_name: kylin-node
-    image: kylinnetwork/kylin-node:main
+  kylin-collator:
+    container_name: kylin-collator
+    image: kylinnetwork/kylin-collator:main
     ports:
       - "9943:9943"
       - "9933:9933"
       - "30334:30334"
-    command: bash -c "sleep 20;/kylin-node --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus_parachain/alice --collator --alice --force-authoring --ws-port 9943 --port 30333 --rpc-port 9933 --parachain-id 2000 --chain local -- --wasm-execution Compiled --port 30334 --chain rococo-local.json"
+    command: bash -c "sleep 20;/kylin-collator --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus_parachain/alice --collator --alice --force-authoring --ws-port 9943 --port 30333 --rpc-port 9933 --parachain-id 2000 --chain local -- --wasm-execution Compiled --port 30334 --chain rococo-local.json"
     volumes:
       - ./kylin_db/cumulus_parachain:/cumulus_parachain/
     depends_on:
@@ -27,7 +27,7 @@ services:
 
   bob:
       container_name: bob
-      image: kylinnetwork/kylin-node:main
+      image: kylinnetwork/kylin-collator:main
       ports:
         - "9935:9935"
         - "9955:9955"
@@ -36,11 +36,11 @@ services:
       volumes:
         - ./kylin_db/cumulus_relay:/cumulus_relay/
       depends_on:
-        -  kylin-node
+        -  kylin-collator
 
   charlie:
       container_name: charlie
-      image: kylinnetwork/kylin-node:main
+      image: kylinnetwork/kylin-collator:main
       ports:
         - "9936:9936"
         - "9956:9956"
@@ -53,7 +53,7 @@ services:
 
   dave:
     container_name: dave
-    image: kylinnetwork/kylin-node:main
+    image: kylinnetwork/kylin-collator:main
     ports:
         - "9937:9937"
         - "9957:9957"
@@ -66,7 +66,7 @@ services:
 
   eve:
     container_name: eve
-    image: kylinnetwork/kylin-node:main
+    image: kylinnetwork/kylin-collator:main
     ports:
       - "9938:9938"
       - "9958:9958"
@@ -79,7 +79,7 @@ services:
    
   ferdie:
     container_name: ferdie
-    image: kylinnetwork/kylin-node:main
+    image: kylinnetwork/kylin-collator:main
     ports:
       - "9939:9939"
       - "9959:9959"
@@ -92,14 +92,14 @@ services:
        
   insert-ocw:
     container_name: insert-ocw
-    image: kylinnetwork/kylin-node:main
+    image: kylinnetwork/kylin-collator:main
     command: bash -c "sleep 600 && /insert_alice_key.sh"
     depends_on:
-      - kylin-node
+      - kylin-collator
 
   frontend:
     container_name: frontend
-    image: kylinnetwork/kylin-node:main
+    image: kylinnetwork/kylin-collator:main
     ports:
       - "3001:3001"
     command: bash -c "cd /apps && serve -p 3001 build"
@@ -124,7 +124,7 @@ services:
 
   init-es-index:
     container_name: init-es-index
-    image: kylinnetwork/kylin-node:main
+    image: kylinnetwork/kylin-collator:main
     environment:
       ES_HOST: http://kylin-es:9200
       ES_INDEX_NAME: kylin_access_tracking
@@ -136,7 +136,7 @@ services:
 
   init-kibana-dashboard:
     container_name: init-kibana-dashboard
-    image: kylinnetwork/kylin-node:main
+    image: kylinnetwork/kylin-collator:main
     environment:
       ES_HOST: http://kylin-es:9200
       ES_INDEX_NAME: kylin_access_tracking
