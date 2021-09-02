@@ -1,25 +1,7 @@
-// Copyright 2019-2021 Parity Technologies (UK) Ltd.
-// This file is part of Cumulus.
-
-// Cumulus is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// Cumulus is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
-
 use crate::{
 	chain_spec,
 	cli::{Cli, RelayChainCli, Subcommand},
-	service::{
-		new_partial,ParachainRuntimeExecutor, ShellRuntimeExecutor,
-	},
+	service::{new_partial, ParachainRuntimeExecutor}
 };
 use codec::Encode;
 use cumulus_client_service::genesis::generate_genesis_block;
@@ -34,25 +16,6 @@ use sc_service::config::{BasePath, PrometheusConfig};
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::Block as BlockT;
 use std::{io::Write, net::SocketAddr};
-
-// default to the Statemint/Statemine/Westmint id
-const DEFAULT_PARA_ID: u32 = 1000;
-
-trait IdentifyChain {
-	fn is_shell(&self) -> bool;
-}
-
-impl IdentifyChain for dyn sc_service::ChainSpec {
-	fn is_shell(&self) -> bool {
-		self.id().starts_with("shell")
-	}
-}
-
-impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
-	fn is_shell(&self) -> bool {
-		<dyn sc_service::ChainSpec>::is_shell(self)
-	}
-}
 
 fn load_spec(
 	id: &str,
@@ -71,22 +34,15 @@ fn load_spec(
 		// Kusama
 		"kylin-kusama-local" => Box::new(chain_spec::local_environment_config(para_id,"kusama-local")),
 		"kylin-kusama-dev" => Box::new(chain_spec::development_environment_config(para_id,"kusama-dev")),
-
-		"shell" => Box::new(chain_spec::get_shell_chain_spec(para_id)),
-		path => {
-			let chain_spec = chain_spec::ChainSpec::from_json_file(path.into())?;
-			if chain_spec.is_shell() {
-				Box::new(chain_spec::ShellChainSpec::from_json_file(path.into())?)
-			} else {
-				Box::new(chain_spec)
-			}
-		}
+		path => Box::new(chain_spec::KylinChainSpec::from_json_file(
+			std::path::PathBuf::from(path),
+		)?),
 	})
 }
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
-		"Kylin collator".into()
+		"Kylin Collator".into()
 	}
 
 	fn impl_version() -> String {
@@ -108,7 +64,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn support_url() -> String {
-		"https://github.com/Kylin-Network/kylin-collator/issues/new".into()
+		"https://github.com/paritytech/cumulus/issues/new".into()
 	}
 
 	fn copyright_start_year() -> i32 {
@@ -116,21 +72,17 @@ impl SubstrateCli for Cli {
 	}
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
-		load_spec(id, self.run.parachain_id.unwrap_or(DEFAULT_PARA_ID).into())
+		load_spec(id, self.run.parachain_id.unwrap_or(100).into())
 	}
 
-	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		if chain_spec.is_shell() {
-			&shell_runtime::VERSION
-		} else {
-			&kylin_collator_runtime::VERSION
-		}
+	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
+		&kylin_collator_runtime::VERSION
 	}
 }
 
 impl SubstrateCli for RelayChainCli {
 	fn impl_name() -> String {
-		"Kylin collator".into()
+		"Kylin Collator".into()
 	}
 
 	fn impl_version() -> String {
@@ -152,7 +104,7 @@ impl SubstrateCli for RelayChainCli {
 	}
 
 	fn support_url() -> String {
-		"https://github.com/Kylin-Network/kylin-collator/issues/new".into()
+		"https://github.com/paritytech/cumulus/issues/new".into()
 	}
 
 	fn copyright_start_year() -> i32 {
@@ -181,29 +133,18 @@ fn extract_genesis_wasm(chain_spec: &Box<dyn sc_service::ChainSpec>) -> Result<V
 macro_rules! construct_async_run {
 	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
 		let runner = $cli.create_runner($cmd)?;
-		if runner.config().chain_spec.is_shell() {
-			runner.async_run(|$config| {
-				let $components = new_partial::<shell_runtime::RuntimeApi, ShellRuntimeExecutor, _>(
-					&$config,
-					crate::service::shell_build_import_queue,
-				)?;
-				let task_manager = $components.task_manager;
-				{ $( $code )* }.map(|v| (v, task_manager))
-			})
-		} else {
-			runner.async_run(|$config| {
-				let $components = new_partial::<
-					kylin_collator_runtime::RuntimeApi,
-					ParachainRuntimeExecutor,
-					_
-				>(
-					&$config,
-					crate::service::parachain_build_import_queue,
-				)?;
-				let task_manager = $components.task_manager;
-				{ $( $code )* }.map(|v| (v, task_manager))
-			})
-		}
+		runner.async_run(|$config| {
+			let $components = new_partial::<
+				kylin_collator_runtime::RuntimeApi,
+				ParachainRuntimeExecutor,
+				_
+			>(
+				&$config,
+				crate::service::parachain_build_import_queue,
+			)?;
+			let task_manager = $components.task_manager;
+			{ $( $code )* }.map(|v| (v, task_manager))
+		})
 	}}
 }
 
@@ -252,7 +193,7 @@ pub fn run() -> Result<()> {
 					&polkadot_cli,
 					config.task_executor.clone(),
 				)
-				.map_err(|err| format!("Relay chain argument error: {}", err))?;
+					.map_err(|err| format!("Relay chain argument error: {}", err))?;
 
 				cmd.run(config, polkadot_config)
 			})
@@ -267,7 +208,7 @@ pub fn run() -> Result<()> {
 
 			let block: crate::service::Block = generate_genesis_block(&load_spec(
 				&params.chain.clone().unwrap_or_default(),
-				params.parachain_id.unwrap_or(DEFAULT_PARA_ID).into(),
+				params.parachain_id.unwrap_or(100).into(),
 			)?)?;
 			let raw_header = block.header().encode();
 			let output_buf = if params.raw {
@@ -305,11 +246,10 @@ pub fn run() -> Result<()> {
 
 			Ok(())
 		}
-
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
-
 			runner.run_node_until_exit(|config| async move {
+				// TODO
 				let para_id =
 					chain_spec::Extensions::try_get(&*config.chain_spec).map(|e| e.para_id);
 
@@ -320,7 +260,7 @@ pub fn run() -> Result<()> {
 						.chain(cli.relaychain_args.iter()),
 				);
 
-				let id = ParaId::from(cli.run.parachain_id.or(para_id).unwrap_or(DEFAULT_PARA_ID));
+				let id = ParaId::from(cli.run.parachain_id.or(para_id).unwrap_or(100));
 
 				let parachain_account =
 					AccountIdConversion::<polkadot_primitives::v0::AccountId>::into_account(&id);
@@ -345,18 +285,10 @@ pub fn run() -> Result<()> {
 						"no"
 					}
 				);
-
-				if config.chain_spec.is_shell() {
-					crate::service::start_shell_node(config, polkadot_config, id)
-						.await
-						.map(|r| r.0)
-						.map_err(Into::into)
-				} else {
-					crate::service::start_rococo_parachain_node(config, polkadot_config, id)
-						.await
-						.map(|r| r.0)
-						.map_err(Into::into)
-				}
+				crate::service::start_node_impl(config, polkadot_config, id)
+					.await
+					.map(|r| r.0)
+					.map_err(Into::into)
 			})
 		}
 	}
@@ -454,12 +386,12 @@ impl CliConfiguration<Self> for RelayChainCli {
 		self.base.base.rpc_ws_max_connections()
 	}
 
-	fn rpc_http_threads(&self) -> Result<Option<usize>> {
-		self.base.base.rpc_http_threads()
-	}
-
 	fn rpc_cors(&self, is_dev: bool) -> Result<Option<Vec<String>>> {
 		self.base.base.rpc_cors(is_dev)
+	}
+
+	fn telemetry_external_transport(&self) -> Result<Option<sc_service::config::ExtTransport>> {
+		self.base.base.telemetry_external_transport()
 	}
 
 	fn default_heap_pages(&self) -> Result<Option<u64>> {

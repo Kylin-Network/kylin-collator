@@ -13,9 +13,9 @@ Follow these steps to prepare a local development environment :hammer_and_wrench
 
 Checkout code
 ```bash
-git clone --recursive https://github.com/Kylin-Network/kylin-node.git
+git clone --recursive https://github.com/Kylin-Network/kylin-collator.git
 
-cd kylin-node
+cd kylin-collator
 git submodule update --recursive --remote
 ```
 ### Docker
@@ -75,19 +75,19 @@ cargo build --release
 
 #### Create genesis & WASM files
 ```bash
-cd kylin-node
+cd kylin-collator
 
 # Genesis
-./target/release/kylin-node export-genesis-state --parachain-id 2000 > para-2000-genesis-local
+./target/release/kylin-collator export-genesis-state --parachain-id 2000 > para-2000-genesis-local
 
 # WASM
-./target/release/kylin-node export-genesis-wasm > para-wasm-local
+./target/release/kylin-collator export-genesis-wasm > para-wasm-local
 ```
 
 #### Start a collator node
 ```bash
 # Customize the --chain flag for the path to your 'rococo-local.json' file
-./target/release/kylin-node --alice --collator --force-authoring --parachain-id 2000 --base-path cumulus_relay/kylin-node --port 40333 --ws-port 8844 -- --execution wasm --chain <path to 'rococo-local.json' file> --port 30343 --ws-port 9942
+./target/release/kylin-collator --alice --collator --force-authoring --parachain-id 2000 --base-path cumulus_relay/kylin-collator --port 40333 --ws-port 8844 -- --execution wasm --chain <path to 'rococo-local.json' file> --port 30343 --ws-port 9942
 ```
 - You should see your collator node running and peering with the already running relay chain nodes.    
 - Your parachain will not begin authoring blocks until you have registered it on the relay chain.

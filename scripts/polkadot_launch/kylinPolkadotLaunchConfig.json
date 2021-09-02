@@ -55,7 +55,7 @@
 	},
 	"parachains": [
 		{
-			"bin": "/kylin-node",
+			"bin": "/kylin-collator",
 			"id": "2000",
 			"balance": "1000000000000000000000",
 			"nodes": [
@@ -63,12 +63,12 @@
 					"wsPort": 9942,
 					"port": 31200,
 					"name": "alice",
-					"flags": ["--unsafe-ws-external","--rpc-cors=all","--wasm-execution=Compiled", "--rpc-external","--rpc-methods=Unsafe", "--execution=Native", "--","--wasm-execution=Compiled"]
+					"flags": ["--force-authoring","--unsafe-ws-external","--rpc-cors=all","--wasm-execution=Compiled", "--rpc-external","--rpc-methods=Unsafe", "--execution=Native", "--","--ws-port=9941","--rpc-port=9933" ,"--wasm-execution=Compiled"]
 				}
 			]
 		},
 		{
-			"bin": "/kylin-node",
+			"bin": "/kylin-collator",
 			"id": "2013",
 			"balance": "1000000000000000000000",
 			"nodes": [
@@ -76,7 +76,7 @@
 					"wsPort": 9943,
 					"port": 31201,
 					"name": "bob",
-					"flags": ["--unsafe-ws-external","--rpc-cors=all","--wasm-execution=Compiled", "--rpc-external","--rpc-methods=Unsafe", "--execution=Native", "--","--wasm-execution=Compiled"]
+					"flags": ["--force-authoring","--unsafe-ws-external","--rpc-cors=all","--wasm-execution=Compiled", "--rpc-external","--rpc-methods=Unsafe", "--execution=Native", "--","--ws-port=9944","--rpc-port=9934","--wasm-execution=Compiled"]
 				}
 			]
 		}
