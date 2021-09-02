@@ -63,7 +63,7 @@
 					"wsPort": 9942,
 					"port": 31200,
 					"name": "alice",
-					"flags": ["--force-authoring","--unsafe-ws-external","--rpc-cors=all","--wasm-execution=Compiled", "--rpc-external","--rpc-methods=Unsafe", "--execution=Native", "--","--ws-port=9941","--rpc-port=9933" ,"--wasm-execution=Compiled"]
+					"flags": ["--unsafe-ws-external","--rpc-cors=all","--wasm-execution=Compiled", "--rpc-external","--rpc-methods=Unsafe", "--execution=Native", "--","--ws-port=9941","--rpc-port=9933" ,"--wasm-execution=Compiled"]
 				}
 			]
 		},
@@ -76,7 +76,7 @@
 					"wsPort": 9943,
 					"port": 31201,
 					"name": "bob",
-					"flags": ["--force-authoring","--unsafe-ws-external","--rpc-cors=all","--wasm-execution=Compiled", "--rpc-external","--rpc-methods=Unsafe", "--execution=Native", "--","--ws-port=9944","--rpc-port=9934","--wasm-execution=Compiled"]
+					"flags": ["--unsafe-ws-external","--rpc-cors=all","--wasm-execution=Compiled", "--rpc-external","--rpc-methods=Unsafe", "--execution=Native", "--","--ws-port=9902","--rpc-port=9934","--wasm-execution=Compiled"]
 				}
 			]
 		}
