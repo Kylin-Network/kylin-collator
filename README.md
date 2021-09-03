@@ -18,7 +18,7 @@ You will need to install [Docker](https://www.docker.com/products/docker-desktop
 
 ### Run
 
-Launch a local network:
+Launching the network using docker compose:
 
 ```bash
 docker-compose -f scripts/docker-compose.yml up -d
@@ -48,6 +48,10 @@ docker logs launch
 ```bash 
 docker logs frontend
 ```
+
+### Testing
+
+Testing for all the sections has been shown [below](#interact-and-testing )
 
 ## 2) From Source
 
@@ -133,7 +137,7 @@ You must wait for the prompt
 
 ### 2b) Launch manually
 
-We need to make sure that the prerequisite have been built for the binaries. Follow the steps below to launch the network
+Make sure that the prerequisite have been completed and we have built the binaries as shown [above](#prerequisite-for-both-the-approaches). Follow the steps below to launch the network
 #### Create local chain spec
 
 ```bash
@@ -167,17 +171,20 @@ cd kylin-collator
 ```bash
 # Customize the --chain flag for the path to your 'rococo-local.json' file
 ./target/release/kylin-collator --alice --collator --force-authoring --parachain-id 2000 --base-path cumulus_relay/kylin-collator --port 40333 --ws-port 8844 -- --execution wasm --chain <path to 'rococo-local.json' file> --port 30343 --ws-port 9942
+
+./target/release/kylin-collator --alice --collator --force-authoring --parachain-id 2013 --base-path cumulus_relay/kylin-collator --port 40334 --ws-port 8845 -- --execution wasm --chain <path to 'rococo-local.json' file> --port 30344 --ws-port 9943
+
 ```
 
 - You should see your collator node running and peering with the already running relay chain nodes.
 - Your parachain will not begin authoring blocks until you have registered it on the relay chain.
 
-## Interact
+## Interact and Testing 
 
-#### Polkadot.js
-
-1. Connect to polkadot.js using a secure frontend connection like [apps](https://github.com/Kylin-Network/apps) or our pre-built `frontend` Docker container.
-2. Fill in config in `Settings` -> `Developer`
+1. You can either Connect to polkadot.js using a secure frontend connection like [apps](https://github.com/Kylin-Network/apps) or our pre-built `frontend` Docker container.
+2. In case you followed the docker based launch or polkadot-launch then you should have your parachains registered to the relaychain and.. If not you can go [here](#register-the-parachain).
+3.  In the UI, you can go to the top-left corner and click into the dropdown. Make sure you have the development option selected. You need to go to the custom under `Development` -> `Custom`. Enter the url which is `ws://127.0.0.1:9942` or `ws://127.0.0.1:9943` and verify its up and running. 
+4. Fill in config in `Settings` -> `Developer`
 
 ```js
 {
@@ -199,14 +206,14 @@ cd kylin-collator
 }
 ```
 
-#### Register the parachain
+#### Register the parachain ( This step is only require if you have manually built from the source as shown in 2b above)
 
 1. Switch to custom endpoint 9944 for sudo access
 2. Select `Developer` -> `Sudo`
 3. Submit the following transaction to register your parachain
    ![example of registering a parachain](./doc/imgs/registerParachain.png)
 
-#### Validate the parachain is registered
+#### Validate the parachain is registered (This step is only require if you have manually built from the source as shown in 2b above)
 
 1. Verify parathread is registered
    - On custom endpoint 9944, select `Network` -> `Parachains`
