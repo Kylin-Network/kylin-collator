@@ -182,9 +182,7 @@ cd kylin-collator
 ## Interact and Testing 
 
 1. You can either Connect to polkadot.js using a secure frontend connection like [apps](https://github.com/Kylin-Network/apps) or our pre-built `frontend` Docker container.
-2. In case you followed the docker based launch or polkadot-launch then you should have your parachains registered to the relaychain and.. If not you can go [here](#register-the-parachain).
-3.  In the UI, you can go to the top-left corner and click into the dropdown. Make sure you have the development option selected. You need to go to the custom under `Development` -> `Custom`. Enter the url which is `ws://127.0.0.1:9942` or `ws://127.0.0.1:9943` and verify its up and running. 
-4. Fill in config in `Settings` -> `Developer`
+2. Fill in config in `Settings` -> `Developer`
 
 ```js
 {
@@ -205,15 +203,16 @@ cd kylin-collator
   }
 }
 ```
-
-#### Register the parachain ( This step is only require if you have manually built from the source as shown in 2b above)
+3. If you followed and launched the network either using the docker or polkadot-launch then you should have your parachains registered to the relaychain and you can skip the below two steps and can go [here](#submit-data-request)
+   
+#### Register the parachain
 
 1. Switch to custom endpoint 9944 for sudo access
 2. Select `Developer` -> `Sudo`
 3. Submit the following transaction to register your parachain
    ![example of registering a parachain](./doc/imgs/registerParachain.png)
 
-#### Validate the parachain is registered (This step is only require if you have manually built from the source as shown in 2b above)
+#### Validate the parachain is registered
 
 1. Verify parathread is registered
    - On custom endpoint 9944, select `Network` -> `Parachains`
@@ -224,8 +223,8 @@ cd kylin-collator
    - Select `Network` -> `Explorer`
    - New blocks are being created if the value of `best` and `finalized` are incrementing higher
 
-#### Submit data request
 
-1. Ensure you are on a collator's custom endpoint, either 9942 or 9943
+#### Submit data request
+1.  In the UI, you can go to the top-left corner and click into the dropdown. Make sure you have the development option selected. You need to go to the custom under `Development` -> `Custom`. Enter the url which is `ws://127.0.0.1:9942` or `ws://127.0.0.1:9943` 
 2. Submit a price request using the `requestPriceFeed` extrinsic
    ![example of submitting a price request](./doc/imgs/requestPriceFeed.png)
