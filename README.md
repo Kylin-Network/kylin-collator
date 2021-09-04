@@ -14,7 +14,7 @@ Follow these steps to prepare a local development environment :hammer_and_wrench
 
 You will need to install [Docker](https://www.docker.com/products/docker-desktop) to launch our pre-built containers.
 
-**NOTE:** You are not required to launch your network with Docker, you can build from source if you prefer.
+**NOTE:** You can not only launch your network with Docker, but can also build from source if you prefer.
 
 ### Run
 
@@ -67,12 +67,12 @@ We will discuss both the approaches in detail.
 
 - Checkout the code from github and build as shown below
 
-  - kylin-node
+  - kylin-collator
 
     ```bash
-    git clone --recursive https://github.com/Kylin-Network/kylin-node.git
+    git clone --recursive https://github.com/Kylin-Network/kylin-collator.git
 
-    cd kylin-node
+    cd kylin-collator
     git submodule update --recursive --remote
 
     cargo build --release
