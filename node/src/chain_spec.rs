@@ -138,55 +138,11 @@ pub fn local_environment_config(id: ParaId, environment: &str) -> ChainSpec {
 	)
 }
 
-pub fn development_environment_config(id: ParaId, environment: &str) -> ChainSpec {
+pub fn development_environment_config(id: ParaId,environment: &str) -> ChainSpec {
 	ChainSpec::from_genesis(
-		// Name
 		format!("kylin {} testnet", environment).as_str(),
 		// ID
 		format!("kylin-{}-testnet", environment).as_str(),
-		ChainType::Local,
-		move || {
-			testnet_genesis(
-				AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
-				vec![
-					hex!["7c11cea2901e72fe525d7335e99d48bdf8dea2a983ac92fa3ab20508a438af73"]
-						.unchecked_into(),
-					hex!["287f278af79ef7f1b2a2b3d5a7c76a047e248232d13f0a5ec744789a96dc824d"]
-						.unchecked_into(),
-					get_from_seed::<AuraId>("Alice"),
-					get_from_seed::<AuraId>("Bob"),
-				],
-				vec![
-					sp_runtime::AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					get_account_id_from_seed::<sr25519::Public>("Bob"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie"),
-					get_account_id_from_seed::<sr25519::Public>("Dave"),
-					get_account_id_from_seed::<sr25519::Public>("Eve"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-				],
-				id,
-			)
-		},
-		Vec::new(),
-		None,
-		Some("Kylin"),
-		Some(kylin_properties()),
-		Default::default()
-
-	)
-}
-
-pub fn rococo_staging_network(id: ParaId) -> ChainSpec {
-	ChainSpec::from_genesis(
-		"Kylin Rococo Testnet",
-		"kylin_rococo_testnet",
 		ChainType::Live,
 		move || {
 			testnet_genesis(

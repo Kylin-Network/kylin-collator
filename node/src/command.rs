@@ -62,7 +62,8 @@ fn load_spec(
 		// Rococo
 		"" | "local"   => Box::new(chain_spec::local_environment_config(para_id,"rococo-local")),
 		"kylin-rococo-dev" => Box::new(chain_spec::development_environment_config(para_id,"rococo-dev")),
-		"kylin-rococo" | "kylin-chachacha" => Box::new(chain_spec::rococo_staging_network(para_id)),
+		"kylin-rococo" => Box::new(chain_spec::development_environment_config(para_id,"rococo")),
+		"kylin-chachacha" => Box::new(chain_spec::development_environment_config(para_id,"chachacha")),
 
 		// Westend
 		"kylin-westend-local" => Box::new(chain_spec::local_environment_config(para_id,"westend-local")),
