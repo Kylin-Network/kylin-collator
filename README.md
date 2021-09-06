@@ -120,8 +120,8 @@ we can use the `polkadot-launch` utility script to launch our network very simpl
   - parachains: We have to provide 4 paramters
     - bin: Specify the location of the binary of your parachain
     - id: Specify the Para ID for the chain
-    - balance: set initial balance for some of the know account(like alice, bob etc)
-    - nodes: nodes configurations for the parachains
+    - balance: Set initial balance for some of the know account(like alice, bob etc)
+    - nodes: Nodes configurations for the parachains
 
 - #### Launching the network
 
