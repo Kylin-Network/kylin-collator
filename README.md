@@ -1,4 +1,4 @@
-# Kylin Node
+# Kylin Collator
 
 Using this repository, you can choose to build and launch the network in multiple ways.
 
