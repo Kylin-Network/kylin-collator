@@ -1,4 +1,4 @@
-# Kylin Node
+# Kylin Collator
 
 This repository is set up to use [Docker](https://www.docker.com/). Composing up with Docker will automatically launch a local network containing multiple validators (polkadot nodes) and collators (kylin nodes) as well as the full user interface on port 3001. However, you can build your network from source if you prefer.
 
