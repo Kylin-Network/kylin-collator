@@ -3504,13 +3504,18 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "pallet-timestamp",
+ "pallet-xcm",
  "parity-scale-codec",
  "serde",
  "sp-core",
  "sp-io",
+ "sp-keystore",
  "sp-runtime",
  "sp-std",
  "xcm",
+ "xcm-builder",
+ "xcm-executor",
 ]
 
 [[package]]
@@ -5401,6 +5406,7 @@ dependencies = [
  "frame-system",
  "log",
  "parity-scale-codec",
+ "serde",
  "sp-runtime",
  "sp-std",
  "xcm",
