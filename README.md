@@ -143,7 +143,7 @@ If the launch is successful, you will see:
 
 ### 2b) Launch manually
 
-If the prerequisites have been completed and we have our binaries as shown [above](#prerequisite-for-both-the-approaches), follow the steps below to launch the network.
+If the prerequisites have been completed and we have our binaries as shown [above](#prerequisite-for-both-approaches), follow the steps below to launch the network.
 #### Create local chain spec
 
 ```bash
