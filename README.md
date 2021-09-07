@@ -19,6 +19,9 @@ Follow these steps to prepare a local development environment :hammer_and_wrench
 2) Checkout the repository
 ```bash
 git clone --recursive https://github.com/Kylin-Network/kylin-collator.git
+
+cd kylin-collator
+git submodule update --recursive --remote
 ```
 
 ### Run
