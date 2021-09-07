@@ -15,7 +15,11 @@ Follow these steps to prepare a local development environment :hammer_and_wrench
 
 ### Setup
 
-You will need to [install docker](https://www.docker.com/products/docker-desktop) to launch our pre-built containers.
+1) You will need to [install docker](https://www.docker.com/products/docker-desktop) to launch our pre-built containers
+2) Checkout the repository
+```bash
+git clone --recursive https://github.com/Kylin-Network/kylin-collator.git
+```
 
 ### Run
 
