@@ -2,10 +2,10 @@
 
 Using this repository, you can choose to configure and launch your network in multiple ways. Options include:
 1) Launch a local development network including a relaychain and two Kylin parachains
-2) Launch a collator node on a live test network
+2) Launch a collator on a live test network
 3) Build from source and configure a custom network
 
-We recommended launching with [Docker](https://www.docker.com/). The default compose file automatically launches a local network containing multiple relaychain validators (polkadot nodes) and collators (kylin collators) as well as the full user interface on port 3001. Additionally, docker can be used to launch collator nodes to supported testnets.
+We recommended launching with [Docker](https://www.docker.com/). The default compose file automatically launches a local network containing multiple relaychain validators (polkadot nodes) and collators (kylin collators) as well as the full user interface on port 3001. Additionally, docker can be used to launch a collator to supported testnets.
 
 You can also build your network from source if you prefer, which is discussed step-by-step in this document as well.
 
