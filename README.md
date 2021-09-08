@@ -1,10 +1,13 @@
 # Kylin Collator
 
-Using this repository, you can choose to build and launch the network in multiple ways.
+Using this repository, you can choose to configure and launch your network in multiple ways. Options include:
+1) Launch a local development network including a relaychain and two Kylin parachains
+2) Launch a collator node on a live test network
+3) Build from source and configure a custom network
 
-First is to use [Docker](https://www.docker.com/). Composing up with Docker will automatically launch a local network containing multiple validators (polkadot nodes) and collators (kylin collators) as well as the full user interface on port 3001.
+We recommended launching with [Docker](https://www.docker.com/). The default compose file automatically launches a local network containing multiple relaychain validators (polkadot nodes) and collators (kylin collators) as well as the full user interface on port 3001. Additionally, docker can be used to launch collator nodes to supported testnets.
 
-The other way is to build your network from source which again has two ways to do so and is discussed step by step below
+You can also build your network from source if you prefer, which is discussed step-by-step in this document as well.
 
 ## 1) Using Docker
 
@@ -12,34 +15,37 @@ Follow these steps to prepare a local development environment :hammer_and_wrench
 
 ### Setup
 
-You will need to install [Docker](https://www.docker.com/products/docker-desktop) to launch our pre-built containers.
+1) You will need to [install docker](https://www.docker.com/products/docker-desktop) to launch our pre-built containers
+2) Checkout the repository
+```bash
+git clone --recursive https://github.com/Kylin-Network/kylin-collator.git
 
-**NOTE:** You can not only launch your network with Docker, but can also build from source if you prefer.
+cd kylin-collator
+git submodule update --recursive --remote
+```
 
 ### Run
 
-Launching the network using docker compose:
+Launch a local network using docker compose:
 
 ```bash
 docker-compose -f scripts/docker-compose.yml up -d
 ```
 
-The `scripts` directory contains multiple compose files which can be used to launch various network configurations and uses `docker-compose.yml` to launch a local network containing a relaychain with six validators and two kylin parachains. Both parachains are registered to the relaychain and will begin authoring blocks shortly after launch.
+The `scripts` directory contains multiple compose files which can be used to launch various network configurations. Launching with docker ensures parachains are registered to the relaychain automatically and will begin authoring blocks shortly after launch.  
 
-Ensure your network is functioning properly
-Confirm docker containers are running.
+To ensure your network is functioning properly:  
+1) Confirm docker containers are running
 ```bash
 docker ps
 ``````
 - These container names should have a status of 'up':
-    - init-kibana-dashboard
-    - insert-ocw
-    - kylin-kibana   
     - launch
     - frontend
+    - kylin-kibana   
     - kylin-es
  
-Check the container logs:
+2) Check the container logs
 ```bash 
 docker logs launch
 ```
@@ -48,24 +54,25 @@ docker logs launch
 ```bash 
 docker logs frontend
 ```
+- If successful, ```Accepting connections at http://localhost:3001``` will be displayed in the terminal.
 
-### Testing
+### Interacting with your network
 
-Testing for all the sections has been shown [below](#interact-and-testing )
+To connect to your local network's user interface, visit [polkadot.js](http://localhost:3001/#/explorer) on port 3001. Interacting with your network is detailed [below](#submit-data-request).
 
 ## 2) From Source
 
-- There are two ways you can build from source
-  - Manually launching relaychains, parachains and registering it
-  - Using the polkadot-launch utility and the configuration file
+- You can launch a network from source in two ways:
+  - Manually launch a relaychain and parachain then register the parachain
+  - Use the [polkadot-launch](https://github.com/paritytech/polkadot-launch) utility to configure your network and register the parachain amoung other helpful functions
 
-We will discuss both the approaches in detail.
+We will discuss both approaches in detail.
 
-### Prerequisite for both the approaches
+### Prerequisite for both approaches
 
 - First, setup your [Rust development environment](https://substrate.dev/docs/en/knowledgebase/getting-started). Then,
 
-- Checkout the code from github and build as shown below
+- Checkout the kylin-collator and polkadot repositories and build the respective binaries:
 
   - kylin-collator
 
@@ -89,11 +96,11 @@ We will discuss both the approaches in detail.
 
 ### 2a) Launch using Polkadot-Launch Configuration
 
-we can use the `polkadot-launch` utility script to launch our network very simply by provding the custom json configuration file.
+The `polkadot-launch` utility allows you to launch your network seamlessly by providing a custom json configuration file.
 
 - #### Install polkadot-launch
 
-  - We need to have the polkadot launch node script file installed, please run the below command in your terminal
+  - To install polkadot-launch, run:
 
     ```bash
     yarn global add polkadot-launch
@@ -104,32 +111,31 @@ we can use the `polkadot-launch` utility script to launch our network very simpl
 
     ```
 
-- #### Defining the configuration file
+- #### Define the configuration file
 
   Once we have the `polkadot-launch` utility installed, we need to define the configuration file.
 
-  The configuration files has been provided within the repository inside `scrips-->polkadot_launch-->kylinPolkadotLaunchConfig.json`, you can customize it based on your requirement.
+  A configuration file has been provided within the repository at `scrips/polkadot_launch/kylinPolkadotLaunchConfig.json`. You can customize it based on your requirements.
 
-  - There are two sections in the file which are essential: `relaychain` and the `parachains`
-  - relaychain: Here we have 3 key parameters to take care
+  - There are two sections in the file which are essential: `relaychain` and `parachains`
+  - relaychain: 3 key parameters
+    - bin: Specify the location of the polkadot binary (in our case we built polkadot in a step above, so we can find the binary at `target/release/polkadot` in the polkadot directory). You can provide a relative or absolute path of the binary.
+    - chain: Specify the type of the chain (in our case we will use rococo-local as we are launching a local network)
+    - nodes: Configure the number of validators you want to have (we've added six validators, feel free to change per your requirement. The rule of thumb is at least two validators per collator). You can pass the name of the validators, additional flags, and both the tcp and websocket ports to be exposed.
 
-    - bin: Specify the location of the relaychain binary(in our case we build the polkadot in the above step so we can find the binary in the folder `target/release/`). Make sure to provide the absolute path of the binary
-    - chain: Specify the type of the chain(in our case we will be using rococo-local as we are launching the local network)
-    - nodes: You can specify the number of validators you need to have and their configurations( we have used six validators, feel free to have as per your requirement. But make sure you have atleast two validators). It has name of the validators with some flags and both tcp and websocket exposed port
-
-  - parachains: We have to provide 4 paramters
-    - bin: Specify the location of the binary of your parachain
+  - parachains: 4 key parameters
+    - bin: Specify the location of the kylin-collator binary
     - id: Specify the Para ID for the chain
-    - balance: Set initial balance for some of the know account(like alice, bob etc)
-    - nodes: Nodes configurations for the parachains
+    - balance: Set initial balance of your parachain
+    - nodes: Node configurations for your parachain
 
-- #### Launching the network
+- #### Launch the network
 
 ```bash
 polkadot-launch scripts/polkadot_launch/kylinPolkadotLaunchConfig.json
 ```
 
-You must wait for the prompt
+If the launch is successful, you will see:
 
 ```bash
 🚀 POLKADOT LAUNCH COMPLETE 🚀
@@ -137,7 +143,7 @@ You must wait for the prompt
 
 ### 2b) Launch manually
 
-Make sure that the prerequisite have been completed and we have built the binaries as shown [above](#prerequisite-for-both-the-approaches). Follow the steps below to launch the network
+If the prerequisites have been completed and we have our binaries as shown [above](#prerequisite-for-both-approaches), follow the steps below to launch the network.
 #### Create local chain spec
 
 ```bash
@@ -176,12 +182,12 @@ cd kylin-collator
 
 ```
 
-- You should see your collator running and peering with the already running relay chain validators.
+- You should see your collator running and peering with the already running relay chain validators.  
 - Your parachain will not begin authoring blocks until you have registered it on the relay chain.
 
-## Interact and Testing 
+#### Connect to user interface
 
-1. You can either Connect to polkadot.js using a secure frontend connection like [apps](https://github.com/Kylin-Network/apps) or our pre-built `frontend` Docker container.
+1. You can connect to your network's user interface using a secure frontend connection like [apps](https://github.com/Kylin-Network/apps) or our pre-built `frontend` docker container.
 2. Fill in config for our types in `Settings` -> `Developer`
 
 ```js
@@ -201,7 +207,7 @@ cd kylin-collator
   }
 }
 ```
-3. If you followed and launched the network either using the docker or polkadot-launch then you should have your parachains registered to the relaychain and you can skip the below two steps and can go [here](#submit-data-request)
+**NOTE:** If you launched your network using docker or polkadot-launch, your parachains should be automatically registered to the relaychain and you can skip the below two steps and can continue [here](#submit-data-request).
    
 #### Register the parachain
 
@@ -222,7 +228,7 @@ cd kylin-collator
    - New blocks are being created if the value of `best` and `finalized` are incrementing higher
 
 
-#### Submit data request
-1.  In the UI, you can go to the top-left corner and click into the dropdown. Make sure you have the development option selected. You need to go to the custom under `Development` -> `Custom`. Enter the url which is `ws://127.0.0.1:9942` or `ws://127.0.0.1:9943` 
-2. Submit a price request using the `requestPriceFeed` extrinsic
-   ![example of submitting a price request](./doc/imgs/requestPriceFeed.png)
+## Submit Data Request
+1. In your [polkadot.js](http://localhost:3001/#/explorer) user interface, go to the top-left corner and click the dropdown. Under the development tab, enter a custom endpoint to connect to a collator: `ws://127.0.0.1:9942` or `ws://127.0.0.1:9943`. 
+2. Select `Developer` -> `Extrinsics`. Submit a price request using the `requestPriceFeed` extrinsic.
+   ![submitting a price request](./doc/imgs/requestPriceFeed.png)
