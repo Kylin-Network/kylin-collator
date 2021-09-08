@@ -2,7 +2,7 @@
 
 Using this repository, you can choose to build and launch the network in multiple ways.
 
-First is to use [Docker](https://www.docker.com/). Composing up with Docker will automatically launch a local network containing multiple validators (polkadot nodes) and collators (kylin nodes) as well as the full user interface on port 3001.
+First is to use [Docker](https://www.docker.com/). Composing up with Docker will automatically launch a local network containing multiple validators (polkadot nodes) and collators (kylin collators) as well as the full user interface on port 3001.
 
 The other way is to build your network from source which again has two ways to do so and is discussed step by step below
 
@@ -166,7 +166,7 @@ cd kylin-collator
 ./target/release/kylin-collator export-genesis-wasm > para-wasm-local
 ```
 
-#### Start a collator node
+#### Start a collator
 
 ```bash
 # Customize the --chain flag for the path to your 'rococo-local.json' file
@@ -176,30 +176,28 @@ cd kylin-collator
 
 ```
 
-- You should see your collator node running and peering with the already running relay chain nodes.
+- You should see your collator running and peering with the already running relay chain validators.
 - Your parachain will not begin authoring blocks until you have registered it on the relay chain.
 
 ## Interact and Testing 
 
 1. You can either Connect to polkadot.js using a secure frontend connection like [apps](https://github.com/Kylin-Network/apps) or our pre-built `frontend` Docker container.
-2. Fill in config in `Settings` -> `Developer`
+2. Fill in config for our types in `Settings` -> `Developer`
 
 ```js
 {
   "Address": "MultiAddress",
   "LookupSource": "MultiAddress",
-  "DataInfo": {
-    "url": "Text",
-    "data": "Text"
-  },
-  "PriceFeedingData": {
-    "para_id": "ParaId",
-    "currencies": "Text",
+  "DataRequest": {
+    "para_id": "Option<ParaId>",
+    "account_id": "Option<AccountId>",
     "requested_block_number": "BlockNumber",
     "processed_block_number": "Option<BlockNumber>",
     "requested_timestamp": "u128",
     "processed_timestamp": "Option<u128>",
-    "payload": "Text"
+    "payload": "Text",
+    "feed_name": "Text",
+    "url": "Text"
   }
 }
 ```
@@ -219,7 +217,7 @@ cd kylin-collator
    - On the parathreads tab you should see your paraid with a lifecycle status of `Onboarding`
    - After onboarding is complete you will see your parachain registered on the Overview tab
 2. Verify parachain is producing blocks
-   - Navigate to the collator node's custom endpoint 9942
+   - Navigate to the collator's custom endpoint 9942
    - Select `Network` -> `Explorer`
    - New blocks are being created if the value of `best` and `finalized` are incrementing higher
 
