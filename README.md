@@ -203,7 +203,7 @@ cd kylin-collator
     "processed_timestamp": "Option<u128>",
     "payload": "Text",
     "feed_name": "Text",
-    "url": "Text"
+    "url": "Option<text>"
   }
 }
 ```
