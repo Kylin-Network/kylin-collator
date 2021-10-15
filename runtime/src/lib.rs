@@ -59,9 +59,13 @@ use crate::sp_api_hidden_includes_IMPL_RUNTIME_APIS::sp_api::Encode;
 
 // XCM imports
 use polkadot_parachain::primitives::Sibling;
-use xcm::latest::prelude::*;
+//use xcm::latest::prelude::*;
+//use xcm::v0::{Xcm, Error as XcmError, SendXcm, OriginKind, MultiLocation, Junction};
+
+use xcm::v0::{BodyId, Junction::*, MultiLocation, MultiLocation::*, NetworkId, Xcm};
+
 use xcm_builder::{
-    AccountId32Aliases, CurrencyAdapter, LocationInverter, ParentIsDefault, RelayChainAsNative,
+    AccountId32Aliases, AllowUnpaidExecutionFrom, CurrencyAdapter, LocationInverter, ParentIsDefault, RelayChainAsNative,
     SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
     SovereignSignedViaLocation, EnsureXcmOrigin,  ParentAsSuperuser,
      TakeWeightCredit, FixedWeightBounds, IsConcrete, NativeAsset,
@@ -323,7 +327,10 @@ impl parachain_info::Config for Runtime {}
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
-	pub const RocLocation: MultiLocation = MultiLocation::parent();
+	//pub const RocLocation: MultiLocation = MultiLocation::parent();
+	pub const RocLocation: MultiLocation = X1(Parent);
+	//Kanthan - v0.9.9 - modified to follow cumulus 0.9.9
+
 	pub const RococoNetwork: NetworkId = NetworkId::Polkadot;
 	pub RelayChainOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
@@ -383,31 +390,39 @@ parameter_types! {
 	// One XCM operation is 1_000_000 weight - almost certainly a conservative estimate.
 	pub UnitWeightCost: Weight = 1_000_000;
 	// One ROC buys 1 second of weight.
-	pub const WeightPrice: (MultiLocation, u128) = (MultiLocation::parent(), ROC);
+	//pub const WeightPrice: (MultiLocation, u128) = (MultiLocation::parent(), ROC);
+	pub const WeightPrice: (MultiLocation, u128) = (X1(Parent), ROC);
+	//Kanthan - v0.9.9 - modified to follow cumulus 0.9.9
+
 	pub const MaxInstructions: u32 = 100;
 
 }
 
 pub type Barrier = (
     TakeWeightCredit,
-    AllowAnyPaidExecutionFrom<Everything>,
-    // AllowUnpaidExecutionFrom<IsInVec<AllowUnpaidFrom>>,	// <- Parent gets free execution
+    //AllowAnyPaidExecutionFrom<Everything>,
+    AllowUnpaidExecutionFrom<Everything>,	// <- Parent gets free execution
 );
 
 
+// Kanthan - The following code block is a custom code based of AllowUnpaidExecutionFrom from polkadot
+// Kanthan - To allow any form of message to come through XCM. If pallet weight is 0, 
+/*
 pub struct AllowAnyPaidExecutionFrom<T>(PhantomData<T>);
+Kanthan - v0.9.9 - changed from option to just pointer for Multilocation
+Kanthan - v0.9.9 - changed mut Xcm to &Xcm
 impl<T: Contains<MultiLocation>> ShouldExecute for AllowAnyPaidExecutionFrom<T> {
 	fn should_execute<Call>(
-		origin: &Option<MultiLocation>,
+		origin: &MultiLocation,
 		_top_level: bool,
-		_message: &mut Xcm<Call>,
+		_message: &Xcm<Call>,
 		_shallow_weight: Weight,
 		_weight_credit: &mut Weight,
 	) -> Result<(), ()> {
 		ensure!(T::contains(&origin.as_ref().unwrap()), ());
 		Ok(())
 	}
-}
+}*/
 
 pub struct XcmConfig;
 impl Config for XcmConfig {
@@ -420,7 +435,8 @@ impl Config for XcmConfig {
 	type IsTeleporter = NativeAsset; // <- should be enough to allow teleportation of ROC
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
-	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
+	type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
+	//Kanthan - v0.9.9 - removed generic argument here, MaxInstructions
 	type Trader = UsingComponents<IdentityFee<Balance>, RocLocation, AccountId, Balances, ()>;
 	type ResponseHandler = (); // Don't handle responses for now.
 }
@@ -439,7 +455,8 @@ pub type LocalOriginToLocation = ();
 /// queues.
 pub type XcmRouter = (
 	// Two routers - use UMP to communicate with the relay chain:
-	cumulus_primitives_utility::ParentAsUmp<ParachainSystem, ()>,
+	cumulus_primitives_utility::ParentAsUmp<ParachainSystem>,
+	//Kanthan - v0.9.9 - removed generic argument here
 	// ..and XCMP to communicate with the sibling chains.
 	XcmpQueue,
 );
@@ -453,10 +470,12 @@ impl pallet_xcm::Config for Runtime {
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type XcmTeleportFilter = Everything;
 	type XcmReserveTransferFilter = frame_support::traits::Nothing;
-	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
+	type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
+	//Kanthan - v0.9.9 - removed generic argument here, MaxInstructions
 	type LocationInverter = LocationInverter<Ancestry>;
-	type Origin = Origin;
-	type Call = Call;
+	//type Origin = Origin;
+	//type Call = Call;
+	//Kanthan - v0.9.9 - removed Origin and Call declarations
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {
@@ -468,7 +487,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type ChannelInfo = ParachainSystem;
-	type VersionWrapper = ();
+	//type VersionWrapper = ();
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {

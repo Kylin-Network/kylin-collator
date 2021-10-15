@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::rpc;
+//use crate::rpc;
 use cumulus_client_consensus_aura::{
 	build_aura_consensus, BuildAuraConsensusParams, SlotProportion,
 };
@@ -32,7 +32,7 @@ use cumulus_primitives_core::{
 use polkadot_service::NativeExecutionDispatch;
 
 
-pub use parachains_common::{AccountId, Balance, Block, Hash, Header, Index as Nonce};
+//pub use parachains_common::{AccountId, Balance, Block, Hash, Header, Index as Nonce};
 
 use futures::lock::Mutex;
 use sc_client_api::ExecutorProvider;
@@ -40,7 +40,22 @@ use sc_consensus::{
 	import_queue::{ Verifier as VerifierT},
 	BlockImportParams,
 };
-use sc_executor::NativeElseWasmExecutor;
+//use sc_executor::NativeElseWasmExecutor;
+use sc_executor::NativeExecutor;
+//Kanthan - v0.9.9 changing to NativeExecutor as this new struct is only available in later versions
+
+
+use sc_executor::native_executor_instance;
+//Kanthan - v0.9.9 added the above missing declaration
+
+
+type BlockNumber = u32;
+type Header = sp_runtime::generic::Header<BlockNumber, sp_runtime::traits::BlakeTwo256>;
+pub type Block = sp_runtime::generic::Block<Header, sp_runtime::OpaqueExtrinsic>;
+type Hash = sp_core::H256;
+//Kanthan - v0.9.9 - added the above 4 lines to initialize these required types
+
+
 use sc_network::NetworkService;
 use sc_service::{Configuration, PartialComponents, Role, TFullBackend, TFullClient, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
@@ -55,35 +70,21 @@ use sp_runtime::{
 use std::sync::Arc;
 use substrate_prometheus_endpoint::Registry;
 
-/// Native executor instance.
-pub struct ParachainRuntimeExecutor;
 
-impl sc_executor::NativeExecutionDispatch for ParachainRuntimeExecutor {
-	type ExtendHostFunctions = ();
+// Native executor instance.
+native_executor_instance!(
+	pub ParachainRuntimeExecutor,
+	kylin_collator_runtime::api::dispatch,
+	kylin_collator_runtime::native_version,
+);
 
-	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		kylin_collator_runtime::api::dispatch(method, data)
-	}
+// Native executor instance.
+native_executor_instance!(
+	pub ShellRuntimeExecutor,
+	shell_runtime::api::dispatch,
+	shell_runtime::native_version,
+);
 
-	fn native_version() -> sc_executor::NativeVersion {
-		kylin_collator_runtime::native_version()
-	}
-}
-
-/// Native executor instance.
-pub struct ShellRuntimeExecutor;
-
-impl sc_executor::NativeExecutionDispatch for ShellRuntimeExecutor {
-	type ExtendHostFunctions = ();
-
-	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		shell_runtime::api::dispatch(method, data)
-	}
-
-	fn native_version() -> sc_executor::NativeVersion {
-		shell_runtime::native_version()
-	}
-}
 
 /// Starts a `ServiceBuilder` for a full service.
 ///
@@ -94,23 +95,23 @@ pub fn new_partial<RuntimeApi, Executor, BIQ>(
 	build_import_queue: BIQ,
 ) -> Result<
 	PartialComponents<
-		TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>,
+		TFullClient<Block, RuntimeApi, Executor>,
 		TFullBackend<Block>,
 		(),
 		sc_consensus::DefaultImportQueue<
 			Block,
-			TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>,
+			TFullClient<Block, RuntimeApi, Executor>,
 		>,
 		sc_transaction_pool::FullPool<
 			Block,
-			TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>,
+			TFullClient<Block, RuntimeApi, Executor>,
 		>,
 		(Option<Telemetry>, Option<TelemetryWorkerHandle>),
 	>,
 	sc_service::Error,
 >
 where
-	RuntimeApi: ConstructRuntimeApi<Block, TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>>
+	RuntimeApi: ConstructRuntimeApi<Block, TFullClient<Block, RuntimeApi, Executor>>
 		+ Send
 		+ Sync
 		+ 'static,
@@ -123,16 +124,16 @@ where
 		> + sp_offchain::OffchainWorkerApi<Block>
 		+ sp_block_builder::BlockBuilder<Block>,
 	sc_client_api::StateBackendFor<TFullBackend<Block>, Block>: sp_api::StateBackend<BlakeTwo256>,
-	Executor: NativeExecutionDispatch + 'static,
+	Executor: sc_executor::NativeExecutionDispatch + 'static,
 	BIQ: FnOnce(
-		Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>>,
+		Arc<TFullClient<Block, RuntimeApi, Executor>>,
 		&Configuration,
 		Option<TelemetryHandle>,
 		&TaskManager,
 	) -> Result<
 		sc_consensus::DefaultImportQueue<
 			Block,
-			TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>,
+			TFullClient<Block, RuntimeApi, Executor>,
 		>,
 		sc_service::Error,
 	>,
@@ -148,18 +149,18 @@ where
 		})
 		.transpose()?;
 
-	let executor = sc_executor::NativeElseWasmExecutor::<Executor>::new(
+	let executor = sc_executor::NativeExecutor::<Executor>::new(
 		config.wasm_method,
 		config.default_heap_pages,
 		config.max_runtime_instances,
 	);
 
 	let (client, backend, keystore_container, task_manager) =
-		sc_service::new_full_parts::<Block, RuntimeApi, _>(
+		sc_service::new_full_parts::<Block, RuntimeApi, Executor>(
 			&config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
-			executor,
 		)?;
+		//Kanthan - v0.9.9 changed the above to match 0.9.9 cumulus
 	let client = Arc::new(client);
 
 	let telemetry_worker_handle = telemetry.as_ref().map(|(worker, _)| worker.handle());
@@ -211,10 +212,10 @@ async fn start_shell_node_impl<RuntimeApi, Executor, RB, BIQ, BIC>(
 	build_consensus: BIC,
 ) -> sc_service::error::Result<(
 	TaskManager,
-	Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>>,
+	Arc<TFullClient<Block, RuntimeApi, Executor>>,
 )>
 where
-	RuntimeApi: ConstructRuntimeApi<Block, TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>>
+	RuntimeApi: ConstructRuntimeApi<Block, TFullClient<Block, RuntimeApi, Executor>>
 		+ Send
 		+ Sync
 		+ 'static,
@@ -230,24 +231,24 @@ where
 	sc_client_api::StateBackendFor<TFullBackend<Block>, Block>: sp_api::StateBackend<BlakeTwo256>,
 	Executor: sc_executor::NativeExecutionDispatch + 'static,
 	RB: Fn(
-			Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>>,
+			Arc<TFullClient<Block, RuntimeApi, Executor>>,
 		) -> Result<jsonrpc_core::IoHandler<sc_rpc::Metadata>, sc_service::Error>
 		+ Send
 		+ 'static,
 	BIQ: FnOnce(
-		Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>>,
+		Arc<TFullClient<Block, RuntimeApi, Executor>>,
 		&Configuration,
 		Option<TelemetryHandle>,
 		&TaskManager,
 	) -> Result<
 		sc_consensus::DefaultImportQueue<
 			Block,
-			TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>,
+			TFullClient<Block, RuntimeApi, Executor>,
 		>,
 		sc_service::Error,
 	>,
 	BIC: FnOnce(
-		Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>>,
+		Arc<TFullClient<Block, RuntimeApi, Executor>>,
 		Option<&Registry>,
 		Option<TelemetryHandle>,
 		&TaskManager,
@@ -255,7 +256,7 @@ where
 		Arc<
 			sc_transaction_pool::FullPool<
 				Block,
-				TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>,
+				TFullClient<Block, RuntimeApi, Executor>,
 			>,
 		>,
 		Arc<NetworkService<Block, Hash>>,
@@ -381,7 +382,7 @@ where
 	start_network.start_network();
 
 	Ok((task_manager, client))
-}
+}	
 
 /// Start a node with the given parachain `Configuration` and relay chain `Configuration`.
 ///
@@ -391,15 +392,16 @@ async fn start_node_impl<RuntimeApi, Executor, RB, BIQ, BIC>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
 	id: ParaId,
-	_rpc_ext_builder: RB,
+	//Kanthan - v0.9.9 why is this below variable prepended by underscore. removed it for compilation
+	rpc_ext_builder: RB,
 	build_import_queue: BIQ,
 	build_consensus: BIC,
 ) -> sc_service::error::Result<(
 	TaskManager,
-	Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>>,
+	Arc<TFullClient<Block, RuntimeApi, Executor>>,
 )>
 where
-	RuntimeApi: ConstructRuntimeApi<Block, TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>>
+	RuntimeApi: ConstructRuntimeApi<Block, TFullClient<Block, RuntimeApi, Executor>>
 		+ Send
 		+ Sync
 		+ 'static,
@@ -411,9 +413,10 @@ where
 			StateBackend = sc_client_api::StateBackendFor<TFullBackend<Block>, Block>,
 		> + sp_offchain::OffchainWorkerApi<Block>
 		+ sp_block_builder::BlockBuilder<Block>
-		+ cumulus_primitives_core::CollectCollationInfo<Block>
-		+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
-		+ frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
+		+ cumulus_primitives_core::CollectCollationInfo<Block>,
+		//Kanthan - v0.9.9 commenting the below as these are not available in 0.9.9
+		//+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
+		//+ frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 	sc_client_api::StateBackendFor<TFullBackend<Block>, Block>: sp_api::StateBackend<BlakeTwo256>,
 	Executor: sc_executor::NativeExecutionDispatch + 'static,
 	RB: Fn(
@@ -422,19 +425,19 @@ where
 		+ Send
 		+ 'static,
 	BIQ: FnOnce(
-			Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>>,
+			Arc<TFullClient<Block, RuntimeApi, Executor>>,
 			&Configuration,
 			Option<TelemetryHandle>,
 			&TaskManager,
 		) -> Result<
 			sc_consensus::DefaultImportQueue<
 				Block,
-				TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>,
+				TFullClient<Block, RuntimeApi, Executor>,
 			>,
 			sc_service::Error,
 		> + 'static,
 	BIC: FnOnce(
-		Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>>,
+		Arc<TFullClient<Block, RuntimeApi, Executor>>,
 		Option<&Registry>,
 		Option<TelemetryHandle>,
 		&TaskManager,
@@ -442,7 +445,7 @@ where
 		Arc<
 			sc_transaction_pool::FullPool<
 				Block,
-				TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>,
+				TFullClient<Block, RuntimeApi, Executor>,
 			>,
 		>,
 		Arc<NetworkService<Block, Hash>>,
@@ -501,20 +504,12 @@ where
 			network.clone(),
 		);
 	}
-	let rpc_extensions_builder = {
-		let client = client.clone();
-		let transaction_pool = transaction_pool.clone();
+	
+    //Kanthan -v0.9.9 - something does not make sense here. rpc_client is not initialized here for some reason. 
+	//Kanthan - v0.9.9 - added initialization as per the start_Shell_node_impl function
 
-		Box::new(move |deny_unsafe, _| {
-			let deps = rpc::FullDeps {
-				client: client.clone(),
-				pool: transaction_pool.clone(),
-				deny_unsafe,
-			};
-
-			Ok(rpc::create_full(deps))
-		})
-	};
+	let rpc_client = client.clone();
+	let rpc_extensions_builder = Box::new(move |_, _| rpc_ext_builder(rpc_client.clone()));
 
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {
 		on_demand: None,
@@ -587,7 +582,7 @@ pub fn parachain_build_import_queue(
 		TFullClient<
 			Block,
 			kylin_collator_runtime::RuntimeApi,
-			NativeElseWasmExecutor<ParachainRuntimeExecutor>,
+			ParachainRuntimeExecutor,
 		>,
 	>,
 	config: &Configuration,
@@ -599,7 +594,7 @@ pub fn parachain_build_import_queue(
 		TFullClient<
 			Block,
 			kylin_collator_runtime::RuntimeApi,
-			NativeElseWasmExecutor<ParachainRuntimeExecutor>,
+			ParachainRuntimeExecutor,
 		>,
 	>,
 	sc_service::Error,
@@ -647,7 +642,7 @@ pub async fn start_rococo_parachain_node(
 		TFullClient<
 			Block,
 			kylin_collator_runtime::RuntimeApi,
-			NativeElseWasmExecutor<ParachainRuntimeExecutor>,
+			ParachainRuntimeExecutor,
 		>,
 	>,
 )> {
@@ -740,7 +735,7 @@ pub async fn start_rococo_parachain_node(
 /// Build the import queue for the shell runtime.
 pub fn shell_build_import_queue(
 	client: Arc<
-		TFullClient<Block, shell_runtime::RuntimeApi, NativeElseWasmExecutor<ShellRuntimeExecutor>>,
+		TFullClient<Block, shell_runtime::RuntimeApi, ShellRuntimeExecutor>,
 	>,
 	config: &Configuration,
 	_: Option<TelemetryHandle>,
@@ -748,7 +743,7 @@ pub fn shell_build_import_queue(
 ) -> Result<
 	sc_consensus::DefaultImportQueue<
 		Block,
-		TFullClient<Block, shell_runtime::RuntimeApi, NativeElseWasmExecutor<ShellRuntimeExecutor>>,
+		TFullClient<Block, shell_runtime::RuntimeApi, ShellRuntimeExecutor>,
 	>,
 	sc_service::Error,
 > {
@@ -770,7 +765,7 @@ pub async fn start_shell_node(
 ) -> sc_service::error::Result<(
 	TaskManager,
 	Arc<
-		TFullClient<Block, shell_runtime::RuntimeApi, NativeElseWasmExecutor<ShellRuntimeExecutor>>,
+		TFullClient<Block, shell_runtime::RuntimeApi, ShellRuntimeExecutor>,
 	>,
 )> {
 	start_shell_node_impl::<
