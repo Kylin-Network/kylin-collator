@@ -3455,7 +3455,6 @@ dependencies = [
  "lite-json",
  "pallet-balances",
  "pallet-timestamp",
- "pallet-transaction-payment",
  "pallet-xcm",
  "parity-scale-codec",
  "scale-info",

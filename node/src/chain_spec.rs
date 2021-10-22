@@ -190,7 +190,7 @@ fn testnet_genesis(
 			balances: endowed_accounts
 				.iter()
 				.cloned()
-				.map(|k| (k, 175 << 60))
+				.map(|k| (k, 10 << 60))
 				.collect(),
 		},
 		sudo: kylin_collator_runtime::SudoConfig { key: root_key },
