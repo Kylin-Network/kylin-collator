@@ -11,8 +11,10 @@ version = '2.0.0'
 targets = ['x86_64-unknown-linux-gnu']
 
 [dependencies]
-serde = { version = "1.0.101", optional = true, features = ["derive"] }
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
+scale-info = { version = "1.0.0", default-features = false, features = ["derive"] }
+serde = { version = "1.0.101", optional = true, features = ["derive"] }
+
 log = { version = "0.4.14", default-features = false }
 # Local Dependencies
 kylin-oracle = { package = 'kylin-oracle', path = '../pallets/kylin-oracle', default-features = false }
@@ -42,6 +44,7 @@ frame-system-rpc-runtime-api = { git = 'https://github.com/paritytech/substrate'
 
 ## Substrate Pallet Dependencies
 pallet-aura = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master" }
+pallet-assets = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master" }
 pallet-balances = { git = 'https://github.com/paritytech/substrate', branch = 'master', default-features = false }
 pallet-randomness-collective-flip = { git = 'https://github.com/paritytech/substrate', branch = 'master', default-features = false }
 pallet-sudo = { git = 'https://github.com/paritytech/substrate', branch = 'master', default-features = false }
@@ -59,6 +62,7 @@ cumulus-primitives-core = { git = 'https://github.com/paritytech/cumulus', branc
 cumulus-primitives-timestamp = { git = 'https://github.com/paritytech/cumulus', branch = 'master', default-features = false }
 cumulus-primitives-utility = { git = 'https://github.com/paritytech/cumulus', branch = 'master', default-features = false }
 parachain-info = { git = 'https://github.com/paritytech/cumulus', branch = 'master', default-features = false }
+parachains-common = { git = 'https://github.com/paritytech/cumulus', branch = 'master', default-features = false }
 
 # Polkadot Dependencies
 polkadot-parachain = { git = 'https://github.com/paritytech/polkadot', branch = 'master', default-features = false }
@@ -88,6 +92,7 @@ runtime-benchmarks = [
 ]
 std = [
 	'codec/std',
+	'scale-info/std',
 	'serde',
 	'sp-api/std',
 	'sp-std/std',
@@ -105,6 +110,7 @@ std = [
 	'frame-executive/std',
 	'frame-system/std',
 	'frame-system-rpc-runtime-api/std',
+	"pallet-assets/std",
 	"pallet-aura/std",
 	'pallet-balances/std',
 	'pallet-randomness-collective-flip/std',
@@ -112,6 +118,7 @@ std = [
 	'pallet-sudo/std',
 	'pallet-transaction-payment/std',
 	'parachain-info/std',
+	'parachains-common/std',
 	'cumulus-pallet-aura-ext/std',
 	'cumulus-pallet-dmp-queue/std',
 	'cumulus-pallet-parachain-system/std',

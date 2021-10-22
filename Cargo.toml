@@ -1,6 +1,8 @@
 [profile.release]
 panic = 'abort'
 debug = true
+split-debuginfo = "unpacked"
+
 
 [workspace]
 members = [

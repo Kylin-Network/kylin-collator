@@ -177,6 +177,8 @@ fn testnet_genesis(
 	endowed_accounts: Vec<AccountId>,
 	id: ParaId,
 ) -> kylin_collator_runtime::GenesisConfig {
+	let _initial_balance: u128 = 1_000_000_000 * 1000;
+
 	kylin_collator_runtime::GenesisConfig {
 		system: kylin_collator_runtime::SystemConfig {
 			code: kylin_collator_runtime::WASM_BINARY
@@ -196,6 +198,7 @@ fn testnet_genesis(
 		aura: kylin_collator_runtime::AuraConfig {
 			authorities: initial_authorities,
 		},
+	
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
 	}
