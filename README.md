@@ -201,12 +201,10 @@ cd kylin-collator
     "processed_block_number": "Option<BlockNumber>",
     "requested_timestamp": "u128",
     "processed_timestamp": "Option<u128>",
-    "payload": "Text",
-    "feed_name": "Text",
-    "is_query": "bool",
-    "url": "Option<Text>"
-  }
-}
+    "payload": "Vec<u8>",
+    "feed_name": "Vec<u8>",
+    "url": "Option<Vec<u8>>"
+ }
 ```
 **NOTE:** If you launched your network using docker or polkadot-launch, your parachains should be automatically registered to the relaychain and you can skip the below two steps and can continue [here](#submit-data-request).
    
