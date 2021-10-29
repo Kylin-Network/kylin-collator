@@ -201,6 +201,7 @@ cd kylin-collator
     "processed_block_number": "Option<BlockNumber>",
     "requested_timestamp": "u128",
     "processed_timestamp": "Option<u128>",
+    "is_query": "bool",
     "payload": "Vec<u8>",
     "feed_name": "Vec<u8>",
     "url": "Option<Vec<u8>>"
