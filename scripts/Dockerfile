@@ -5,10 +5,11 @@ LABEL maintainer="kylin-dev"
 ARG PROFILE=release
 ARG KYLIN_GIT_REPO="https://github.com/Kylin-Network/kylin-collator.git"
 ARG GIT_BRANCH="main"
+ARG GIT_CLONE_DEPTH="--depth 1 --shallow-submodules"
 WORKDIR /builds/
 
 #Build kylin-collator
-RUN git clone --recursive ${KYLIN_GIT_REPO}
+RUN git clone --recursive ${KYLIN_GIT_REPO} ${GIT_CLONE_DEPTH}
 
 WORKDIR /builds/kylin-collator
 RUN git checkout ${GIT_BRANCH}
@@ -32,7 +33,7 @@ RUN npm install npm@latest -g && \
     n stable
 
 ARG POLKADOT_LAUNCH_REPO="https://github.com/Kylin-Network/polkadot-launch.git"
-RUN git clone --recursive ${POLKADOT_LAUNCH_REPO}
+RUN git clone --recursive ${POLKADOT_LAUNCH_REPO} ${GIT_CLONE_DEPTH}
 WORKDIR /builds/polkadot-launch
 RUN yarn global add polkadot-launch
 
