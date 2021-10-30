@@ -41,7 +41,7 @@ RUN apt-get install -y \
     npm
 RUN npm install npm@latest -g && \
     npm install n -g && \
-    n latest
+    n 16.13.0
 RUN YARN_CHECKSUM_BEHAVIOR=update yarn && yarn build:www
 RUN npm install -g serve
 
