@@ -7,7 +7,7 @@ services:
     ports:
       - "30330-30345:30330-30345"
       - "9933-9960:9933-9960"
-    command: bash -c "cd polkadot_launch; rm *.log;polkadot-launch kylinPolkadotLaunchConfig.json"
+    command: bash -c "cd polkadot_launch; rm *.log;polkadot-launch kylinLaunchConfig.json"
     volumes:
       - ./polkadot_launch/:/polkadot_launch/
        

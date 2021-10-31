@@ -115,9 +115,9 @@ The `polkadot-launch` utility allows you to launch your network seamlessly by pr
 
   Once we have the `polkadot-launch` utility installed, we need to define the configuration file.
 
-  A configuration file has been provided within the repository at `scrips/polkadot_launch/kylinPolkadotLaunchConfig.json`. You can customize it based on your requirements.
+  A configuration file has been provided within the repository at `scrips/polkadot_launch/kylinLaunchConfig.json`. You can customize it based on your requirements.
 
-  - There are two sections in the file which are essential: `relaychain` and `parachains`
+  - There are two sections in the file which are essential: `relaychain` and `parachains` 
   - relaychain: 3 key parameters
     - bin: Specify the location of the polkadot binary (in our case we built polkadot in a step above, so we can find the binary at `target/release/polkadot` in the polkadot directory). You can provide a relative or absolute path of the binary.
     - chain: Specify the type of the chain (in our case we will use rococo-local as we are launching a local network)
@@ -132,7 +132,7 @@ The `polkadot-launch` utility allows you to launch your network seamlessly by pr
 - #### Launch the network
 
 ```bash
-polkadot-launch scripts/polkadot_launch/kylinPolkadotLaunchConfig.json
+polkadot-launch scripts/polkadot_launch/kylinLaunchConfig.json
 ```
 
 If the launch is successful, you will see:

@@ -17,7 +17,10 @@ name = 'kylin-collator'
 
 [features]
 default = []
-runtime-benchmarks = ['kylin-collator-runtime/runtime-benchmarks']
+runtime-benchmarks = [
+	"pichiu-runtime/runtime-benchmarks",
+	"development-runtime/runtime-benchmarks",
+]
 
 [dependencies]
 derive_more = "0.15.0"
@@ -33,7 +36,9 @@ hex-literal = "0.2.1"
 async-trait = "0.1.42"
 
 # Parachain runtimes
-kylin-collator-runtime = { path = '../runtime' }
+development-runtime = { path = '../runtime/development' }
+pichiu-runtime = { path = '../runtime/pichiu' }
+runtime-common = { path = '../runtime/common' }
 shell-runtime  = { git = 'https://github.com/paritytech/cumulus', branch = 'master' }
 
 # Substrate dependencies
@@ -101,3 +106,5 @@ nix = "0.17"
 rand = "0.7.3"
 tempfile = "3.2.0"
 tokio = { version = "1.10.0", features = ["macros"] }
+
+
