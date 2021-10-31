@@ -1,0 +1,61 @@
+[package]
+authors = ["PureStake"]
+edition = "2018"
+name = "pallet-crowdloan-rewards"
+version = '0.6.0'
+description = "Reward citizens who participated in a crowdloan to acquire a parachain slot o nthe backing relay chain."
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false }
+serde = { version = "1.0.101", optional = true, features = ["derive"], default-features = false }
+log = { version = "0.4", default-features = false }
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+
+
+frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master" }
+frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master" }
+sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master" }
+sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master" }
+sp-io = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
+pallet-utility = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false, optional = true }
+ed25519-dalek = { version = "1.0.1", default-features = false, features = ["u64_backend", "alloc"], optional = true }
+sp-trie = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master", optional = true }
+
+cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "master", optional = true }
+cumulus-pallet-parachain-system = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "master", optional = true }
+cumulus-primitives-parachain-inherent = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "master", optional = true }
+
+[dev-dependencies]
+cumulus-test-relay-sproof-builder = { git = "https://github.com/paritytech/cumulus", branch = "master" }
+
+[features]
+default = ["std"]
+std = [
+    "pallet-balances/std",
+    "codec/std",
+    "pallet-utility/std",
+    "frame-benchmarking/std",
+    "frame-support/std",
+    "frame-system/std",
+    "sp-core/std",
+    "sp-runtime/std",
+    "serde",
+    "log/std",
+    "scale-info/std",
+    "sp-std/std",
+    "sp-io/std",
+    "cumulus-pallet-parachain-system/std",
+    "cumulus-primitives-core/std",
+    "cumulus-primitives-parachain-inherent/std",
+]
+runtime-benchmarks = [
+    "frame-benchmarking",
+    "sp-trie",
+    "ed25519-dalek",
+    "cumulus-primitives-core",
+    "cumulus-pallet-parachain-system",
+    "cumulus-primitives-parachain-inherent",
+]

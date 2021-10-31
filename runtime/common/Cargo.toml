@@ -3,7 +3,7 @@ authors = ['Kylin <https://github.com/kylin-network>']
 edition = '2018'
 homepage = 'https://kylin.network'
 license = 'Apache 2.0'
-name = 'kylin-collator-runtime'
+name = 'runtime-common'
 repository = 'https://github.com/kylin-network/kylin-collator/'
 version = '2.0.0'
 
@@ -16,8 +16,6 @@ scale-info = { version = "1.0.0", default-features = false, features = ["derive"
 serde = { version = "1.0.101", optional = true, features = ["derive"] }
 
 log = { version = "0.4.14", default-features = false }
-# Local Dependencies
-kylin-oracle = { package = 'kylin-oracle', path = '../pallets/kylin-oracle', default-features = false }
 
 # Substrate Dependencies
 ## Substrate Primitive Dependencies
@@ -88,7 +86,6 @@ runtime-benchmarks = [
 	'frame-system/runtime-benchmarks',
 	'pallet-balances/runtime-benchmarks',
 	'pallet-timestamp/runtime-benchmarks',
-	'kylin-oracle/runtime-benchmarks',
 ]
 std = [
 	'codec/std',
@@ -129,7 +126,6 @@ std = [
 	'cumulus-pallet-xcm/std',
 	'cumulus-pallet-xcmp-queue/std',
 	'cumulus-primitives-utility/std',
-	'kylin-oracle/std',
 ]
 
 # A feature that should be enabled when the runtime should be build for on-chain
