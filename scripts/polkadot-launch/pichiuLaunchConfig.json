@@ -1,7 +1,7 @@
 {
     "relaychain": {
             "bin": "../polkadot/target/release/polkadot",
-            "chain": "kusama-local",
+            "chain": "westend-local",
             "nodes": [
                     {
                             "name": "alice",
@@ -63,7 +63,7 @@
                                     "wsPort": 9942,
                                     "port": 31200,
                                     "name": "alice",
-                                    "flags": ["--force-authoring","--unsafe-ws-external","--rpc-cors=all","--wasm-execution=Compiled", "--rpc-external","--rpc-methods=Unsafe", "--execution=Native", "--","--ws-port=9941","--rpc-port=9913" ,"--wasm-execution=Compiled"]
+                                    "flags": ["--force-authoring","--unsafe-ws-external","--rpc-cors=all", "--rpc-external","--rpc-methods=Unsafe", "--execution=Native", "--","--ws-port=9941","--rpc-port=9913" ,"--execution=wasm"]
                             }
                     ]
             },
@@ -76,7 +76,7 @@
                                     "wsPort": 9943,
                                     "port": 31201,
                                     "name": "bob",
-                                    "flags": ["--force-authoring", "--unsafe-ws-external","--rpc-cors=all","--wasm-execution=Compiled", "--rpc-external","--rpc-methods=Unsafe", "--execution=Native", "--","--ws-port=9920","--rpc-port=9914","--wasm-execution=Compiled"]
+                                    "flags": ["--force-authoring", "--unsafe-ws-external","--rpc-cors=all", "--rpc-external","--rpc-methods=Unsafe", "--execution=Native", "--","--ws-port=9920","--rpc-port=9914","--execution=wasm"]
                             }
                     ]
             }
