@@ -5,7 +5,7 @@ LABEL maintainer="kylin-dev"
 ARG PROFILE=release
 ARG KYLIN_GIT_REPO="https://github.com/Kylin-Network/kylin-collator.git"
 ARG GIT_BRANCH="main"
-ARG GIT_CLONE_DEPTH="--depth 1 --shallow-submodules"
+ARG GIT_CLONE_DEPTH="--depth 1"
 WORKDIR /builds/
 
 #Build kylin-collator
