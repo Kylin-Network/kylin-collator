@@ -112,7 +112,7 @@ pub fn development_local_config(id: ParaId, environment: &str) -> DevelopmentCha
 				],
 				endowed_accounts(),
 				id,
-				3_000_000 * KYL
+				300_000_000 * KYL
 			)
 		},
 		Vec::new(),
@@ -142,7 +142,7 @@ pub fn development_environment_config(id: ParaId,environment: &str) -> Developme
 				],
 				endowed_accounts(),
 				id,
-				3_000_000 * KYL
+				300_000_000 * KYL
 			)
 		},
 		Vec::new(),
@@ -176,7 +176,7 @@ pub fn pichiu_local_network(para_id: ParaId) -> PichiuChainSpec {
 				endowed_accounts(),
 				Some(50000000 * PCHU),
 				para_id,
-				3_000_000 * PCHU
+				30_000_000 * PCHU
 			)
 		},
 		Vec::new(),
@@ -193,8 +193,8 @@ pub fn pichiu_development_network(para_id: ParaId) -> PichiuChainSpec {
 	properties.insert("tokenDecimals".into(), 18.into());
 
 	PichiuChainSpec::from_genesis(
-		"Pichiu dev",
-		"pichiu_dev",
+		"Pichiu Testnet",
+		"pichiu_testnet",
 		ChainType::Live,
 		move || {
 			pichiu_genesis(
@@ -210,7 +210,7 @@ pub fn pichiu_development_network(para_id: ParaId) -> PichiuChainSpec {
 				endowed_accounts(),
 				Some(50000000 * PCHU),
 				para_id,
-				3_000_000 * PCHU
+				30_000_000 * PCHU
 			)
 		},
 		vec![],
@@ -245,7 +245,7 @@ pub fn pichiu_network(para_id: ParaId) -> PichiuChainSpec {
 				endowed_accounts(),
 				Some(50000000 * PCHU),
 				para_id,
-				3_000_000 * PCHU
+				30_000_000 * PCHU
 			)
 		},
 		vec![],

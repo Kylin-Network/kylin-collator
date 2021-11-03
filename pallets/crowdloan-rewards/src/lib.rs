@@ -87,11 +87,10 @@ use sp_std::collections::btree_map::BTreeMap;
 use sp_std::vec;
 use sp_std::vec::Vec;
 use scale_info::TypeInfo;
-use sp_std::fmt::Debug;
+
 #[frame_support::pallet]
 pub mod pallet {
     use super::*;
-
 
 
 	#[pallet::pallet]

@@ -140,6 +140,7 @@ std = [
 	'cumulus-pallet-xcmp-queue/std',
 	'cumulus-primitives-utility/std',
 	'kylin-oracle/std',
+	'pallet-crowdloan-rewards/std',
 ]
 
 # A feature that should be enabled when the runtime should be build for on-chain
