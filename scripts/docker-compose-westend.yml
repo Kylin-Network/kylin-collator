@@ -1,15 +1,15 @@
 version: "3.2"
 
 services:
-  kylin-collator:
-    container_name: kylin-collator
+  kylin-collator-westend:
+    container_name: kylin-collator-westend
     image: kylinnetwork/kylin-collator:main
     ports:
       - "9942:9942"
       - "9930:9930"
       - "30333:30333"
       - "30334:30334"
-    command: bash -c "/kylin-collator --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus_parachain/kylin-collator-1 --collator --name pichiu-collator-1 --force-authoring --ws-port 9942 --port 30333 --rpc-port 9930 --parachain-id 2104 --chain pichiu-westend --execution=Native --  --port 30334 --chain westend --execution=wasm"
+    command: bash -c "/kylin-collator --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus_parachain/kylin-collator-1 --collator --name pichiu-collator-1 --force-authoring --ws-port 9942 --port 30333 --rpc-port 9930 --parachain-id 2104 --chain pichiu-westend --execution=Native --  --port 30334 --chain westend --execution=wasm --pruning archive"
     volumes:
       - ./kylin_db/cumulus_parachain:/cumulus_parachain/
 
@@ -19,4 +19,4 @@ services:
     ports:
       - "3001:80"
     depends_on:
-      - kylin-collator
+      - kylin-collator-westend

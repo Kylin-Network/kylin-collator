@@ -181,6 +181,23 @@ pub mod pallet {
         T::AccountId: AsRef<[u8]> + ToHex,
         T: pallet_balances::Config,
     {
+
+
+        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+        pub fn sudo_remove_feed_account(
+            origin: OriginFor<T>,
+            feed_name: Vec<u8>,
+        ) -> DispatchResult {
+            ensure_root(origin)?;
+            let feed_exists = FeedAccountLookup::<T>::contains_key(feed_name.clone());
+            if feed_exists {
+                <FeedAccountLookup<T>>::remove(&feed_name);
+                Self::deposit_event(Event::RemovedFeedAccount(feed_name.clone()))
+            }
+            Ok(())
+        }
+
+
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
         pub fn query_data(
             origin: OriginFor<T>,
@@ -474,6 +491,7 @@ pub mod pallet {
     where
         <T as frame_system::Config>::AccountId: AsRef<[u8]> + ToHex,
     {
+        RemovedFeedAccount(Vec<u8>),
         SubmitNewData(
             Option<ParaId>,
             Vec<u8>,
