@@ -181,8 +181,6 @@ pub mod pallet {
         T::AccountId: AsRef<[u8]> + ToHex,
         T: pallet_balances::Config,
     {
-
-
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
         pub fn sudo_remove_feed_account(
             origin: OriginFor<T>,
@@ -196,7 +194,6 @@ pub mod pallet {
             }
             Ok(())
         }
-
 
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
         pub fn query_data(
@@ -412,58 +409,60 @@ pub mod pallet {
             let block_number = <system::Pallet<T>>::block_number();
             let current_timestamp = T::UnixTime::now().as_millis();
             for key in processed_requests.iter() {
-                let saved_request = Self::saved_data_requests(key);
-                let processed_request = DataRequest {
-                    para_id: saved_request.para_id,
-                    account_id: saved_request.account_id,
-                    feed_name: saved_request.feed_name.clone(),
-                    requested_block_number: saved_request.requested_block_number,
-                    processed_block_number: Some(block_number),
-                    requested_timestamp: saved_request.requested_timestamp,
-                    processed_timestamp: Some(current_timestamp),
-                    payload: saved_request.payload.clone(),
-                    is_query: saved_request.is_query,
-                    url: saved_request.url.clone(),
-                };
+                if SavedRequests::<T>::contains_key(key.clone()) {
+                    let saved_request = Self::saved_data_requests(key);
+                    let processed_request = DataRequest {
+                        para_id: saved_request.para_id,
+                        account_id: saved_request.account_id,
+                        feed_name: saved_request.feed_name.clone(),
+                        requested_block_number: saved_request.requested_block_number,
+                        processed_block_number: Some(block_number),
+                        requested_timestamp: saved_request.requested_timestamp,
+                        processed_timestamp: Some(current_timestamp),
+                        payload: saved_request.payload.clone(),
+                        is_query: saved_request.is_query,
+                        url: saved_request.url.clone(),
+                    };
 
-                <SavedRequests<T>>::insert(key, processed_request.clone());
+                    <SavedRequests<T>>::insert(key, processed_request.clone());
 
-                let encoded_hash = hex::encode(
-                    sp_runtime::traits::BlakeTwo256::hash(
-                        processed_request.clone().encode().as_slice(),
+                    let encoded_hash = hex::encode(
+                        sp_runtime::traits::BlakeTwo256::hash(
+                            processed_request.clone().encode().as_slice(),
+                        )
+                        .as_bytes(),
                     )
-                    .as_bytes(),
-                )
-                .as_bytes()
-                .to_vec();
-                if processed_request.is_query {
-                    Self::deposit_event(Event::ReadFromDWH(
-                        processed_request.para_id,
-                        encoded_hash.clone(),
-                        processed_request.feed_name.clone(),
-                        processed_request.clone(),
-                        processed_request.processed_block_number.clone().unwrap(),
-                    ));
-                } else {
-                    //insert to api
-                    <ApiQueue<T>>::insert(key, processed_request.clone());
-                    let feed_owner =
-                        Self::feed_account_lookup(processed_request.feed_name.clone()).0;
-                    <FeedAccountLookup<T>>::insert(
-                        processed_request.feed_name.clone(),
-                        (&feed_owner, encoded_hash.clone()),
-                    );
-                    Self::deposit_event(Event::SavedToDWH(
-                        processed_request.para_id,
-                        encoded_hash.clone(),
-                        processed_request.feed_name.clone(),
-                        processed_request.clone(),
-                        processed_request.processed_block_number.clone().unwrap(),
-                    ));
-                }
+                    .as_bytes()
+                    .to_vec();
+                    if processed_request.is_query {
+                        Self::deposit_event(Event::ReadFromDWH(
+                            processed_request.para_id,
+                            encoded_hash.clone(),
+                            processed_request.feed_name.clone(),
+                            processed_request.clone(),
+                            processed_request.processed_block_number.clone().unwrap(),
+                        ));
+                    } else {
+                        //insert to api
+                        <ApiQueue<T>>::insert(key, processed_request.clone());
+                        let feed_owner =
+                            Self::feed_account_lookup(processed_request.feed_name.clone()).0;
+                        <FeedAccountLookup<T>>::insert(
+                            processed_request.feed_name.clone(),
+                            (&feed_owner, encoded_hash.clone()),
+                        );
+                        Self::deposit_event(Event::SavedToDWH(
+                            processed_request.para_id,
+                            encoded_hash.clone(),
+                            processed_request.feed_name.clone(),
+                            processed_request.clone(),
+                            processed_request.processed_block_number.clone().unwrap(),
+                        ));
+                    }
 
-                <DataRequests<T>>::remove(&key);
-                <NextUnsignedAt<T>>::put(block_number);
+                    <DataRequests<T>>::remove(&key);
+                    <NextUnsignedAt<T>>::put(block_number);
+                }
             }
             Ok(().into())
         }
@@ -736,10 +735,14 @@ where
         let feed_name = str::from_utf8(&self.feed_name).unwrap().chars().collect();
         object_elements.push((feed_name_key, JsonValue::String(feed_name)));
 
-        let url_string = self.url.as_ref().unwrap();
         let url_key = str::from_utf8(b"url").unwrap().chars().collect();
-        let url = str::from_utf8(&url_string).unwrap().chars().collect();
-        object_elements.push((url_key, JsonValue::String(url)));
+        if self.url.is_some() {
+            let url_string = self.url.as_ref().unwrap();
+            let url = str::from_utf8(&url_string).unwrap().chars().collect();
+            object_elements.push((url_key, JsonValue::String(url)));
+        } else {
+            object_elements.push((url_key, JsonValue::Null));
+        }
 
         let json = JsonValue::Object(object_elements.clone());
         object_elements = Vec::new();
@@ -1113,7 +1116,7 @@ where
                 .unwrap_or("Failed to submit data".as_bytes().to_vec());
             queue_to_api.push(key);
         }
-        
+
         if queue_to_api.iter().count() > 0 {
             let result = SubmitTransaction::<T, Call<T>>::submit_unsigned_transaction(
                 Call::clear_api_queue_unsigned {
