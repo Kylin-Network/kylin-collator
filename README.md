@@ -115,7 +115,7 @@ The `polkadot-launch` utility allows you to launch your network seamlessly by pr
 
   Once we have the `polkadot-launch` utility installed, we need to define the configuration file.
 
-  A configuration file has been provided within the repository at `scrips/polkadot_launch/kylinLaunchConfig.json`. You can customize it based on your requirements.
+  A configuration file has been provided within the repository at `scripts/polkadot-launch/kylinLaunchConfig.json`. You can customize it based on your requirements.
 
   - There are two sections in the file which are essential: `relaychain` and `parachains` 
   - relaychain: 3 key parameters
@@ -132,7 +132,7 @@ The `polkadot-launch` utility allows you to launch your network seamlessly by pr
 - #### Launch the network
 
 ```bash
-polkadot-launch scripts/polkadot_launch/kylinLaunchConfig.json
+polkadot-launch scripts/polkadot-launch/kylinLaunchConfig.json
 ```
 
 If the launch is successful, you will see:
