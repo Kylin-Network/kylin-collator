@@ -43,6 +43,10 @@ pub use pallet::*;
 #[cfg(test)]
 mod tests;
 
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
 pub mod weights;
 pub use weights::*;
 type BalanceOf<T> =

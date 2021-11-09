@@ -48,7 +48,12 @@ sp-keystore = { git = 'https://github.com/paritytech/substrate', branch = 'maste
 
 [features]
 default = ['std']
-runtime-benchmarks = ['frame-benchmarking']
+runtime-benchmarks = [
+	'frame-benchmarking',
+	"frame-system/runtime-benchmarks",
+	"xcm-builder/runtime-benchmarks",
+	"pallet-xcm/runtime-benchmarks",
+]
 std = [
 	"codec/std",
 	"serde/std",
@@ -69,4 +74,5 @@ std = [
 	"pallet-xcm/std",
 	"xcm-builder/std",
 	"xcm-executor/std",
+
 ]
