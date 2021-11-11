@@ -1,26 +1,33 @@
 #![cfg(feature = "runtime-benchmarks")]
 use super::*;
-use crate::*;
-use pallet::*;
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_system::RawOrigin;
 
-impl<T: Config> Pallet<T>
-where
-    T::AccountId: AsRef<[u8]> + ToHex,
-    T: pallet_balances::Config,
-{}
+// fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
+// 	let events = frame_system::Pallet::<T>::events();
+// 	let system_event: <T as frame_system::Config>::Event = generic_event.into();
+// 	// compare to the last event record
+// 	let EventRecord { event, .. } = &events[events.len() - 1];
+// 	assert_eq!(event, &system_event);
+// }
 
 benchmarks! {
+    where_clause { where
+		T::AccountId: AsRef<[u8]>,
+	}
+
     write_data_onchain {
         let a in 1 .. 100;
-        let feed_name = b"feed_name".to_vec();
+        let feed_name = a.to_string();
+        let feed_name_vec = feed_name.as_bytes().to_vec();
         let data = b"{'test':'test'}".to_vec();
         let caller: T::AccountId = whitelisted_caller();
-    }: _(RawOrigin::signed(caller), feed_name, data)
+    }: _(RawOrigin::Signed(caller), feed_name_vec, data.clone())
     verify {
-        assert_eq!(1,1);
-        // assert_eq!(Pallet::<T>::get(), Some(a.into));
+        // assert_last_event::<T>(Event::SubmitNewData(None, feed_name_vec, None, caller, frame_system::Pallet::<T>::block_number()).into());
+        let key = DataId::<T>::get();
+        let data_request = Pallet::<T>::data_requests(key);
+        assert_eq!(data_request.payload, data);
     }
 }
 
