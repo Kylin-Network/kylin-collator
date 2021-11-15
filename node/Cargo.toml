@@ -16,11 +16,20 @@ targets = ['x86_64-unknown-linux-gnu']
 name = 'kylin-collator'
 
 [features]
-default = []
-runtime-benchmarks = [
-	"pichiu-runtime/runtime-benchmarks",
-	"development-runtime/runtime-benchmarks",
+default = ["std"]
+std = [
+    "pallet-collective/std",
+    "frame-benchmarking/std"
 ]
+runtime-benchmarks = [
+    'kylin-collator-runtime/runtime-benchmarks',
+    "pallet-collective/runtime-benchmarks"
+]
+
+try-runtime = [
+    "pallet-collective/try-runtime"
+]
+
 
 [dependencies]
 derive_more = "0.15.0"
@@ -36,9 +45,7 @@ hex-literal = "0.2.1"
 async-trait = "0.1.42"
 
 # Parachain runtimes
-development-runtime = { path = '../runtime/development' }
-pichiu-runtime = { path = '../runtime/pichiu' }
-runtime-common = { path = '../runtime/common' }
+kylin-collator-runtime = { path = '../runtime' }
 shell-runtime  = { git = 'https://github.com/paritytech/cumulus', branch = 'master' }
 
 # Substrate dependencies
@@ -78,6 +85,7 @@ jsonrpc-core = "18.0.0"
 sc-transaction-pool-api = { git = "https://github.com/paritytech/substrate", branch = "master" }
 frame-rpc-system = { package = "substrate-frame-rpc-system", git = "https://github.com/paritytech/substrate", branch = "master" }
 pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrate", branch = "master" }
+pallet-collective = { git = "https://github.com/paritytech/substrate", branch = "master" }
 
 # Cumulus dependencies
 cumulus-client-cli  = { git = 'https://github.com/paritytech/cumulus', branch = 'master' }
@@ -100,11 +108,11 @@ polkadot-parachain = { git = "https://github.com/paritytech/polkadot", branch = 
 [build-dependencies]
 substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "master" }
 
+
+
 [dev-dependencies]
 assert_cmd = "0.12"
 nix = "0.17"
 rand = "0.7.3"
 tempfile = "3.2.0"
 tokio = { version = "1.10.0", features = ["macros"] }
-
-

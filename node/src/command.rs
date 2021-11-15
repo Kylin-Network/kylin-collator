@@ -18,7 +18,7 @@ use crate::{
 	chain_spec,
 	cli::{Cli, RelayChainCli, Subcommand},
 	service::{
-		new_partial,DevelopmentRuntimeExecutor,PichiuRuntimerExecutor, ShellRuntimeExecutor,
+		new_partial,ParachainRuntimeExecutor, ShellRuntimeExecutor,
 	},
 };
 use codec::Encode;
@@ -38,33 +38,19 @@ use std::{io::Write, net::SocketAddr};
 // default to the Statemint/Statemine/Westmint id
 const DEFAULT_PARA_ID: u32 = 1000;
 
-
-enum ChainIdentity {
-	Pichiu,
-	Development,
-	Shell,
-}
-
 trait IdentifyChain {
-	fn identify(&self) -> ChainIdentity;
+	fn is_shell(&self) -> bool;
 }
 
 impl IdentifyChain for dyn sc_service::ChainSpec {
-	fn identify(&self) -> ChainIdentity {
-		 if self.id().starts_with("pichiu")
-		{
-			ChainIdentity::Pichiu
-		} else if self.id().starts_with("shell") {
-			ChainIdentity::Shell
-		} else {
-			ChainIdentity::Development
-		}
+	fn is_shell(&self) -> bool {
+		self.id().starts_with("shell")
 	}
 }
 
 impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
-	fn identify(&self) -> ChainIdentity {
-		<dyn sc_service::ChainSpec>::identify(self)
+	fn is_shell(&self) -> bool {
+		<dyn sc_service::ChainSpec>::is_shell(self)
 	}
 }
 
@@ -74,32 +60,26 @@ fn load_spec(
 ) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
 		// Rococo
-		"" | "local"   => Box::new(chain_spec::development_local_config(para_id,"rococo-local")),
-		"kylin-dev" => Box::new(chain_spec::development_environment_config(para_id,"rococo-dev")),
+		"" | "local"   => Box::new(chain_spec::local_environment_config(para_id,"rococo-local")),
+		"kylin-rococo-dev" => Box::new(chain_spec::development_environment_config(para_id,"rococo-dev")),
 		"kylin-rococo" => Box::new(chain_spec::development_environment_config(para_id,"rococo")),
 		"kylin-chachacha" => Box::new(chain_spec::development_environment_config(para_id,"chachacha")),
 
 		// Westend
-		"pichiu-local" => Box::new(chain_spec::pichiu_local_network(para_id)),
-		"pichiu-westend" | "pichiu-chachacha" => Box::new(chain_spec::pichiu_development_network(para_id)),
+		"kylin-westend-local" => Box::new(chain_spec::local_environment_config(para_id,"westend-local")),
+		"kylin-westend-dev" => Box::new(chain_spec::development_environment_config(para_id,"westend-dev")),
 
 		// Kusama
-		"pichiu" => Box::new(chain_spec::pichiu_network(para_id)),
+		"kylin-kusama-local" => Box::new(chain_spec::local_environment_config(para_id,"kusama-local")),
+		"kylin-kusama-dev" => Box::new(chain_spec::development_environment_config(para_id,"kusama-dev")),
 
 		"shell" => Box::new(chain_spec::get_shell_chain_spec(para_id)),
-
 		path => {
-			let chain_spec = chain_spec::PichiuChainSpec::from_json_file(path.into())?;
-			match chain_spec.identify() {
-				ChainIdentity::Pichiu => {
-					Box::new(chain_spec::PichiuChainSpec::from_json_file(path.into())?)
-				}
-				ChainIdentity::Development => {
-					Box::new(chain_spec::DevelopmentChainSpec::from_json_file(path.into())?)
-				}
-				ChainIdentity::Shell => {
-					Box::new(chain_spec::ShellChainSpec::from_json_file(path.into())?)
-				}
+			let chain_spec = chain_spec::ChainSpec::from_json_file(path.into())?;
+			if chain_spec.is_shell() {
+				Box::new(chain_spec::ShellChainSpec::from_json_file(path.into())?)
+			} else {
+				Box::new(chain_spec)
 			}
 		}
 	})
@@ -107,7 +87,7 @@ fn load_spec(
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
-		"Kylin Parachain Collator".into()
+		"Kylin collator".into()
 	}
 
 	fn impl_version() -> String {
@@ -140,11 +120,11 @@ impl SubstrateCli for Cli {
 		load_spec(id, self.run.parachain_id.unwrap_or(DEFAULT_PARA_ID).into())
 	}
 
-	fn native_runtime_version(spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		match spec.identify() {
-			ChainIdentity::Pichiu => &pichiu_runtime::VERSION,
-			ChainIdentity::Development => &development_runtime::VERSION,
-			ChainIdentity::Shell => &shell_runtime::VERSION,
+	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
+		if chain_spec.is_shell() {
+			&shell_runtime::VERSION
+		} else {
+			&kylin_collator_runtime::VERSION
 		}
 	}
 }
@@ -202,37 +182,28 @@ fn extract_genesis_wasm(chain_spec: &Box<dyn sc_service::ChainSpec>) -> Result<V
 macro_rules! construct_async_run {
 	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
 		let runner = $cli.create_runner($cmd)?;
-		match runner.config().chain_spec.identify() {
-			ChainIdentity::Pichiu => {
-				runner.async_run(|$config| {
-					let $components = new_partial::<pichiu_runtime::RuntimeApi, PichiuRuntimerExecutor, _>(
-						&$config,
-						crate::service::build_pichiu_import_queue,
-					)?;
-					let task_manager = $components.task_manager;
-					{ $( $code )* }.map(|v| (v, task_manager))
-				})
-			}
-			ChainIdentity::Development => {
-				runner.async_run(|$config| {
-					let $components = new_partial::<development_runtime::RuntimeApi, DevelopmentRuntimeExecutor, _>(
-						&$config,
-						crate::service::build_development_import_queue,
-					)?;
-					let task_manager = $components.task_manager;
-					{ $( $code )* }.map(|v| (v, task_manager))
-				})
-			}
-			ChainIdentity::Shell => {
-				runner.async_run(|$config| {
-					let $components = new_partial::<shell_runtime::RuntimeApi, ShellRuntimeExecutor, _>(
-						&$config,
-						crate::service::build_shell_import_queue,
-					)?;
-					let task_manager = $components.task_manager;
-					{ $( $code )* }.map(|v| (v, task_manager))
-				})
-			}
+		if runner.config().chain_spec.is_shell() {
+			runner.async_run(|$config| {
+				let $components = new_partial::<shell_runtime::RuntimeApi, ShellRuntimeExecutor, _>(
+					&$config,
+					crate::service::shell_build_import_queue,
+				)?;
+				let task_manager = $components.task_manager;
+				{ $( $code )* }.map(|v| (v, task_manager))
+			})
+		} else {
+			runner.async_run(|$config| {
+				let $components = new_partial::<
+					kylin_collator_runtime::RuntimeApi,
+					ParachainRuntimeExecutor,
+					_
+				>(
+					&$config,
+					crate::service::parachain_build_import_queue,
+				)?;
+				let task_manager = $components.task_manager;
+				{ $( $code )* }.map(|v| (v, task_manager))
+			})
 		}
 	}}
 }
@@ -376,28 +347,17 @@ pub fn run() -> Result<()> {
 					}
 				);
 
-
-				match config.chain_spec.identify() {
-					ChainIdentity::Pichiu => {
-						crate::service::start_pichiu_node(config, polkadot_config, id)
-							.await
-							.map(|r| r.0)
-							.map_err(Into::into)
-					}
-					ChainIdentity::Development => {
-						crate::service::start_development_node(config, polkadot_config, id)
-							.await
-							.map(|r| r.0)
-							.map_err(Into::into)
-					}
-					ChainIdentity::Shell => {
-						crate::service::start_shell_node(config, polkadot_config, id)
-							.await
-							.map(|r| r.0)
-							.map_err(Into::into)
-					}
+				if config.chain_spec.is_shell() {
+					crate::service::start_shell_node(config, polkadot_config, id)
+						.await
+						.map(|r| r.0)
+						.map_err(Into::into)
+				} else {
+					crate::service::start_rococo_parachain_node(config, polkadot_config, id)
+						.await
+						.map(|r| r.0)
+						.map_err(Into::into)
 				}
-
 			})
 		}
 	}

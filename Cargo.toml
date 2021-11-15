@@ -1,5 +1,6 @@
 [profile.release]
-panic = 'unwind'
+panic = 'abort'
+debug = true
 split-debuginfo = "unpacked"
 
 
@@ -7,7 +8,5 @@ split-debuginfo = "unpacked"
 members = [
     'node',
     'pallets/*',
-	"runtime/pichiu",
-	"runtime/development",
-	"runtime/common",
+    'runtime',
 ]

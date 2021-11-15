@@ -33,27 +33,21 @@ pallet-balances = { git = 'https://github.com/paritytech/substrate', branch = 'm
 
 xcm = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "master" }
 
-pallet-xcm = { git = 'https://github.com/paritytech/polkadot', branch = 'master', default-features = false }
-pallet-timestamp = { git = 'https://github.com/paritytech/substrate', branch = 'master', default-features = false }
-xcm-builder = { git = 'https://github.com/paritytech/polkadot', branch = 'master', default-features = false }
-xcm-executor = { git = 'https://github.com/paritytech/polkadot', branch = 'master', default-features = false }
-
 [dev-dependencies]
 serde = { version = "1.0.101" }
 sp-core = { git = 'https://github.com/paritytech/substrate', branch = 'master', default-features = false }
 sp-runtime = { git = 'https://github.com/paritytech/substrate', branch = 'master', default-features = false }
 sp-io = { git = 'https://github.com/paritytech/substrate', branch = 'master', default-features = false }
-pallet-transaction-payment = { git = 'https://github.com/paritytech/substrate', branch = 'master', default-features = false }
 sp-keystore = { git = 'https://github.com/paritytech/substrate', branch = 'master', default-features = false }
+pallet-timestamp = { git = 'https://github.com/paritytech/substrate', branch = 'master', default-features = false }
+pallet-transaction-payment = { git = 'https://github.com/paritytech/substrate', branch = 'master', default-features = false }
+pallet-xcm = { git = 'https://github.com/paritytech/polkadot', branch = 'master', default-features = false }
+xcm-builder = { git = 'https://github.com/paritytech/polkadot', branch = 'master', default-features = false }
+xcm-executor = { git = 'https://github.com/paritytech/polkadot', branch = 'master', default-features = false }
 
 [features]
 default = ['std']
-runtime-benchmarks = [
-	'frame-benchmarking',
-	"frame-system/runtime-benchmarks",
-	"xcm-builder/runtime-benchmarks",
-	"pallet-xcm/runtime-benchmarks",
-]
+runtime-benchmarks = ['frame-benchmarking']
 std = [
 	"codec/std",
 	"serde/std",
@@ -64,6 +58,7 @@ std = [
 	'frame-system/std',
 	"sp-core/std",
 	"sp-runtime/std",
+	"sp-keystore/std",
 	"sp-io/std",
 	"sp-std/std",
 	"cumulus-pallet-xcm/std",
@@ -74,5 +69,4 @@ std = [
 	"pallet-xcm/std",
 	"xcm-builder/std",
 	"xcm-executor/std",
-
 ]
