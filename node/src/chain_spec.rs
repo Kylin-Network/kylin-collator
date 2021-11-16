@@ -110,7 +110,7 @@ pub fn development_local_config(id: ParaId, environment: &str) -> DevelopmentCha
 					get_from_seed::<AuraId>("Alice"),
 					get_from_seed::<AuraId>("Bob"),
 				],
-				endowed_accounts(),
+				endowed_accounts_local(),
 				id,
 				300_000_000 * KYL
 			)
@@ -133,8 +133,6 @@ pub fn development_environment_config(id: ParaId,environment: &str) -> Developme
 			development_genesis(
 				AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
 				vec![
-					get_from_seed::<AuraId>("Alice"),
-					get_from_seed::<AuraId>("Bob"),
 					hex!["7c11cea2901e72fe525d7335e99d48bdf8dea2a983ac92fa3ab20508a438af73"]
 					.unchecked_into(),
 					hex!["287f278af79ef7f1b2a2b3d5a7c76a047e248232d13f0a5ec744789a96dc824d"]
@@ -173,7 +171,7 @@ pub fn pichiu_local_network(para_id: ParaId) -> PichiuChainSpec {
 					get_from_seed::<AuraId>("Alice"),
 					get_from_seed::<AuraId>("Bob"),
 				],
-				endowed_accounts(),
+				endowed_accounts_local(),
 				Some(50000000 * PCHU),
 				para_id,
 				30_000_000 * PCHU
@@ -200,8 +198,6 @@ pub fn pichiu_development_network(para_id: ParaId) -> PichiuChainSpec {
 			pichiu_genesis(
 				AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
 				vec![
-					get_from_seed::<AuraId>("Alice"),
-					get_from_seed::<AuraId>("Bob"),
 					hex!["7c11cea2901e72fe525d7335e99d48bdf8dea2a983ac92fa3ab20508a438af73"]
 					.unchecked_into(),
 					hex!["287f278af79ef7f1b2a2b3d5a7c76a047e248232d13f0a5ec744789a96dc824d"]
@@ -260,6 +256,13 @@ pub fn pichiu_network(para_id: ParaId) -> PichiuChainSpec {
 }
 
 fn endowed_accounts() -> Vec<AccountId> {
+	vec![
+		AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
+	]
+}
+
+
+fn endowed_accounts_local() -> Vec<AccountId> {
 	vec![
 		AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
 		get_account_id_from_seed::<sr25519::Public>("Alice"),
