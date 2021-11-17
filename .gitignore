@@ -21,5 +21,5 @@
 
 scripts/kylin-data-proxy.env
 scripts/kylin_db/
-scripts/polkadot_launch/rococo*.json
+scripts/polkadot-launch/rococo*.json
 cumulus-parachain/*
