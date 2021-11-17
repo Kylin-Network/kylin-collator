@@ -1,17 +1,41 @@
 version: "3.2"
 
 services:
-  kylin-collator-westend:
-    container_name: kylin-collator-westend
+  kylin-collator-1:
+    container_name: kylin-collator-1
     image: kylinnetwork/kylin-collator:main
     ports:
       - "9942:9942"
       - "9930:9930"
       - "30333:30333"
       - "30334:30334"
-    command: bash -c "wget https://raw.githubusercontent.com/Kylin-Network/kylin-collator/main/res/pichiu-westend-spec.json;/kylin-collator --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus_parachain/kylin-collator-1 --collator --name pichiu-collator-1 --ws-port 9942 --port 30333 --rpc-port 9930 --parachain-id 2106 --chain pichiu-westend-spec.json --execution=Native --  --port 30334 --chain westend --execution=wasm  --sync fast --pruning archive"
+    command: bash -c "wget https://raw.githubusercontent.com/Kylin-Network/kylin-collator/main/res/pichiu-westend-spec.json;/kylin-collator --collator --allow-private-ipv4 --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus_parachain/kylin-collator-1  --name pichiu-collator-1 --ws-port 9942 --port 30333 --rpc-port 9930 --parachain-id 2112 --chain pichiu-westend-spec.json --execution=Native --  --port 30334 --chain westend --execution=wasm --sync fast "
     volumes:
-      - ./kylin_db/cumulus_parachain:/cumulus_parachain/
+      - ./kylin_db/cumulus_parachain-1:/cumulus_parachain/
+  
+  kylin-collator-2:
+    container_name: kylin-collator-2
+    image: kylinnetwork/kylin-collator:main
+    ports:
+      - "9943:9942"
+      - "9931:9930"
+      - "30335:30333"
+      - "30336:30334"
+    command: bash -c "wget https://raw.githubusercontent.com/Kylin-Network/kylin-collator/main/res/pichiu-westend-spec.json;/kylin-collator --collator --allow-private-ipv4 --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus_parachain/kylin-collator-1  --name pichiu-collator-1 --ws-port 9942 --port 30333 --rpc-port 9930 --parachain-id 2112 --chain pichiu-westend-spec.json --execution=Native --  --port 30334 --chain westend --execution=wasm --sync fast "
+    volumes:
+      - ./kylin_db/cumulus_parachain-2:/cumulus_parachain/
+  
+  kylin-collator-3:
+    container_name: kylin-collator-3
+    image: kylinnetwork/kylin-collator:main
+    ports:
+      - "9944:9942"
+      - "9932:9930"
+      - "30337:30333"
+      - "30338:30334"
+    command: bash -c "wget https://raw.githubusercontent.com/Kylin-Network/kylin-collator/main/res/pichiu-westend-spec.json;/kylin-collator --collator --allow-private-ipv4 --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus_parachain/kylin-collator-1  --name pichiu-collator-1 --ws-port 9942 --port 30333 --rpc-port 9930 --parachain-id 2112 --chain pichiu-westend-spec.json --execution=Native --  --port 30334 --chain westend --execution=wasm --sync fast "
+    volumes:
+      - ./kylin_db/cumulus_parachain-3:/cumulus_parachain/
 
   frontend:
     container_name: frontend
@@ -19,4 +43,4 @@ services:
     ports:
       - "3001:80"
     depends_on:
-      - kylin-collator-westend
+      - kylin-collator-1
