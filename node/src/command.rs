@@ -35,10 +35,6 @@ use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::Block as BlockT;
 use std::{io::Write, net::SocketAddr};
 
-// default to the Statemint/Statemine/Westmint id
-const DEFAULT_PARA_ID: u32 = 2112;
-
-
 enum ChainIdentity {
 	Pichiu,
 	Development,

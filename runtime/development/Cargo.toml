@@ -97,8 +97,12 @@ runtime-benchmarks = [
 	'frame-system-benchmarking',
 	'frame-system/runtime-benchmarks',
 	'pallet-balances/runtime-benchmarks',
+	'pallet-collective/runtime-benchmarks',
 	'pallet-timestamp/runtime-benchmarks',
+	'pallet-xcm/runtime-benchmarks',
 	'kylin-oracle/runtime-benchmarks',
+	'xcm-builder/runtime-benchmarks',
+	'xcm/runtime-benchmarks',
 ]
 std = [
 	'codec/std',
@@ -131,6 +135,7 @@ std = [
 	'pallet-utility/std',
 	'pallet-vesting/std',
 	'pallet-transaction-payment/std',
+	'pallet-xcm/std',
 	'parachain-info/std',
 	'parachains-common/std',
 	'cumulus-pallet-aura-ext/std',

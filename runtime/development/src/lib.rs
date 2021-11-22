@@ -86,6 +86,7 @@ use xcm_builder::{
 
 /// common types for the runtime.
 pub use runtime_common::*;
+pub use runtime_common::Index;
 
 
 pub type SessionHandlers = ();
@@ -155,11 +156,11 @@ impl frame_system::Config for Runtime {
 	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
 	type Lookup = AccountIdLookup<AccountId, ()>;
 	/// The index type for storing how many extrinsics an account has signed.
-	type Index = Index;
+	type Index = runtime_common::Index;	
 	/// The index type for blocks.
 	type BlockNumber = BlockNumber;
-	/// The type for hashing blocks and tries.
 	type Hash = Hash;
+
 	/// The hashing algorithm used.
 	type Hashing = BlakeTwo256;
 	/// The header type.
@@ -671,24 +672,6 @@ construct_runtime! {
 	}
 }
 
-/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-pub type Signature = sp_runtime::MultiSignature;
-/// Some way of identifying an account on the chain. We intentionally make it equivalent
-/// to the public key of our transaction signing scheme.
-pub type AccountId = <<Signature as sp_runtime::traits::Verify>::Signer as sp_runtime::traits::IdentifyAccount>::AccountId;
-/// Balance of an account.
-pub type Balance = u128;
-/// Index of a transaction in the chain.
-pub type Index = u32;
-/// A hash of some data used by the chain.
-pub type Hash = sp_core::H256;
-/// An index to a block.
-pub type BlockNumber = u32;
-/// The address format for describing accounts.
-pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
-/// Block header type as expected by this runtime.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
-/// Block type as expected by this runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 /// A Block signed with a Justification
 pub type SignedBlock = generic::SignedBlock<Block>;
