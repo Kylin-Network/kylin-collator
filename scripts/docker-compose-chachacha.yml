@@ -1,17 +1,41 @@
 version: "3.2"
 
 services:
-  kylin-collator:
-    container_name: kylin-collator
+  kylin-collator-1:
+    container_name: kylin-collator-1
     image: kylinnetwork/kylin-collator:main
     ports:
       - "9942:9942"
       - "9930:9930"
       - "30333:30333"
       - "30334:30334"
-    command: bash -c "wget https://raw.githubusercontent.com/centrifuge/polkadot/chachacha/node/service/res/rococo-chachacha.json;/kylin-collator --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus_parachain/kylin-collator-1 --collator --name kylin-collator-1 --force-authoring --ws-port 9942 --port 30333 --rpc-port 9930 --parachain-id 2000 --chain kylin-chachacha -- --wasm-execution Compiled --port 30334 --chain rococo-chachacha.json --sync fast"
+    command: bash -c "wget https://raw.githubusercontent.com/Kylin-Network/kylin-collator/main/res/pichiu-chachacha-spec.json; wget https://raw.githubusercontent.com/centrifuge/polkadot/chachacha/node/service/res/rococo-chachacha.json;/kylin-collator --collator --allow-private-ipv4 --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus_parachain/kylin-collator-1  --name pichiu-collator-1 --ws-port 9942 --port 30333 --rpc-port 9930 --parachain-id 2112 --chain pichiu-chachacha-spec.json --execution=Native --  --port 30334 --chain rococo-chachacha.json --execution=wasm --sync fast --pruning archive"
     volumes:
-      - ./kylin_db/cumulus_parachain:/cumulus_parachain/
+      - ./kylin_db/cumulus_parachain_1:/cumulus_parachain/
+  
+  kylin-collator-2:
+    container_name: kylin-collator-2
+    image: kylinnetwork/kylin-collator:main
+    ports:
+      - "9943:9942"
+      - "9931:9930"
+      - "30335:30333"
+      - "30336:30334"
+    command: bash -c "wget https://raw.githubusercontent.com/Kylin-Network/kylin-collator/main/res/pichiu-chachacha-spec.json; wget https://raw.githubusercontent.com/centrifuge/polkadot/chachacha/node/service/res/rococo-chachacha.json;/kylin-collator --collator --allow-private-ipv4 --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus_parachain/kylin-collator-1  --name pichiu-collator-1 --ws-port 9942 --port 30333 --rpc-port 9930 --parachain-id 2112 --chain pichiu-chachacha-spec.json --execution=Native --  --port 30334 --chain rococo-chachacha.json --execution=wasm --sync fast --pruning archive"
+    volumes:
+      - ./kylin_db/cumulus_parachain_2:/cumulus_parachain/
+  
+  kylin-collator-3:
+    container_name: kylin-collator-3
+    image: kylinnetwork/kylin-collator:main
+    ports:
+      - "9944:9942"
+      - "9932:9930"
+      - "30337:30333"
+      - "30338:30334"
+    command: bash -c "wget https://raw.githubusercontent.com/Kylin-Network/kylin-collator/main/res/pichiu-chachacha-spec.json; wget https://raw.githubusercontent.com/centrifuge/polkadot/chachacha/node/service/res/rococo-chachacha.json;/kylin-collator --collator --allow-private-ipv4 --unsafe-ws-external --rpc-cors all  --rpc-external --rpc-methods Unsafe -d cumulus_parachain/kylin-collator-1  --name pichiu-collator-1 --ws-port 9942 --port 30333 --rpc-port 9930 --parachain-id 2112 --chain pichiu-chachacha-spec.json --execution=Native --  --port 30334 --chain rococo-chachacha.json --execution=wasm --sync fast --pruning archive"
+    volumes:
+      - ./kylin_db/cumulus_parachain_3:/cumulus_parachain/
 
   kylin-market-frontend:
     container_name: frontend
@@ -20,51 +44,4 @@ services:
       - "3001:3001"
     command: bash -c "cd /apps && serve -p 3001 build"
     depends_on:
-      - kylin-collator
-
-  kylin-es:
-    container_name: kylin-es
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.8.1
-    environment:
-      - discovery.type=single-node
-    volumes:
-      - es-data:/usr/share/elasticsearch/data
-
-  kylin-kibana:
-    container_name: kylin-kibana
-    ports:
-      - "5601:5601"
-    image: docker.elastic.co/kibana/kibana:7.8.1
-    environment:
-      ELASTICSEARCH_HOSTS: http://kylin-es:9200
-    depends_on:
-      - kylin-es
-
-  init-es-index:
-    container_name: init-es-index
-    image: kylinnetwork/kylin-collator:main
-    environment:
-      ES_HOST: http://kylin-es:9200
-      ES_INDEX_NAME: kylin_access_tracking
-      KIBANA_HOST: http://kylin-kibana:5601
-    command: /bin/bash -c "sleep 60 && /init_es_index.sh"
-    depends_on:
-      - kylin-es
-      - kylin-kibana
-
-  init-kibana-dashboard:
-    container_name: init-kibana-dashboard
-    image: kylinnetwork/kylin-collator:main
-    environment:
-      ES_HOST: http://kylin-es:9200
-      ES_INDEX_NAME: kylin_access_tracking
-      KIBANA_HOST: http://kylin-kibana:5601
-    command: /bin/bash -c "sleep 120 && /init_kibana_dashboard.sh"
-    depends_on:
-      - kylin-es
-      - kylin-kibana
-volumes:
-  es-data:
-    driver: local
-
-
+      - kylin-collator-1
