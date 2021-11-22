@@ -18,7 +18,7 @@ use crate::{
 	chain_spec,
 	cli::{Cli, RelayChainCli, Subcommand},
 	service::{
-		new_partial,ParachainRuntimeExecutor, ShellRuntimeExecutor,
+		new_partial, Block, ParachainRuntimeExecutor, ShellRuntimeExecutor,
 	},
 };
 use codec::Encode;
@@ -40,17 +40,24 @@ const DEFAULT_PARA_ID: u32 = 1000;
 
 trait IdentifyChain {
 	fn is_shell(&self) -> bool;
+	fn is_parachain(&self) -> bool;
 }
 
 impl IdentifyChain for dyn sc_service::ChainSpec {
 	fn is_shell(&self) -> bool {
 		self.id().starts_with("shell")
 	}
+	fn is_parachain(&self) -> bool {
+		self.id().starts_with("parachain")
+	}
 }
 
 impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
 	fn is_shell(&self) -> bool {
 		<dyn sc_service::ChainSpec>::is_shell(self)
+	}
+	fn is_parachain(&self) -> bool {
+		<dyn sc_service::ChainSpec>::is_parachain(self)
 	}
 }
 
@@ -306,6 +313,21 @@ pub fn run() -> Result<()> {
 
 			Ok(())
 		}
+		Some(Subcommand::Benchmark(cmd)) =>
+			if cfg!(feature = "runtime-benchmarks") {
+				let runner = cli.create_runner(cmd)?;
+				if runner.config().chain_spec.is_parachain() {
+					runner.sync_run(|config| cmd.run::<Block, ParachainRuntimeExecutor>(config))
+				} else if runner.config().chain_spec.is_shell() {
+					runner.sync_run(|config| cmd.run::<Block, ShellRuntimeExecutor>(config))
+				} else {
+					Err("Chain doesn't support benchmarking".into())
+				}
+			} else {
+				Err("Benchmarking wasn't enabled when building the node. \
+				You can enable it with `--features runtime-benchmarks`."
+					.into())
+			}
 
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
