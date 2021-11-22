@@ -329,6 +329,28 @@ pub fn run() -> Result<()> {
 
 			Ok(())
 		}
+		Some(Subcommand::Benchmark(cmd)) => {
+			if cfg!(feature = "runtime-benchmarks") {
+				let runner = cli.create_runner(cmd)?;
+
+				match runner.config().chain_spec.identify() {
+
+					ChainIdentity::Pichiu => runner.sync_run(|config| {
+						cmd.run::<pichiu_runtime::Block, PichiuRuntimerExecutor>(config)
+					}),
+					ChainIdentity::Development => runner.sync_run(|config| {
+						cmd.run::<development_runtime::Block, DevelopmentRuntimeExecutor>(config)
+					}),
+					ChainIdentity::Shell => runner.sync_run(|config| {
+						cmd.run::<shell_runtime::Block, ShellRuntimeExecutor>(config)
+					}),
+				}
+			} else {
+				Err("Benchmarking wasn't enabled when building the node. \
+				You can enable it with `--features runtime-benchmarks`."
+					.into())
+			}
+		}
 
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
