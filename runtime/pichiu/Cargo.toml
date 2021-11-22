@@ -14,6 +14,7 @@ targets = ['x86_64-unknown-linux-gnu']
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
 scale-info = { version = "1.0.0", default-features = false, features = ["derive"] }
 serde = { version = "1.0.101", optional = true, features = ["derive"] }
+hex-literal = { version = '0.3.1', optional = true }
 
 log = { version = "0.4.14", default-features = false }
 
@@ -94,6 +95,7 @@ runtime-benchmarks = [
 	'frame-support/runtime-benchmarks',
 	'frame-system-benchmarking',
 	'frame-system/runtime-benchmarks',
+	'hex-literal',
 	'pallet-balances/runtime-benchmarks',
 	'pallet-collective/runtime-benchmarks',
 	'pallet-timestamp/runtime-benchmarks',

@@ -59,7 +59,7 @@ use substrate_prometheus_endpoint::Registry;
 pub struct DevelopmentRuntimeExecutor;
 
 impl sc_executor::NativeExecutionDispatch for DevelopmentRuntimeExecutor {
-	type ExtendHostFunctions = ();
+	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		development_runtime::api::dispatch(method, data)
@@ -75,7 +75,7 @@ impl sc_executor::NativeExecutionDispatch for DevelopmentRuntimeExecutor {
 pub struct PichiuRuntimerExecutor;
 
 impl sc_executor::NativeExecutionDispatch for PichiuRuntimerExecutor {
-	type ExtendHostFunctions = ();
+	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		pichiu_runtime::api::dispatch(method, data)
