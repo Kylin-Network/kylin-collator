@@ -59,7 +59,8 @@ use substrate_prometheus_endpoint::Registry;
 pub struct ParachainRuntimeExecutor;
 
 impl sc_executor::NativeExecutionDispatch for ParachainRuntimeExecutor {
-	type ExtendHostFunctions = ();
+	//Kanthan - benchmark client
+	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		kylin_collator_runtime::api::dispatch(method, data)
@@ -74,7 +75,9 @@ impl sc_executor::NativeExecutionDispatch for ParachainRuntimeExecutor {
 pub struct ShellRuntimeExecutor;
 
 impl sc_executor::NativeExecutionDispatch for ShellRuntimeExecutor {
-	type ExtendHostFunctions = ();
+	//Kanthan - benchmark client
+	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		shell_runtime::api::dispatch(method, data)
