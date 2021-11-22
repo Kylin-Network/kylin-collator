@@ -43,6 +43,7 @@ frame-system-rpc-runtime-api = { git = 'https://github.com/paritytech/substrate'
 ## Substrate Pallet Dependencies
 pallet-aura = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master" }
 pallet-assets = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "master" }
+pallet-collective = { git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
 pallet-balances = { git = 'https://github.com/paritytech/substrate', branch = 'master', default-features = false }
 pallet-randomness-collective-flip = { git = 'https://github.com/paritytech/substrate', branch = 'master', default-features = false }
 pallet-sudo = { git = 'https://github.com/paritytech/substrate', branch = 'master', default-features = false }
@@ -119,6 +120,7 @@ std = [
 	'frame-system-rpc-runtime-api/std',
 	"pallet-assets/std",
 	"pallet-aura/std",
+	"pallet-collective/std",
 	'pallet-balances/std',
 	'pallet-randomness-collective-flip/std',
 	'pallet-timestamp/std',
