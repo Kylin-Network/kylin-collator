@@ -41,6 +41,7 @@ benchmarks! {
     query_data {
         let a in 1 .. 100;
         let caller: T::AccountId = whitelisted_caller();
+        let _ = T::Currency::make_free_balance_be(&caller, T::Currency::minimum_balance());
         let feed_name = str::from_utf8(b"custom_benchmark_feed").unwrap().as_bytes().to_vec();
         let data = b"{'benchmark':'this is data'}".to_vec();
         // Submit data signed
