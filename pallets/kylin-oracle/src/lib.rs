@@ -185,223 +185,20 @@ pub mod pallet {
         T::AccountId: AsRef<[u8]> + ToHex,
         T: pallet_balances::Config,
     {
-        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-        pub fn sudo_remove_feed_account(
+        #[pallet::weight(<T as Config>::WeightInfo::clear_api_queue_unsigned())]
+        pub fn clear_api_queue_unsigned(
             origin: OriginFor<T>,
-            feed_name: Vec<u8>,
-        ) -> DispatchResult {
-            ensure_root(origin)?;
-            let feed_exists = FeedAccountLookup::<T>::contains_key(feed_name.clone());
-            if feed_exists {
-                <FeedAccountLookup<T>>::remove(&feed_name);
-                Self::deposit_event(Event::RemovedFeedAccount(feed_name.clone()))
+            _block_number: T::BlockNumber,
+            processed_requests: Vec<u64>,
+        ) -> DispatchResultWithPostInfo {
+            // This ensures that the function can only be called via unsigned transaction.
+            ensure_none(origin)?;
+            for key in processed_requests.iter() {
+                <ApiQueue<T>>::remove(&key);
             }
-            Ok(())
+            Ok(().into())
         }
-
-        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-        pub fn query_data(
-            origin: OriginFor<T>,
-            para_id: Option<ParaId>,
-            feed_name: Vec<u8>,
-        ) -> DispatchResult {
-            ensure_signed(origin.clone())?;
-            let submitter_account_id = ensure_signed(origin.clone())?;
-            Self::query_feed(submitter_account_id, para_id, feed_name)
-        }
-
-        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-        pub fn write_data_onchain(
-            origin: OriginFor<T>,
-            feed_name: Vec<u8>,
-            data: Vec<u8>,
-        ) -> DispatchResult {
-            ensure_signed(origin.clone())?;
-            let submitter_account_id = ensure_signed(origin.clone())?;
-            let new_feed_name = (str::from_utf8(b"custom_").unwrap().to_owned()
-                + str::from_utf8(&feed_name).unwrap())
-            .as_bytes()
-            .to_vec();
-            let result = Self::ensure_account_owns_table(
-                submitter_account_id.clone(),
-                new_feed_name.clone(),
-            );
-            match result {
-                Ok(()) => Self::add_data_request(
-                    Some(submitter_account_id),
-                    None,
-                    None,
-                    new_feed_name,
-                    data,
-                    false,
-                ),
-                _ => result,
-            }
-        }
-
-        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-        pub fn submit_data_signed(
-            origin: OriginFor<T>,
-            block_number: T::BlockNumber,
-            key: u64,
-            data: Vec<u8>,
-        ) -> DispatchResult {
-            // Check that the extrinsic was signed and get the signer.
-            // This function will return an error if the extrinsic is not signed.
-            // https://substrate.dev/docs/en/knowledgebase/runtime/origin
-            ensure_signed(origin.clone())?;
-            let submitter_account_id = ensure_signed(origin.clone())?;
-
-            let data_request = Self::data_requests(key);
-            let saved_request = DataRequest {
-                para_id: data_request.para_id,
-                account_id: Some(submitter_account_id),
-                feed_name: data_request.feed_name.clone(),
-                requested_block_number: data_request.requested_block_number,
-                processed_block_number: Some(block_number),
-                requested_timestamp: data_request.requested_timestamp,
-                processed_timestamp: None,
-                payload: data,
-                is_query: data_request.is_query,
-                url: data_request.url.clone(),
-            };
-            Self::save_data_response_onchain(block_number, key, saved_request);
-            Ok(())
-        }
-
-        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-        pub fn submit_data_unsigned(
-            origin: OriginFor<T>,
-            block_number: T::BlockNumber,
-            key: u64,
-            data: Vec<u8>,
-        ) -> DispatchResult {
-            ensure_none(origin.clone())?;
-            let data_request = Self::data_requests(key);
-            let saved_request = DataRequest {
-                para_id: data_request.para_id,
-                account_id: data_request.account_id,
-                feed_name: data_request.feed_name.clone(),
-                requested_block_number: data_request.requested_block_number,
-                processed_block_number: Some(block_number),
-                requested_timestamp: data_request.requested_timestamp,
-                processed_timestamp: None,
-                payload: data,
-                is_query: data_request.is_query,
-                url: data_request.url.clone(),
-            };
-
-            Self::save_data_response_onchain(block_number, key, saved_request);
-            Self::send_response_to_parachain(block_number, key)
-        }
-
-        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-        pub fn submit_data_via_api(
-            origin: OriginFor<T>,
-            para_id: Option<ParaId>,
-            url: Vec<u8>,
-            feed_name: Vec<u8>,
-        ) -> DispatchResult {
-            ensure_signed(origin.clone())?;
-            let submitter_account_id = ensure_signed(origin.clone())?;
-            let new_feed_name = (str::from_utf8(b"custom_").unwrap().to_owned()
-                + str::from_utf8(&feed_name).unwrap())
-            .as_bytes()
-            .to_vec();
-            let result = Self::ensure_account_owns_table(
-                submitter_account_id.clone(),
-                new_feed_name.clone(),
-            );
-            match result {
-                Ok(()) => Self::add_data_request(
-                    Some(submitter_account_id),
-                    para_id,
-                    Some(url),
-                    new_feed_name,
-                    Vec::new(),
-                    false,
-                ),
-                _ => result,
-            }
-        }
-
-        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-        pub fn xcm_submit_data_via_api(
-            origin: OriginFor<T>,
-            url: Vec<u8>,
-            feed_name: Vec<u8>,
-        ) -> DispatchResult {
-            let requester_para_id =
-                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
-            let submitter_account_id = ensure_signed(origin.clone())?;
-            let new_feed_name = (str::from_utf8(b"custom_").unwrap().to_owned()
-                + str::from_utf8(&feed_name).unwrap())
-            .as_bytes()
-            .to_vec();
-            let result = Self::ensure_account_owns_table(
-                submitter_account_id.clone(),
-                new_feed_name.clone(),
-            );
-            match result {
-                Ok(()) => Self::add_data_request(
-                    Some(submitter_account_id),
-                    Some(requester_para_id),
-                    Some(url),
-                    new_feed_name,
-                    Vec::new(),
-                    false,
-                ),
-                _ => result,
-            }
-        }
-
-        #[pallet::weight(<T as Config>::WeightInfo::write_data_onchain())]
-        pub fn submit_price_feed(
-            origin: OriginFor<T>,
-            para_id: Option<ParaId>,
-            requested_currencies: Vec<u8>,
-        ) -> DispatchResult {
-            let submitter_account_id = ensure_signed(origin.clone())?;
-            let feed_name = "price_feeding".as_bytes().to_vec();
-            let result =
-                Self::ensure_account_owns_table(submitter_account_id.clone(), feed_name.clone());
-            match result {
-                Ok(()) => {
-                    let currencies = str::from_utf8(&requested_currencies).unwrap();
-                    let api_url =
-                        str::from_utf8(b"https://api.kylin-node.co.uk/prices?currency_pairs=")
-                            .unwrap();
-                    let url = api_url.clone().to_owned() + currencies.clone();
-                    Self::add_data_request(
-                        Some(submitter_account_id),
-                        para_id,
-                        Some(url.as_bytes().to_vec()),
-                        "price_feeding".as_bytes().to_vec(),
-                        Vec::new(),
-                        false,
-                    )
-                }
-                _ => result,
-            }
-        }
-
-        #[pallet::weight(0)]
-        pub fn receive_response_from_parachain(
-            origin: OriginFor<T>,
-            feed_name: Vec<u8>,
-            response: Vec<u8>,
-        ) -> DispatchResult {
-            let para_id = ensure_sibling_para(<T as Config>::Origin::from(origin))?;
-            let block_number = <system::Pallet<T>>::block_number();
-            Self::deposit_event(Event::ResponseReceived(
-                para_id,
-                feed_name.clone(),
-                response.clone(),
-                block_number,
-            ));
-            Ok(())
-        }
-
+        
         #[pallet::weight(0 + T::DbWeight::get().writes(1))]
         pub fn clear_processed_requests_unsigned(
             origin: OriginFor<T>,
@@ -471,19 +268,224 @@ pub mod pallet {
             Ok(().into())
         }
 
-        #[pallet::weight(0 + T::DbWeight::get().writes(1))]
-        pub fn clear_api_queue_unsigned(
+        #[pallet::weight(<T as Config>::WeightInfo::query_data())]
+        pub fn query_data(
             origin: OriginFor<T>,
-            _block_number: T::BlockNumber,
-            processed_requests: Vec<u64>,
-        ) -> DispatchResultWithPostInfo {
-            // This ensures that the function can only be called via unsigned transaction.
-            ensure_none(origin)?;
-            for key in processed_requests.iter() {
-                <ApiQueue<T>>::remove(&key);
-            }
-            Ok(().into())
+            para_id: Option<ParaId>,
+            feed_name: Vec<u8>,
+        ) -> DispatchResult {
+            ensure_signed(origin.clone())?;
+            let submitter_account_id = ensure_signed(origin.clone())?;
+            Self::query_feed(submitter_account_id, para_id, feed_name)
         }
+
+        #[pallet::weight(0)]
+        pub fn receive_response_from_parachain(
+            origin: OriginFor<T>,
+            feed_name: Vec<u8>,
+            response: Vec<u8>,
+        ) -> DispatchResult {
+            let para_id = ensure_sibling_para(<T as Config>::Origin::from(origin))?;
+            let block_number = <system::Pallet<T>>::block_number();
+            Self::deposit_event(Event::ResponseReceived(
+                para_id,
+                feed_name.clone(),
+                response.clone(),
+                block_number,
+            ));
+            Ok(())
+        }
+        
+        #[pallet::weight(<T as Config>::WeightInfo::submit_data_signed())]
+        pub fn submit_data_signed(
+            origin: OriginFor<T>,
+            block_number: T::BlockNumber,
+            key: u64,
+            data: Vec<u8>,
+        ) -> DispatchResult {
+            // Check that the extrinsic was signed and get the signer.
+            // This function will return an error if the extrinsic is not signed.
+            // https://substrate.dev/docs/en/knowledgebase/runtime/origin
+            ensure_signed(origin.clone())?;
+            let submitter_account_id = ensure_signed(origin.clone())?;
+
+            let data_request = Self::data_requests(key);
+            let saved_request = DataRequest {
+                para_id: data_request.para_id,
+                account_id: Some(submitter_account_id),
+                feed_name: data_request.feed_name.clone(),
+                requested_block_number: data_request.requested_block_number,
+                processed_block_number: Some(block_number),
+                requested_timestamp: data_request.requested_timestamp,
+                processed_timestamp: None,
+                payload: data,
+                is_query: data_request.is_query,
+                url: data_request.url.clone(),
+            };
+
+            Self::save_data_response_onchain(block_number, key, saved_request);
+            Ok(())
+        }
+
+        #[pallet::weight(<T as Config>::WeightInfo::submit_data_unsigned())]
+        pub fn submit_data_unsigned(
+            origin: OriginFor<T>,
+            block_number: T::BlockNumber,
+            key: u64,
+            data: Vec<u8>,
+        ) -> DispatchResult {
+            ensure_none(origin.clone())?;
+            let data_request = Self::data_requests(key);
+            let saved_request = DataRequest {
+                para_id: data_request.para_id,
+                account_id: data_request.account_id,
+                feed_name: data_request.feed_name.clone(),
+                requested_block_number: data_request.requested_block_number,
+                processed_block_number: Some(block_number),
+                requested_timestamp: data_request.requested_timestamp,
+                processed_timestamp: None,
+                payload: data,
+                is_query: data_request.is_query,
+                url: data_request.url.clone(),
+            };
+
+            Self::save_data_response_onchain(block_number, key, saved_request);
+            Self::send_response_to_parachain(block_number, key)
+        }
+
+        #[pallet::weight(<T as Config>::WeightInfo::submit_data_via_api())]
+        pub fn submit_data_via_api(
+            origin: OriginFor<T>,
+            para_id: Option<ParaId>,
+            url: Vec<u8>,
+            feed_name: Vec<u8>,
+        ) -> DispatchResult {
+            ensure_signed(origin.clone())?;
+            let submitter_account_id = ensure_signed(origin.clone())?;
+            let new_feed_name = (str::from_utf8(b"custom_").unwrap().to_owned()
+                + str::from_utf8(&feed_name).unwrap())
+            .as_bytes()
+            .to_vec();
+            let result = Self::ensure_account_owns_table(
+                submitter_account_id.clone(),
+                new_feed_name.clone(),
+            );
+            match result {
+                Ok(()) => Self::add_data_request(
+                    Some(submitter_account_id),
+                    para_id,
+                    Some(url),
+                    new_feed_name,
+                    Vec::new(),
+                    false,
+                ),
+                _ => result,
+            }
+        }
+
+        #[pallet::weight(<T as Config>::WeightInfo::submit_price_feed())]
+        pub fn submit_price_feed(
+            origin: OriginFor<T>,
+            para_id: Option<ParaId>,
+            requested_currencies: Vec<u8>,
+        ) -> DispatchResult {
+            let submitter_account_id = ensure_signed(origin.clone())?;
+            let feed_name = "price_feeding".as_bytes().to_vec();
+            let result =
+                Self::ensure_account_owns_table(submitter_account_id.clone(), feed_name.clone());
+            match result {
+                Ok(()) => {
+                    let currencies = str::from_utf8(&requested_currencies).unwrap();
+                    let api_url =
+                        str::from_utf8(b"https://api.kylin-node.co.uk/prices?currency_pairs=")
+                            .unwrap();
+                    let url = api_url.clone().to_owned() + currencies.clone();
+                    Self::add_data_request(
+                        Some(submitter_account_id),
+                        para_id,
+                        Some(url.as_bytes().to_vec()),
+                        "price_feeding".as_bytes().to_vec(),
+                        Vec::new(),
+                        false,
+                    )
+                }
+                _ => result,
+            }
+        }
+
+        #[pallet::weight(<T as Config>::WeightInfo::sudo_remove_feed_account())]
+        pub fn sudo_remove_feed_account(
+            origin: OriginFor<T>,
+            feed_name: Vec<u8>,
+        ) -> DispatchResult {
+            ensure_root(origin)?;
+            let feed_exists = FeedAccountLookup::<T>::contains_key(feed_name.clone());
+            if feed_exists {
+                <FeedAccountLookup<T>>::remove(&feed_name);
+                Self::deposit_event(Event::RemovedFeedAccount(feed_name.clone()))
+            }
+            Ok(())
+        }
+
+        #[pallet::weight(<T as Config>::WeightInfo::write_data_onchain())]
+        pub fn write_data_onchain(
+            origin: OriginFor<T>,
+            feed_name: Vec<u8>,
+            data: Vec<u8>,
+        ) -> DispatchResult {
+            ensure_signed(origin.clone())?;
+            let submitter_account_id = ensure_signed(origin.clone())?;
+            let new_feed_name = (str::from_utf8(b"custom_").unwrap().to_owned()
+                + str::from_utf8(&feed_name).unwrap())
+            .as_bytes()
+            .to_vec();
+            let result = Self::ensure_account_owns_table(
+                submitter_account_id.clone(),
+                new_feed_name.clone(),
+            );
+            match result {
+                Ok(()) => Self::add_data_request(
+                    Some(submitter_account_id),
+                    None,
+                    None,
+                    new_feed_name,
+                    data,
+                    false,
+                ),
+                _ => result,
+            }
+        }
+
+        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+        pub fn xcm_submit_data_via_api(
+            origin: OriginFor<T>,
+            url: Vec<u8>,
+            feed_name: Vec<u8>,
+        ) -> DispatchResult {
+            let requester_para_id =
+                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
+            let submitter_account_id = ensure_signed(origin.clone())?;
+            let new_feed_name = (str::from_utf8(b"custom_").unwrap().to_owned()
+                + str::from_utf8(&feed_name).unwrap())
+            .as_bytes()
+            .to_vec();
+            let result = Self::ensure_account_owns_table(
+                submitter_account_id.clone(),
+                new_feed_name.clone(),
+            );
+            match result {
+                Ok(()) => Self::add_data_request(
+                    Some(submitter_account_id),
+                    Some(requester_para_id),
+                    Some(url),
+                    new_feed_name,
+                    Vec::new(),
+                    false,
+                ),
+                _ => result,
+            }
+        }
+
     }
 
     // #[pallet::event where <T as frame_system::Config>:: AccountId: AsRef<[u8]> + ToHex + Decode + Serialize]

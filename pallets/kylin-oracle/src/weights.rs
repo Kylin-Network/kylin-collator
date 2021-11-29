@@ -21,37 +21,105 @@
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
-use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
+use frame_support::{
+    traits::Get,
+    weights::{constants::RocksDbWeight, Weight},
+};
 use sp_std::marker::PhantomData;
 
 /// Weight functions needed for kylin_oracle.
-pub trait WeightInfo {	fn sudo_remove_feed_account(a: u32, ) -> Weight;	fn submit_price_feed(a: u32, ) -> Weight;	fn query_data(a: u32, ) -> Weight;	fn write_data_onchain(a: u32, ) -> Weight;	fn submit_data_signed(a: u32, ) -> Weight;	fn submit_data_unsigned(a: u32, ) -> Weight;	fn submit_data_via_api(a: u32, ) -> Weight;	fn clear_api_queue_unsigned(a: u32, ) -> Weight;}
+pub trait WeightInfo {
+    fn clear_api_queue_unsigned() -> Weight;
+    fn query_data() -> Weight;
+    fn submit_data_unsigned() -> Weight;
+    fn submit_data_signed() -> Weight;
+    fn submit_data_via_api() -> Weight;
+    fn submit_price_feed() -> Weight;
+    fn sudo_remove_feed_account() -> Weight;
+    fn write_data_onchain() -> Weight;
+}
 
 /// Weights for kylin_oracle using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
-impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {	fn sudo_remove_feed_account(a: u32, ) -> Weight {
-		(39_825_000 as Weight)			// Standard Error: 0
-			.saturating_add((1_000 as Weight).saturating_mul(a as Weight))			.saturating_add(T::DbWeight::get().reads(1 as Weight))			.saturating_add(T::DbWeight::get().writes(1 as Weight))	}	fn submit_price_feed(_a: u32, ) -> Weight {
-		(65_555_000 as Weight)			.saturating_add(T::DbWeight::get().reads(3 as Weight))			.saturating_add(T::DbWeight::get().writes(3 as Weight))	}	fn query_data(a: u32, ) -> Weight {
-		(120_431_000 as Weight)			// Standard Error: 0
-			.saturating_add((4_000 as Weight).saturating_mul(a as Weight))			.saturating_add(T::DbWeight::get().reads(4 as Weight))			.saturating_add(T::DbWeight::get().writes(2 as Weight))	}	fn write_data_onchain(_a: u32, ) -> Weight {
-		(63_382_000 as Weight)			.saturating_add(T::DbWeight::get().reads(3 as Weight))			.saturating_add(T::DbWeight::get().writes(3 as Weight))	}	fn submit_data_signed(_a: u32, ) -> Weight {
-		(20_506_000 as Weight)			.saturating_add(T::DbWeight::get().reads(2 as Weight))			.saturating_add(T::DbWeight::get().writes(1 as Weight))	}	fn submit_data_unsigned(_a: u32, ) -> Weight {
-		(25_216_000 as Weight)			.saturating_add(T::DbWeight::get().reads(2 as Weight))			.saturating_add(T::DbWeight::get().writes(1 as Weight))	}	fn submit_data_via_api(a: u32, ) -> Weight {
-		(65_295_000 as Weight)			// Standard Error: 0
-			.saturating_add((1_000 as Weight).saturating_mul(a as Weight))			.saturating_add(T::DbWeight::get().reads(3 as Weight))			.saturating_add(T::DbWeight::get().writes(3 as Weight))	}	fn clear_api_queue_unsigned(_a: u32, ) -> Weight {
-		(6_141_000 as Weight)			.saturating_add(T::DbWeight::get().writes(1 as Weight))	}}
+impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
+	fn clear_api_queue_unsigned() -> Weight {
+        (6_284_000 as Weight).saturating_add(T::DbWeight::get().writes(1 as Weight))
+    }
+	fn query_data() -> Weight {
+        (121_180_000 as Weight) // Standard Error: 0
+            .saturating_add(T::DbWeight::get().reads(4 as Weight))
+            .saturating_add(T::DbWeight::get().writes(2 as Weight))
+    }
+	fn submit_data_unsigned() -> Weight {
+        (25_520_000 as Weight) // Standard Error: 0
+            .saturating_add(T::DbWeight::get().reads(2 as Weight))
+            .saturating_add(T::DbWeight::get().writes(1 as Weight))
+    }
+	fn submit_data_signed() -> Weight {
+        (20_716_000 as Weight) // Standard Error: 0
+            .saturating_add(T::DbWeight::get().reads(2 as Weight))
+            .saturating_add(T::DbWeight::get().writes(1 as Weight))
+    }
+	fn submit_data_via_api() -> Weight {
+        (66_168_000 as Weight)
+            .saturating_add(T::DbWeight::get().reads(3 as Weight))
+            .saturating_add(T::DbWeight::get().writes(3 as Weight))
+    }
+	fn submit_price_feed() -> Weight {
+        (65_955_000 as Weight)
+            .saturating_add(T::DbWeight::get().reads(3 as Weight))
+            .saturating_add(T::DbWeight::get().writes(3 as Weight))
+    }
+    fn sudo_remove_feed_account() -> Weight {
+        (39_902_000 as Weight)
+            .saturating_add(T::DbWeight::get().reads(1 as Weight))
+            .saturating_add(T::DbWeight::get().writes(1 as Weight))
+    }
+	fn write_data_onchain() -> Weight {
+        (63_925_000 as Weight)
+            .saturating_add(T::DbWeight::get().reads(3 as Weight))
+            .saturating_add(T::DbWeight::get().writes(3 as Weight))
+    }
+}
 
 // For backwards compatibility and tests
-impl WeightInfo for () {	fn sudo_remove_feed_account(a: u32, ) -> Weight {
-		(39_825_000 as Weight)			// Standard Error: 0
-			.saturating_add((1_000 as Weight).saturating_mul(a as Weight))			.saturating_add(RocksDbWeight::get().reads(1 as Weight))			.saturating_add(RocksDbWeight::get().writes(1 as Weight))	}	fn submit_price_feed(_a: u32, ) -> Weight {
-		(65_555_000 as Weight)			.saturating_add(RocksDbWeight::get().reads(3 as Weight))			.saturating_add(RocksDbWeight::get().writes(3 as Weight))	}	fn query_data(a: u32, ) -> Weight {
-		(120_431_000 as Weight)			// Standard Error: 0
-			.saturating_add((4_000 as Weight).saturating_mul(a as Weight))			.saturating_add(RocksDbWeight::get().reads(4 as Weight))			.saturating_add(RocksDbWeight::get().writes(2 as Weight))	}	fn write_data_onchain(_a: u32, ) -> Weight {
-		(63_382_000 as Weight)			.saturating_add(RocksDbWeight::get().reads(3 as Weight))			.saturating_add(RocksDbWeight::get().writes(3 as Weight))	}	fn submit_data_signed(_a: u32, ) -> Weight {
-		(20_506_000 as Weight)			.saturating_add(RocksDbWeight::get().reads(2 as Weight))			.saturating_add(RocksDbWeight::get().writes(1 as Weight))	}	fn submit_data_unsigned(_a: u32, ) -> Weight {
-		(25_216_000 as Weight)			.saturating_add(RocksDbWeight::get().reads(2 as Weight))			.saturating_add(RocksDbWeight::get().writes(1 as Weight))	}	fn submit_data_via_api(a: u32, ) -> Weight {
-		(65_295_000 as Weight)			// Standard Error: 0
-			.saturating_add((1_000 as Weight).saturating_mul(a as Weight))			.saturating_add(RocksDbWeight::get().reads(3 as Weight))			.saturating_add(RocksDbWeight::get().writes(3 as Weight))	}	fn clear_api_queue_unsigned(_a: u32, ) -> Weight {
-		(6_141_000 as Weight)			.saturating_add(RocksDbWeight::get().writes(1 as Weight))	}}
+impl WeightInfo for () {
+	fn clear_api_queue_unsigned() -> Weight {
+        (6_284_000 as Weight).saturating_add(RocksDbWeight::get().writes(1 as Weight))
+    }
+	fn query_data() -> Weight {
+        (121_180_000 as Weight) // Standard Error: 0
+            .saturating_add(RocksDbWeight::get().reads(4 as Weight))
+            .saturating_add(RocksDbWeight::get().writes(2 as Weight))
+    }
+	fn submit_data_unsigned() -> Weight {
+        (25_520_000 as Weight) // Standard Error: 0
+            .saturating_add(RocksDbWeight::get().reads(2 as Weight))
+            .saturating_add(RocksDbWeight::get().writes(1 as Weight))
+    }
+	fn submit_data_signed() -> Weight {
+        (20_716_000 as Weight) // Standard Error: 0
+            .saturating_add(RocksDbWeight::get().reads(2 as Weight))
+            .saturating_add(RocksDbWeight::get().writes(1 as Weight))
+    }
+	fn submit_data_via_api() -> Weight {
+        (66_168_000 as Weight)
+            .saturating_add(RocksDbWeight::get().reads(3 as Weight))
+            .saturating_add(RocksDbWeight::get().writes(3 as Weight))
+    }
+	fn submit_price_feed() -> Weight {
+        (65_955_000 as Weight)
+            .saturating_add(RocksDbWeight::get().reads(3 as Weight))
+            .saturating_add(RocksDbWeight::get().writes(3 as Weight))
+    }
+	fn sudo_remove_feed_account() -> Weight {
+        (39_902_000 as Weight)
+            .saturating_add(RocksDbWeight::get().reads(1 as Weight))
+            .saturating_add(RocksDbWeight::get().writes(1 as Weight))
+    }
+	fn write_data_onchain() -> Weight {
+        (63_925_000 as Weight)
+            .saturating_add(RocksDbWeight::get().reads(3 as Weight))
+            .saturating_add(RocksDbWeight::get().writes(3 as Weight))
+    }
+}
