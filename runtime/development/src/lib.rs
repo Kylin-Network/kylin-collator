@@ -40,12 +40,14 @@ use sp_std::{marker::PhantomData, prelude::*};
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
+// Weights used in the runtime
+mod weights;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
 	ensure,
 	construct_runtime, match_type, parameter_types,
-	traits::{Contains, Everything, IsInVec, Randomness},
+	traits::{Contains, Everything, IsInVec, PrivilegeCmp, Randomness},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		DispatchClass, IdentityFee, Weight,
@@ -84,6 +86,7 @@ use xcm_builder::{
 
 /// common types for the runtime.
 pub use runtime_common::*;
+pub use runtime_common::Index;
 
 
 pub type SessionHandlers = ();
@@ -153,11 +156,11 @@ impl frame_system::Config for Runtime {
 	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
 	type Lookup = AccountIdLookup<AccountId, ()>;
 	/// The index type for storing how many extrinsics an account has signed.
-	type Index = Index;
+	type Index = runtime_common::Index;	
 	/// The index type for blocks.
 	type BlockNumber = BlockNumber;
-	/// The type for hashing blocks and tries.
 	type Hash = Hash;
+
 	/// The hashing algorithm used.
 	type Hashing = BlakeTwo256;
 	/// The header type.
@@ -511,8 +514,10 @@ impl pallet_crowdloan_rewards::Config for Runtime {
 impl pallet_utility::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
+	type PalletsOrigin = OriginCaller;
 	type WeightInfo = pallet_utility::weights::SubstrateWeight<Runtime>;
 }
+
 
 parameter_types! {
 	pub MaximumSchedulerWeight: Weight = NORMAL_DISPATCH_RATIO * RuntimeBlockWeights::get().max_block;
@@ -527,8 +532,10 @@ impl pallet_scheduler::Config for Runtime {
 	type MaximumWeight = MaximumSchedulerWeight;
 	type ScheduleOrigin = EnsureRoot<AccountId>;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-	type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_scheduler::WeightInfo<Runtime>;
+	type OriginPrivilegeCmp = frame_support::traits::EqualPrivilegeOnly;
 }
+
 
 impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime where
 	Call: From<LocalCall>,
@@ -649,9 +656,6 @@ construct_runtime! {
 		Scheduler: pallet_scheduler::{Pallet, Storage, Config, Event<T>, Call} = 33,
 		Utility: pallet_utility::{Pallet, Call, Event} = 34,
 
-
-		// Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 33,
-
 		Aura: pallet_aura::{Pallet, Config<T>},
 		AuraExt: cumulus_pallet_aura_ext::{Pallet, Config},
 
@@ -668,24 +672,6 @@ construct_runtime! {
 	}
 }
 
-/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-pub type Signature = sp_runtime::MultiSignature;
-/// Some way of identifying an account on the chain. We intentionally make it equivalent
-/// to the public key of our transaction signing scheme.
-pub type AccountId = <<Signature as sp_runtime::traits::Verify>::Signer as sp_runtime::traits::IdentifyAccount>::AccountId;
-/// Balance of an account.
-pub type Balance = u128;
-/// Index of a transaction in the chain.
-pub type Index = u32;
-/// A hash of some data used by the chain.
-pub type Hash = sp_core::H256;
-/// An index to a block.
-pub type BlockNumber = u32;
-/// The address format for describing accounts.
-pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
-/// Block header type as expected by this runtime.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
-/// Block type as expected by this runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 /// A Block signed with a Justification
 pub type SignedBlock = generic::SignedBlock<Block>;

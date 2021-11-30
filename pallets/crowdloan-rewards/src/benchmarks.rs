@@ -15,7 +15,7 @@ use frame_support::{
 	traits::{Currency, Get, OnFinalize, OnInitialize},
 };
 use frame_system::RawOrigin;
-use parity_scale_codec::Encode;
+use codec::Encode;
 use sp_core::{
 	crypto::{AccountId32, UncheckedFrom},
 	ed25519,

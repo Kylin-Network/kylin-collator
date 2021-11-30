@@ -35,10 +35,6 @@ use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::Block as BlockT;
 use std::{io::Write, net::SocketAddr};
 
-// default to the Statemint/Statemine/Westmint id
-const DEFAULT_PARA_ID: u32 = 2112;
-
-
 enum ChainIdentity {
 	Pichiu,
 	Development,
@@ -69,24 +65,23 @@ impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
 }
 
 fn load_spec(
-	id: &str,
-	para_id: ParaId,
+	id: &str
 ) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
 		// Rococo
-		"" | "local"   => Box::new(chain_spec::development_local_config(para_id,"rococo-local")),
-		"kylin-dev" => Box::new(chain_spec::development_environment_config(para_id,"rococo-dev")),
-		"kylin-rococo" => Box::new(chain_spec::development_environment_config(para_id,"rococo")),
-		"kylin-chachacha" => Box::new(chain_spec::development_environment_config(para_id,"chachacha")),
+		"" | "local"   => Box::new(chain_spec::development_local_config("rococo-local")),
+		"kylin-dev" => Box::new(chain_spec::development_environment_config("rococo-dev")),
+		"kylin-rococo" => Box::new(chain_spec::development_environment_config("rococo")),
+		"kylin-chachacha" => Box::new(chain_spec::development_environment_config("chachacha")),
 
 		// Westend
-		"pichiu-local" => Box::new(chain_spec::pichiu_local_network(para_id)),
-		"pichiu-westend" | "pichiu-chachacha" => Box::new(chain_spec::pichiu_development_network(para_id)),
+		"pichiu-local" => Box::new(chain_spec::pichiu_local_network()),
+		"pichiu-westend" | "pichiu-chachacha" => Box::new(chain_spec::pichiu_development_network()),
 
 		// Kusama
-		"pichiu" => Box::new(chain_spec::pichiu_network(para_id)),
+		"pichiu" => Box::new(chain_spec::pichiu_network()),
 
-		"shell" => Box::new(chain_spec::get_shell_chain_spec(para_id)),
+		"shell" => Box::new(chain_spec::get_shell_chain_spec()),
 
 		path => {
 			let chain_spec = chain_spec::PichiuChainSpec::from_json_file(path.into())?;
@@ -137,7 +132,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
-		load_spec(id, self.run.parachain_id.unwrap_or(DEFAULT_PARA_ID).into())
+		load_spec(id)
 	}
 
 	fn native_runtime_version(spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
@@ -296,8 +291,7 @@ pub fn run() -> Result<()> {
 			let _ = builder.init();
 
 			let block: crate::service::Block = generate_genesis_block(&load_spec(
-				&params.chain.clone().unwrap_or_default(),
-				params.parachain_id.unwrap_or(DEFAULT_PARA_ID).into(),
+				&params.chain.clone().unwrap_or_default()
 			)?)?;
 			let raw_header = block.header().encode();
 			let output_buf = if params.raw {
@@ -335,13 +329,36 @@ pub fn run() -> Result<()> {
 
 			Ok(())
 		}
+		Some(Subcommand::Benchmark(cmd)) => {
+			if cfg!(feature = "runtime-benchmarks") {
+				let runner = cli.create_runner(cmd)?;
+
+				match runner.config().chain_spec.identify() {
+
+					ChainIdentity::Pichiu => runner.sync_run(|config| {
+						cmd.run::<pichiu_runtime::Block, PichiuRuntimerExecutor>(config)
+					}),
+					ChainIdentity::Development => runner.sync_run(|config| {
+						cmd.run::<development_runtime::Block, DevelopmentRuntimeExecutor>(config)
+					}),
+					ChainIdentity::Shell => runner.sync_run(|config| {
+						cmd.run::<shell_runtime::Block, ShellRuntimeExecutor>(config)
+					}),
+				}
+			} else {
+				Err("Benchmarking wasn't enabled when building the node. \
+				You can enable it with `--features runtime-benchmarks`."
+					.into())
+			}
+		}
 
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 
 			runner.run_node_until_exit(|config| async move {
-				let para_id =
-					chain_spec::Extensions::try_get(&*config.chain_spec).map(|e| e.para_id);
+				let para_id = chain_spec::Extensions::try_get(&*config.chain_spec)
+					.map(|e| e.para_id)
+					.ok_or_else(|| "Could not find parachain extension in chain-spec.")?;
 
 				let polkadot_cli = RelayChainCli::new(
 					&config,
@@ -350,8 +367,7 @@ pub fn run() -> Result<()> {
 						.chain(cli.relaychain_args.iter()),
 				);
 
-				let id = ParaId::from(cli.run.parachain_id.or(para_id).unwrap_or(DEFAULT_PARA_ID));
-
+				let id = ParaId::from(para_id);
 				let parachain_account =
 					AccountIdConversion::<polkadot_primitives::v0::AccountId>::into_account(&id);
 
