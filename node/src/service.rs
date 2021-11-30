@@ -59,7 +59,7 @@ use substrate_prometheus_endpoint::Registry;
 pub struct DevelopmentRuntimeExecutor;
 
 impl sc_executor::NativeExecutionDispatch for DevelopmentRuntimeExecutor {
-	type ExtendHostFunctions = ();
+	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		development_runtime::api::dispatch(method, data)
@@ -75,7 +75,7 @@ impl sc_executor::NativeExecutionDispatch for DevelopmentRuntimeExecutor {
 pub struct PichiuRuntimerExecutor;
 
 impl sc_executor::NativeExecutionDispatch for PichiuRuntimerExecutor {
-	type ExtendHostFunctions = ();
+	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		pichiu_runtime::api::dispatch(method, data)
@@ -499,12 +499,12 @@ where
 	let import_queue = cumulus_client_service::SharedImportQueue::new(params.import_queue);
 	let (network, system_rpc_tx, start_network) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
+			on_demand: None,
 			config: &parachain_config,
 			client: client.clone(),
 			transaction_pool: transaction_pool.clone(),
 			spawn_handle: task_manager.spawn_handle(),
 			import_queue: import_queue.clone(),
-			on_demand: None,
 			block_announce_validator_builder: Some(Box::new(|_| block_announce_validator)),
 			warp_sync: None,
 		})?;

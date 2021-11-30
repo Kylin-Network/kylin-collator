@@ -72,7 +72,7 @@ fn shell_testnet_genesis(parachain_id: ParaId) -> shell_runtime::GenesisConfig {
 			code: shell_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
-			changes_trie_config: Default::default(),
+				changes_trie_config: Default::default(),
 		},
 		parachain_info: shell_runtime::ParachainInfoConfig { parachain_id },
 		parachain_system: Default::default(),
@@ -84,15 +84,13 @@ pub fn get_shell_chain_spec(id: ParaId) -> ShellChainSpec {
 		"Shell Local Testnet",
 		"shell_local_testnet",
 		ChainType::Local,
-		move || shell_testnet_genesis(id),
+		move || shell_testnet_genesis(id.into()),
 		vec![],
 		None,
 		Some("Kylin"),
 		Some(kylin_properties()),
-		Extensions {
-			relay_chain: "westend".into(),
-			para_id: id.into(),
-		},
+		Extensions { relay_chain: "westend".into(), para_id: id.into() },
+
 	)
 }
 
@@ -111,7 +109,7 @@ pub fn development_local_config(id: ParaId, environment: &str) -> DevelopmentCha
 					get_from_seed::<AuraId>("Bob"),
 				],
 				endowed_accounts_local(),
-				id,
+				id.into(),
 				300_000_000 * KYL
 			)
 		},
@@ -139,7 +137,7 @@ pub fn development_environment_config(id: ParaId,environment: &str) -> Developme
 					.unchecked_into()
 				],
 				endowed_accounts(),
-				id,
+				id.into(),
 				300_000_000 * KYL
 			)
 		},
@@ -154,7 +152,7 @@ pub fn development_environment_config(id: ParaId,environment: &str) -> Developme
 	)
 }
 
-pub fn pichiu_local_network(para_id: ParaId) -> PichiuChainSpec {
+pub fn pichiu_local_network(id: ParaId) -> PichiuChainSpec {
 	let mut properties = Properties::new();
 	properties.insert("ss58Format".into(), 31.into());
 	properties.insert("tokenSymbol".into(), "PCHU".into());
@@ -173,7 +171,7 @@ pub fn pichiu_local_network(para_id: ParaId) -> PichiuChainSpec {
 				],
 				endowed_accounts_local(),
 				Some(50000000 * PCHU),
-				para_id,
+				id.into(),
 				30_000_000 * PCHU
 			)
 		},
@@ -185,7 +183,7 @@ pub fn pichiu_local_network(para_id: ParaId) -> PichiuChainSpec {
 	)
 }
 
-pub fn pichiu_development_network(para_id: ParaId) -> PichiuChainSpec {
+pub fn pichiu_development_network(id: ParaId) -> PichiuChainSpec {
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "PCHU".into());
 	properties.insert("tokenDecimals".into(), 18.into());
@@ -205,7 +203,7 @@ pub fn pichiu_development_network(para_id: ParaId) -> PichiuChainSpec {
 				],
 				endowed_accounts(),
 				Some(50000000 * PCHU),
-				para_id,
+				id.into(),
 				30_000_000 * PCHU
 			)
 		},
@@ -220,7 +218,7 @@ pub fn pichiu_development_network(para_id: ParaId) -> PichiuChainSpec {
 	)
 }
 
-pub fn pichiu_network(para_id: ParaId) -> PichiuChainSpec {
+pub fn pichiu_network(id: ParaId) -> PichiuChainSpec {
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "PCHU".into());
 	properties.insert("tokenDecimals".into(), 18.into());
@@ -240,7 +238,7 @@ pub fn pichiu_network(para_id: ParaId) -> PichiuChainSpec {
 				],
 				endowed_accounts(),
 				Some(50000000 * PCHU),
-				para_id,
+				id.into(),
 				30_000_000 * PCHU
 			)
 		},
@@ -308,10 +306,14 @@ fn pichiu_genesis(
 			code: pichiu_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
-			changes_trie_config: Default::default(),
+				changes_trie_config: Default::default(),
 		},
 		balances: pichiu_runtime::BalancesConfig { balances },
 		sudo: pichiu_runtime::SudoConfig { key: root_key },
+		council:pichiu_runtime::CouncilConfig{
+			members: Default::default(),
+			phantom: Default::default(),
+		},
 		scheduler: pichiu_runtime::SchedulerConfig {},
 		vesting: Default::default(),
 		crowdloan_rewards: pichiu_runtime::CrowdloanRewardsConfig {
@@ -338,7 +340,7 @@ fn development_genesis(
 			code: development_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
-			changes_trie_config: Default::default(),
+				changes_trie_config: Default::default(),
 		},
 		balances: development_runtime::BalancesConfig {
 			balances: endowed_accounts

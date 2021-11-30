@@ -36,8 +36,7 @@ use sp_runtime::traits::Block as BlockT;
 use std::{io::Write, net::SocketAddr};
 
 // default to the Statemint/Statemine/Westmint id
-const DEFAULT_PARA_ID: u32 = 2112;
-
+const DEFAULT_PARA_ID: u32 = 2102;
 
 enum ChainIdentity {
 	Pichiu,
@@ -334,6 +333,28 @@ pub fn run() -> Result<()> {
 			}
 
 			Ok(())
+		}
+		Some(Subcommand::Benchmark(cmd)) => {
+			if cfg!(feature = "runtime-benchmarks") {
+				let runner = cli.create_runner(cmd)?;
+
+				match runner.config().chain_spec.identify() {
+
+					ChainIdentity::Pichiu => runner.sync_run(|config| {
+						cmd.run::<pichiu_runtime::Block, PichiuRuntimerExecutor>(config)
+					}),
+					ChainIdentity::Development => runner.sync_run(|config| {
+						cmd.run::<development_runtime::Block, DevelopmentRuntimeExecutor>(config)
+					}),
+					ChainIdentity::Shell => runner.sync_run(|config| {
+						cmd.run::<shell_runtime::Block, ShellRuntimeExecutor>(config)
+					}),
+				}
+			} else {
+				Err("Benchmarking wasn't enabled when building the node. \
+				You can enable it with `--features runtime-benchmarks`."
+					.into())
+			}
 		}
 
 		None => {

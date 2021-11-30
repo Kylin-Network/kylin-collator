@@ -50,8 +50,15 @@ pub enum Subcommand {
 
 	/// Revert the chain to a previous state.
 	Revert(sc_cli::RevertCmd),
+
+	/// The custom benchmark subcommmand benchmarking runtime pallets.
+	#[structopt(name = "benchmark", about = "Benchmark runtime pallets.")]
+	Benchmark(frame_benchmarking_cli::BenchmarkCmd),
 }
 
+
+
+// benchmark --chain=local --steps=100 --repeat=200 --pallet=kylin-oracle --extrinsic=* --execution=wasm --wasm-execution=compiled --heap-pages=4096 --output=pallets/example/weights.rs
 /// Command for exporting the genesis state of the parachain
 #[derive(Debug, StructOpt)]
 pub struct ExportGenesisStateCommand {
