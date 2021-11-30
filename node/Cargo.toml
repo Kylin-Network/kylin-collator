@@ -40,12 +40,12 @@ async-trait = "0.1.42"
 development-runtime = { path = '../runtime/development' }
 pichiu-runtime = { path = '../runtime/pichiu' }
 runtime-common = { path = '../runtime/common' }
-shell-runtime  = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12"  }
+shell-runtime  = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12" }
 
 # Substrate dependencies
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false  }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 sp-inherents = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
@@ -82,24 +82,24 @@ pallet-collective = { git = "https://github.com/paritytech/substrate", branch = 
 pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 
 # Cumulus dependencies
-cumulus-client-cli  = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12"  }
-cumulus-client-consensus-aura = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12"  }
-cumulus-client-consensus-relay-chain = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12"  }
-cumulus-client-consensus-common = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12"  }
-cumulus-client-collator = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12"  }
-cumulus-client-service = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12"  }
-cumulus-client-network = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12"  }
-cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12"  }
-cumulus-primitives-parachain-inherent = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12"  }
-parachains-common  = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12"  }
+cumulus-client-cli  = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12" }
+cumulus-client-consensus-aura = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12" }
+cumulus-client-consensus-relay-chain = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12" }
+cumulus-client-consensus-common = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12" }
+cumulus-client-collator = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12" }
+cumulus-client-service = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12" }
+cumulus-client-network = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12" }
+cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12" }
+cumulus-primitives-parachain-inherent = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12" }
+parachains-common  = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12" }
 
 # Polkadot dependencies
-pallet-xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.12", default-features = false  }
+pallet-xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.12", default-features = false }
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.12" }
 polkadot-service = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.12" }
 polkadot-cli = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.12" }
 polkadot-parachain = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.12" }
-xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.12", default-features = false  }
+xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.12", default-features = false }
 
 [build-dependencies]
 substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
