@@ -72,28 +72,29 @@ fn shell_testnet_genesis(parachain_id: ParaId) -> shell_runtime::GenesisConfig {
 			code: shell_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
+				changes_trie_config: Default::default(),
 		},
 		parachain_info: shell_runtime::ParachainInfoConfig { parachain_id },
 		parachain_system: Default::default(),
 	}
 }
 
-pub fn get_shell_chain_spec() -> ShellChainSpec {
+pub fn get_shell_chain_spec(id: ParaId) -> ShellChainSpec {
 	ShellChainSpec::from_genesis(
 		"Shell Local Testnet",
 		"shell_local_testnet",
 		ChainType::Local,
-		move || shell_testnet_genesis(1000.into()),
+		move || shell_testnet_genesis(id.into()),
 		vec![],
 		None,
 		Some("Kylin"),
 		Some(kylin_properties()),
-		Extensions { relay_chain: "westend".into(), para_id: 1000 },
+		Extensions { relay_chain: "westend".into(), para_id: id.into() },
 
 	)
 }
 
-pub fn development_local_config(environment: &str) -> DevelopmentChainSpec {
+pub fn development_local_config(id: ParaId, environment: &str) -> DevelopmentChainSpec {
 	DevelopmentChainSpec::from_genesis(
 		// Name
 		format!("kylin {} testnet", environment).as_str(),
@@ -108,7 +109,7 @@ pub fn development_local_config(environment: &str) -> DevelopmentChainSpec {
 					get_from_seed::<AuraId>("Bob"),
 				],
 				endowed_accounts_local(),
-				1000.into(),
+				id.into(),
 				300_000_000 * KYL
 			)
 		},
@@ -120,7 +121,7 @@ pub fn development_local_config(environment: &str) -> DevelopmentChainSpec {
 	)
 }
 
-pub fn development_environment_config(environment: &str) -> DevelopmentChainSpec {
+pub fn development_environment_config(id: ParaId,environment: &str) -> DevelopmentChainSpec {
 	DevelopmentChainSpec::from_genesis(
 		format!("kylin {} testnet", environment).as_str(),
 		// ID
@@ -136,7 +137,7 @@ pub fn development_environment_config(environment: &str) -> DevelopmentChainSpec
 					.unchecked_into()
 				],
 				endowed_accounts(),
-				1000.into(),
+				id.into(),
 				300_000_000 * KYL
 			)
 		},
@@ -151,7 +152,7 @@ pub fn development_environment_config(environment: &str) -> DevelopmentChainSpec
 	)
 }
 
-pub fn pichiu_local_network() -> PichiuChainSpec {
+pub fn pichiu_local_network(id: ParaId) -> PichiuChainSpec {
 	let mut properties = Properties::new();
 	properties.insert("ss58Format".into(), 31.into());
 	properties.insert("tokenSymbol".into(), "PCHU".into());
@@ -170,7 +171,7 @@ pub fn pichiu_local_network() -> PichiuChainSpec {
 				],
 				endowed_accounts_local(),
 				Some(50000000 * PCHU),
-				1000.into(),
+				id.into(),
 				30_000_000 * PCHU
 			)
 		},
@@ -182,7 +183,7 @@ pub fn pichiu_local_network() -> PichiuChainSpec {
 	)
 }
 
-pub fn pichiu_development_network() -> PichiuChainSpec {
+pub fn pichiu_development_network(id: ParaId) -> PichiuChainSpec {
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "PCHU".into());
 	properties.insert("tokenDecimals".into(), 18.into());
@@ -202,7 +203,7 @@ pub fn pichiu_development_network() -> PichiuChainSpec {
 				],
 				endowed_accounts(),
 				Some(50000000 * PCHU),
-				1000.into(),
+				id.into(),
 				30_000_000 * PCHU
 			)
 		},
@@ -217,7 +218,7 @@ pub fn pichiu_development_network() -> PichiuChainSpec {
 	)
 }
 
-pub fn pichiu_network() -> PichiuChainSpec {
+pub fn pichiu_network(id: ParaId) -> PichiuChainSpec {
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "PCHU".into());
 	properties.insert("tokenDecimals".into(), 18.into());
@@ -237,7 +238,7 @@ pub fn pichiu_network() -> PichiuChainSpec {
 				],
 				endowed_accounts(),
 				Some(50000000 * PCHU),
-				1000.into(),
+				id.into(),
 				30_000_000 * PCHU
 			)
 		},
@@ -305,6 +306,7 @@ fn pichiu_genesis(
 			code: pichiu_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
+				changes_trie_config: Default::default(),
 		},
 		balances: pichiu_runtime::BalancesConfig { balances },
 		sudo: pichiu_runtime::SudoConfig { key: root_key },
@@ -338,6 +340,7 @@ fn development_genesis(
 			code: development_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
+				changes_trie_config: Default::default(),
 		},
 		balances: development_runtime::BalancesConfig {
 			balances: endowed_accounts

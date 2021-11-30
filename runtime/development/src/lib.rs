@@ -47,7 +47,7 @@ mod weights;
 pub use frame_support::{
 	ensure,
 	construct_runtime, match_type, parameter_types,
-	traits::{Contains, Everything, IsInVec, PrivilegeCmp, Randomness},
+	traits::{Contains, Everything, IsInVec, Randomness},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		DispatchClass, IdentityFee, Weight,
@@ -514,7 +514,6 @@ impl pallet_crowdloan_rewards::Config for Runtime {
 impl pallet_utility::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
-	type PalletsOrigin = OriginCaller;
 	type WeightInfo = pallet_utility::weights::SubstrateWeight<Runtime>;
 }
 
@@ -533,7 +532,6 @@ impl pallet_scheduler::Config for Runtime {
 	type ScheduleOrigin = EnsureRoot<AccountId>;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
 	type WeightInfo = weights::pallet_scheduler::WeightInfo<Runtime>;
-	type OriginPrivilegeCmp = frame_support::traits::EqualPrivilegeOnly;
 }
 
 
