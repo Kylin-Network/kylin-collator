@@ -1,3 +1,5 @@
+# Kylin Pallet Documentation
+
 Extrinsics
 
 Submit Price Feed
