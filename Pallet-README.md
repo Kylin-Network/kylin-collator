@@ -34,7 +34,7 @@ Data inside the warehouse is stored using feed names. Write extrinsics require a
 ![submit price feed](./doc/imgs/submit_price_feed.png)
 
 ## Read from Data Warehouse
-To query data from the warehouse, use the `queryData` extrinsic. The all data associated with the passed feed name will be returned.  
+To query data from the warehouse, use the `queryData` extrinsic. All data associated with the passed feed name will be returned.  
 - Submit query  
 ![query data](./doc/imgs/query_feed.png)
 - A `ReadFromDWH` event is emitted by the blockchain containing the returned data.  
@@ -42,7 +42,7 @@ To query data from the warehouse, use the `queryData` extrinsic. The all data as
 
 ## Feed Account Lookup
 To get a list of feed names currently in use, use the `feedAccountLookup` query in `Chain State`.  
-![feed account lookup](./doc/imgs/verify_query.png)
+![feed account lookup](./doc/imgs/feed_account_lookup.png)
 
 
 # Kylin API
