@@ -61,7 +61,8 @@ Interactive Swagger documentation is available [here](https://api.kylin-node.co.
 
 ## Example Price Query
 1. Get current spot price of BTC, ETH and KYL in denominated currencies.
-```
+
+Query Request:```
 https://api.kylin-node.co.uk/prices?currency_pairs=btc_usd,eth_gdp,kyl_jpy
 
 Response:
