@@ -47,14 +47,24 @@ To get a list of feed names currently in use, use the `feedAccountLookup` query 
 
 # Kylin API
 
-The Kylin API is used to as an intermediary between the parachain and data warehouse. When a user submits a write extrinsic, the parachain sends a POST request to the Kylin API which then stores the data in a Postgres database. When a user submits a query extrinsic, the parachain sends a GET request to the Kylin API which returns data specified by the query parameters.
+The Kylin API is built with Python using the Flask framework. It plays the roles of intermediary between the parachain and data warehouse and acts as a price Oracle.  
 
-The Kylin API also contains the capabiliy to retrieve aggregated exchange rates from various data providers. The current list of data providers comprise of:
+## Integration of Kylin API to the Kylin Oracle Pallet
+
+The Kylin API manages incoming requests from the parachain. Based on the extrinsic being submitted on-chain, the request will either be a submit to warehouse or query from warehouse call. When a user executes a submit extrinsic, the parachain sends a POST request to the Kylin API (which contains the data submitted by the user) which is then stored in a Postgres database. When a user executes a query extrinsic, the parachain sends a GET request to the Kylin API containing a feed name to query for which is used to return requested data.  
+
+The parachain also uses the price oracle. When a user submits a `submitPriceFeed` extrinsic, the price data that is submitted to the warehouse is retrieved from the Kylin Price API.
+
+## Price Oracle 
+The Kylin Price API queries various exchange rate providers, consolidates/aggregates the rates and sends the consolidated response back to the API consumer. The current list of data providers comprise of:
 1. Coingecko
 2. Cryptowatch
 3. Bancor
 4. Coinbase
 5. Cryptocompare
+
+## Developement
+The Kylin API is built using Python, Postgres and Docker. Python's Flask library is used to serve responses while Postgres is the data warehouse that stores data being submitted on-chain. Docker is used to containerize the application and add safety measures. 
 
 ## Documentation
 Interactive Swagger documentation is available [here](https://api.kylin-node.co.uk/). You can submit requests yourself and view real-time responses. Details about the Price API can be found under `/prices` tab. 
