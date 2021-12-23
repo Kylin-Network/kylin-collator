@@ -71,6 +71,9 @@ url varchar,
 hash varchar
 ```
 
+## APIs role in Data Warehouse Query
+When a user queries the data warehouse using the `queryData` extrinsic, they are required to provide a feed name to query for. The parachain uses that feed name to look up the latest hash of data stored on-chain. It then sends a GET request containing the hash to the Kylin API which queries all data associated with that hash's accompanying feed name. Data is returned to the parachain and an event containing the data is emitted on-chain. 
+
 ## Price Oracle 
 The parachain also uses the Kylin Price API to provide current price data. When a user submits a `submitPriceFeed` extrinsic, the price data that is stored in the warehouse is retrieved from the Kylin Price API. The price API queries various exchange rate providers, consolidates/aggregates the rates and sends the consolidated response back to the API consumer. The current list of data providers comprise of:
 1. Coingecko
