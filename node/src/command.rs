@@ -1,47 +1,35 @@
-// Copyright 2019-2021 Parity Technologies (UK) Ltd.
-// This file is part of Cumulus.
-
-// Cumulus is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// Cumulus is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
-
 use crate::{
 	chain_spec,
 	cli::{Cli, RelayChainCli, Subcommand},
 	service::{
-		new_partial,DevelopmentRuntimeExecutor,PichiuRuntimerExecutor, ShellRuntimeExecutor,
+		new_partial, PichiuRuntimerExecutor,
 	},
 };
 use codec::Encode;
 use cumulus_client_service::genesis::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
 use log::info;
+pub use parachains_common::{AccountId, Balance, Block, Hash, Header, Index as Nonce};
 use polkadot_parachain::primitives::AccountIdConversion;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
 };
-use sc_service::config::{BasePath, PrometheusConfig};
+use sc_service::{
+	config::{BasePath, PrometheusConfig},
+};
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::Block as BlockT;
 use std::{io::Write, net::SocketAddr};
+
 
 // default to the Statemint/Statemine/Westmint id
 const DEFAULT_PARA_ID: u32 = 2102;
 
 enum ChainIdentity {
 	Pichiu,
-	Development,
-	Shell,
+	// Development,
+	// Shell,
 }
 
 trait IdentifyChain {
@@ -50,14 +38,14 @@ trait IdentifyChain {
 
 impl IdentifyChain for dyn sc_service::ChainSpec {
 	fn identify(&self) -> ChainIdentity {
-		 if self.id().starts_with("pichiu")
-		{
-			ChainIdentity::Pichiu
-		} else if self.id().starts_with("shell") {
-			ChainIdentity::Shell
-		} else {
-			ChainIdentity::Development
-		}
+		ChainIdentity::Pichiu
+		// if self.id().starts_with("pichiu") {
+		// 	ChainIdentity::Pichiu
+		// } else if self.id().starts_with("shell") {
+		// 	ChainIdentity::Shell
+		// } else {
+		// 	ChainIdentity::Development
+		// }
 	}
 }
 
@@ -72,34 +60,37 @@ fn load_spec(
 	para_id: ParaId,
 ) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
-		// Rococo
-		"" | "local"   => Box::new(chain_spec::development_local_config(para_id,"rococo-local")),
-		"kylin-dev" => Box::new(chain_spec::development_environment_config(para_id,"rococo-dev")),
-		"kylin-rococo" => Box::new(chain_spec::development_environment_config(para_id,"rococo")),
-		"kylin-chachacha" => Box::new(chain_spec::development_environment_config(para_id,"chachacha")),
+		// // Rococo
+		// "" | "local" => Box::new(chain_spec::development_local_config(
+		// 	para_id,
+		// 	"rococo-local",
+		// )),
+		// "kylin-dev" => Box::new(chain_spec::development_environment_config(
+		// 	para_id,
+		// 	"rococo-dev",
+		// )),
+		// "kylin-rococo" => Box::new(chain_spec::development_environment_config(
+		// 	para_id, "rococo",
+		// )),
+		// "kylin-chachacha" => Box::new(chain_spec::development_environment_config(
+		// 	para_id,
+		// 	"chachacha",
+		// )),
 
 		// Westend
 		"pichiu-local" => Box::new(chain_spec::pichiu_local_network(para_id)),
-		"pichiu-westend" | "pichiu-chachacha" => Box::new(chain_spec::pichiu_development_network(para_id)),
+		"pichiu-westend" | "pichiu-chachacha" => {
+			Box::new(chain_spec::pichiu_development_network(para_id))
+		}
 
 		// Kusama
 		"pichiu" => Box::new(chain_spec::pichiu_network(para_id)),
 
-		"shell" => Box::new(chain_spec::get_shell_chain_spec(para_id)),
+		// "shell" => Box::new(chain_spec::get_shell_chain_spec(para_id)),
 
 		path => {
 			let chain_spec = chain_spec::PichiuChainSpec::from_json_file(path.into())?;
-			match chain_spec.identify() {
-				ChainIdentity::Pichiu => {
-					Box::new(chain_spec::PichiuChainSpec::from_json_file(path.into())?)
-				}
-				ChainIdentity::Development => {
-					Box::new(chain_spec::DevelopmentChainSpec::from_json_file(path.into())?)
-				}
-				ChainIdentity::Shell => {
-					Box::new(chain_spec::ShellChainSpec::from_json_file(path.into())?)
-				}
-			}
+			Box::new(chain_spec::PichiuChainSpec::from_json_file(path.into())?)
 		}
 	})
 }
@@ -140,11 +131,12 @@ impl SubstrateCli for Cli {
 	}
 
 	fn native_runtime_version(spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		match spec.identify() {
-			ChainIdentity::Pichiu => &pichiu_runtime::VERSION,
-			ChainIdentity::Development => &development_runtime::VERSION,
-			ChainIdentity::Shell => &shell_runtime::VERSION,
-		}
+		&pichiu_runtime::VERSION
+		// match spec.identify() {
+		// 	ChainIdentity::Pichiu => &pichiu_runtime::VERSION,
+		// 	// ChainIdentity::Development => &development_runtime::VERSION,
+		// 	// ChainIdentity::Shell => &shell_runtime::VERSION,
+		// }
 	}
 }
 
@@ -180,8 +172,7 @@ impl SubstrateCli for RelayChainCli {
 	}
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
-		polkadot_cli::Cli::from_iter([RelayChainCli::executable_name().to_string()].iter())
-			.load_spec(id)
+		polkadot_cli::Cli::from_iter([RelayChainCli::executable_name()].iter()).load_spec(id)
 	}
 
 	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
@@ -189,6 +180,7 @@ impl SubstrateCli for RelayChainCli {
 	}
 }
 
+#[allow(clippy::borrowed_box)]
 fn extract_genesis_wasm(chain_spec: &Box<dyn sc_service::ChainSpec>) -> Result<Vec<u8>> {
 	let mut storage = chain_spec.build_storage()?;
 
@@ -201,38 +193,48 @@ fn extract_genesis_wasm(chain_spec: &Box<dyn sc_service::ChainSpec>) -> Result<V
 macro_rules! construct_async_run {
 	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
 		let runner = $cli.create_runner($cmd)?;
-		match runner.config().chain_spec.identify() {
-			ChainIdentity::Pichiu => {
-				runner.async_run(|$config| {
-					let $components = new_partial::<pichiu_runtime::RuntimeApi, PichiuRuntimerExecutor, _>(
-						&$config,
-						crate::service::build_pichiu_import_queue,
-					)?;
-					let task_manager = $components.task_manager;
-					{ $( $code )* }.map(|v| (v, task_manager))
-				})
-			}
-			ChainIdentity::Development => {
-				runner.async_run(|$config| {
-					let $components = new_partial::<development_runtime::RuntimeApi, DevelopmentRuntimeExecutor, _>(
-						&$config,
-						crate::service::build_development_import_queue,
-					)?;
-					let task_manager = $components.task_manager;
-					{ $( $code )* }.map(|v| (v, task_manager))
-				})
-			}
-			ChainIdentity::Shell => {
-				runner.async_run(|$config| {
-					let $components = new_partial::<shell_runtime::RuntimeApi, ShellRuntimeExecutor, _>(
-						&$config,
-						crate::service::build_shell_import_queue,
-					)?;
-					let task_manager = $components.task_manager;
-					{ $( $code )* }.map(|v| (v, task_manager))
-				})
-			}
-		}
+
+		runner.async_run(|$config| {
+			let $components = new_partial::<pichiu_runtime::RuntimeApi, PichiuRuntimerExecutor, _>(
+				&$config,
+				crate::service::build_pichiu_import_queue,
+			)?;
+			let task_manager = $components.task_manager;
+			{ $( $code )* }.map(|v| (v, task_manager))
+		})
+
+		// match runner.config().chain_spec.identify() {
+		// 	ChainIdentity::Pichiu => {
+		// 		runner.async_run(|$config| {
+		// 			let $components = new_partial::<pichiu_runtime::RuntimeApi, PichiuRuntimerExecutor, _>(
+		// 				&$config,
+		// 				crate::service::build_pichiu_import_queue,
+		// 			)?;
+		// 			let task_manager = $components.task_manager;
+		// 			{ $( $code )* }.map(|v| (v, task_manager))
+		// 		})
+		// 	}
+			// ChainIdentity::Development => {
+			// 	runner.async_run(|$config| {
+			// 		let $components = new_partial::<development_runtime::RuntimeApi, DevelopmentRuntimeExecutor, _>(
+			// 			&$config,
+			// 			crate::service::build_development_import_queue,
+			// 		)?;
+			// 		let task_manager = $components.task_manager;
+			// 		{ $( $code )* }.map(|v| (v, task_manager))
+			// 	})
+			// }
+			// ChainIdentity::Shell => {
+			// 	runner.async_run(|$config| {
+			// 		let $components = new_partial::<shell_runtime::RuntimeApi, ShellRuntimeExecutor, _>(
+			// 			&$config,
+			// 			crate::service::build_shell_import_queue,
+			// 		)?;
+			// 		let task_manager = $components.task_manager;
+			// 		{ $( $code )* }.map(|v| (v, task_manager))
+			// 	})
+			// }
+		// }
 	}}
 }
 
@@ -271,9 +273,9 @@ pub fn run() -> Result<()> {
 			runner.sync_run(|config| {
 				let polkadot_cli = RelayChainCli::new(
 					&config,
-					[RelayChainCli::executable_name().to_string()]
+					[RelayChainCli::executable_name()]
 						.iter()
-						.chain(cli.relaychain_args.iter()),
+						.chain(cli.relay_chain_args.iter()),
 				);
 
 				let polkadot_config = SubstrateCli::create_configuration(
@@ -286,18 +288,30 @@ pub fn run() -> Result<()> {
 				cmd.run(config, polkadot_config)
 			})
 		}
-		Some(Subcommand::Revert(cmd)) => construct_async_run!(|components, cli, cmd, config| {
-			Ok(cmd.run(components.client, components.backend))
-		}),
+		Some(Subcommand::Revert(cmd)) => {
+			construct_async_run!(|components, cli, cmd, config| {
+				Ok(cmd.run(components.client, components.backend))
+			})
+		}
 		Some(Subcommand::ExportGenesisState(params)) => {
 			let mut builder = sc_cli::LoggerBuilder::new("");
 			builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
 			let _ = builder.init();
 
-			let block: crate::service::Block = generate_genesis_block(&load_spec(
-				&params.chain.clone().unwrap_or_default(),
-				params.parachain_id.unwrap_or(DEFAULT_PARA_ID).into(),
-			)?)?;
+            let chain_spec = &load_spec(
+                &params.chain.clone().unwrap_or_default(),
+                params.parachain_id.unwrap_or(10001).into(),
+            )?;
+            let state_version = Cli::native_runtime_version(&chain_spec).state_version();
+
+            let block: crate::service::Block = generate_genesis_block(
+                &load_spec(
+                    &params.chain.clone().unwrap_or_default(),
+                    params.parachain_id.unwrap_or(DEFAULT_PARA_ID).into(),
+                )?,
+                state_version,
+            )?;
+
 			let raw_header = block.header().encode();
 			let output_buf = if params.raw {
 				raw_header
@@ -337,47 +351,55 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::Benchmark(cmd)) => {
 			if cfg!(feature = "runtime-benchmarks") {
 				let runner = cli.create_runner(cmd)?;
-
-				match runner.config().chain_spec.identify() {
-
-					ChainIdentity::Pichiu => runner.sync_run(|config| {
-						cmd.run::<pichiu_runtime::Block, PichiuRuntimerExecutor>(config)
-					}),
-					ChainIdentity::Development => runner.sync_run(|config| {
-						cmd.run::<development_runtime::Block, DevelopmentRuntimeExecutor>(config)
-					}),
-					ChainIdentity::Shell => runner.sync_run(|config| {
-						cmd.run::<shell_runtime::Block, ShellRuntimeExecutor>(config)
-					}),
-				}
+				runner.sync_run(|config| {
+					cmd.run::<pichiu_runtime::Block, PichiuRuntimerExecutor>(config)
+				})
+				// match runner.config().chain_spec.identify() {
+				// 	ChainIdentity::Pichiu => runner.sync_run(|config| {
+				// 		cmd.run::<pichiu_runtime::Block, PichiuRuntimerExecutor>(config)
+				// 	}),
+				// 	ChainIdentity::Development => runner.sync_run(|config| {
+				// 		cmd.run::<development_runtime::Block, DevelopmentRuntimeExecutor>(config)
+				// 	}),
+				// 	ChainIdentity::Shell => runner.sync_run(|config| {
+				// 		cmd.run::<shell_runtime::Block, ShellRuntimeExecutor>(config)
+				// 	}),
+				// }
 			} else {
 				Err("Benchmarking wasn't enabled when building the node. \
 				You can enable it with `--features runtime-benchmarks`."
 					.into())
 			}
 		}
-
+		#[cfg(not(feature = "try-runtime"))]
+		Some(Subcommand::TryRuntime(_)) => {
+			panic!("TryRuntime wasn't enabled when building the node.")
+		},
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
+			let collator_options = cli.run.collator_options();
 
 			runner.run_node_until_exit(|config| async move {
-				let para_id =
-					chain_spec::Extensions::try_get(&*config.chain_spec).map(|e| e.para_id);
+				let para_id = chain_spec::Extensions::try_get(&*config.chain_spec)
+					.map(|e| e.para_id)
+					.ok_or_else(|| "Could not find parachain ID in chain-spec.")?;
 
 				let polkadot_cli = RelayChainCli::new(
 					&config,
-					[RelayChainCli::executable_name().to_string()]
+					[RelayChainCli::executable_name()]
 						.iter()
-						.chain(cli.relaychain_args.iter()),
+						.chain(cli.relay_chain_args.iter()),
 				);
 
-				let id = ParaId::from(cli.run.parachain_id.or(para_id).unwrap_or(DEFAULT_PARA_ID));
+				let id = ParaId::from(para_id);
 
 				let parachain_account =
 					AccountIdConversion::<polkadot_primitives::v0::AccountId>::into_account(&id);
 
-				let block: crate::service::Block =
-					generate_genesis_block(&config.chain_spec).map_err(|e| format!("{:?}", e))?;
+				let state_version =
+					RelayChainCli::native_runtime_version(&config.chain_spec).state_version();
+				let block: Block = generate_genesis_block(&config.chain_spec, state_version)
+					.map_err(|e| format!("{:?}", e))?;
 				let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header().encode()));
 
 				let tokio_handle = config.tokio_handle.clone();
@@ -396,29 +418,45 @@ pub fn run() -> Result<()> {
 						"no"
 					}
 				);
+				crate::service::start_pichiu_node(
+					config,
+					polkadot_config,
+					collator_options,
+					id,
+				)
+				.await
+				.map(|r| r.0)
+				.map_err(Into::into)
 
-
-				match config.chain_spec.identify() {
-					ChainIdentity::Pichiu => {
-						crate::service::start_pichiu_node(config, polkadot_config, id)
-							.await
-							.map(|r| r.0)
-							.map_err(Into::into)
-					}
-					ChainIdentity::Development => {
-						crate::service::start_development_node(config, polkadot_config, id)
-							.await
-							.map(|r| r.0)
-							.map_err(Into::into)
-					}
-					ChainIdentity::Shell => {
-						crate::service::start_shell_node(config, polkadot_config, id)
-							.await
-							.map(|r| r.0)
-							.map_err(Into::into)
-					}
-				}
-
+				// match config.chain_spec.identify() {
+				// 	ChainIdentity::Pichiu => crate::service::start_pichiu_node(
+				// 		config,
+				// 		polkadot_config,
+				// 		collator_options,
+				// 		id,
+				// 	)
+				// 	.await
+				// 	.map(|r| r.0)
+				// 	.map_err(Into::into),
+				// 	ChainIdentity::Development => crate::service::start_development_node(
+				// 		config,
+				// 		polkadot_config,
+				// 		collator_options,
+				// 		id,
+				// 	)
+				// 	.await
+				// 	.map(|r| r.0)
+				// 	.map_err(Into::into),
+				// 	ChainIdentity::Shell => crate::service::start_shell_node(
+				// 		config,
+				// 		polkadot_config,
+				// 		collator_options,
+				// 		id,
+				// 	)
+				// 	.await
+				// 	.map(|r| r.0)
+				// 	.map_err(Into::into),
+				// }
 			})
 		}
 	}
@@ -478,11 +516,26 @@ impl CliConfiguration<Self> for RelayChainCli {
 		self.base.base.rpc_ws(default_listen_port)
 	}
 
-	fn prometheus_config(&self, default_listen_port: u16) -> Result<Option<PrometheusConfig>> {
-		self.base.base.prometheus_config(default_listen_port)
+	fn prometheus_config(
+		&self,
+		default_listen_port: u16,
+		chain_spec: &Box<dyn ChainSpec>,
+	) -> Result<Option<PrometheusConfig>> {
+		self.base
+			.base
+			.prometheus_config(default_listen_port, chain_spec)
 	}
 
-	fn init<C: SubstrateCli>(&self) -> Result<()> {
+	fn init<F>(
+		&self,
+		_support_url: &String,
+		_impl_version: &String,
+		_logger_hook: F,
+		_config: &sc_service::Configuration,
+	) -> Result<()>
+	where
+		F: FnOnce(&mut sc_cli::LoggerBuilder, &sc_service::Configuration),
+	{
 		unreachable!("PolkadotCli is never initialized; qed");
 	}
 
@@ -545,5 +598,9 @@ impl CliConfiguration<Self> for RelayChainCli {
 		chain_spec: &Box<dyn ChainSpec>,
 	) -> Result<Option<sc_telemetry::TelemetryEndpoints>> {
 		self.base.base.telemetry_endpoints(chain_spec)
+	}
+
+	fn node_name(&self) -> Result<String> {
+		self.base.base.node_name()
 	}
 }

@@ -94,6 +94,7 @@ pub mod pallet {
 
 
 	#[pallet::pallet]
+	#[pallet::without_storage_info]
 	pub struct Pallet<T>(PhantomData<T>);
 
 	pub const PALLET_ID: PalletId = PalletId(*b"Crwdloan");
@@ -129,13 +130,14 @@ pub mod pallet {
 			+ Into<AccountId32>
 			+ From<AccountId32>
 			+ TypeInfo
-			+ Ord;
+			+ Ord
+			+ MaxEncodedLen;
 
 		// The origin that is allowed to change the reward address with relay signatures
 		type RewardAddressChangeOrigin: EnsureOrigin<Self::Origin>;
 
 		/// The type that will be used to track vesting progress
-		type VestingBlockNumber: AtLeast32BitUnsigned + Parameter + Default + Into<BalanceOf<Self>>;
+		type VestingBlockNumber: AtLeast32BitUnsigned + Parameter + Default + Into<BalanceOf<Self>> + MaxEncodedLen;
 
 		/// The notion of time that will be used for vesting. Probably
 		/// either the relay chain or sovereign chain block number.
