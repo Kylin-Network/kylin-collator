@@ -13,6 +13,7 @@ use std::str::FromStr;
 use sp_core::crypto::UncheckedInto;
 
 
+
 /// Properties for Kylin.
 pub fn kylin_properties() -> Properties {
 	let mut properties = Properties::new();
@@ -24,8 +25,6 @@ pub fn kylin_properties() -> Properties {
 
 /// Specialized `ChainSpec` for the Pichiu parachain runtime.
 pub type PichiuChainSpec = sc_service::GenericChainSpec<pichiu_runtime::GenesisConfig, Extensions>;
-/// Specialized `ChainSpec` for the develop parachain runtime.
-// pub type DevelopmentChainSpec = sc_service::GenericChainSpec<pichiu_runtime::GenesisConfig>;
 
 const POLKADOT_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
@@ -76,7 +75,7 @@ where
 /// Generate the session keys from individual elements.
 ///
 /// The input must be a tuple of individual keys (a single arg for now since we have just one key).
-pub fn template_session_keys(keys: AuraId) -> pichiu_runtime::SessionKeys {
+pub fn pichiu_session_keys(keys: AuraId) -> pichiu_runtime::SessionKeys {
 	pichiu_runtime::SessionKeys { aura: keys }
 }
 
@@ -92,7 +91,9 @@ pub fn pichiu_local_network(id: ParaId) -> PichiuChainSpec {
 		ChainType::Local,
 		move || {
 			pichiu_genesis(
+				// root key
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				// initial collators.
 				vec![
 					(get_account_id_from_seed::<sr25519::Public>("Alice"), get_collator_keys_from_seed("Alice")),
 					(get_account_id_from_seed::<sr25519::Public>("Bob"), get_collator_keys_from_seed("Bob")),
@@ -103,9 +104,13 @@ pub fn pichiu_local_network(id: ParaId) -> PichiuChainSpec {
 				30_000_000 * PCHU
 			)
 		},
+		// Bootnodes
 		Vec::new(),
+		// Telemetry
 		None,
+		// Protocol ID
 		Some("Pichiu"),
+		// Fork ID
 		None,
 		Some(properties),
 		Extensions {
@@ -128,8 +133,8 @@ pub fn pichiu_development_network(id: ParaId) -> PichiuChainSpec {
 			pichiu_genesis(
 				AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
 				vec![
-					(AccountId32::from_str("7c11cea2901e72fe525d7335e99d48bdf8dea2a983ac92fa3ab20508a438af73").unwrap(), get_collator_keys_from_seed("validator_key")),
-					(AccountId32::from_str("287f278af79ef7f1b2a2b3d5a7c76a047e248232d13f0a5ec744789a96dc824d").unwrap(), get_collator_keys_from_seed("validator_key")),
+					(AccountId32::from_str("TODO").unwrap(), get_collator_keys_from_seed("TODO")),
+					(AccountId32::from_str("TODO").unwrap(), get_collator_keys_from_seed("TODO")),
 				],
 				endowed_accounts(),
 				Some(50000000 * PCHU),
@@ -165,8 +170,8 @@ pub fn pichiu_network(id: ParaId) -> PichiuChainSpec {
 			pichiu_genesis(
 				AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
 				vec![
-					(AccountId32::from_str("7c11cea2901e72fe525d7335e99d48bdf8dea2a983ac92fa3ab20508a438af73").unwrap(), get_collator_keys_from_seed("validator_key")),
-					(AccountId32::from_str("287f278af79ef7f1b2a2b3d5a7c76a047e248232d13f0a5ec744789a96dc824d").unwrap(), get_collator_keys_from_seed("validator_key")),
+					(AccountId32::from_str("TODO").unwrap(), get_collator_keys_from_seed("TODO")),
+					(AccountId32::from_str("TODO").unwrap(), get_collator_keys_from_seed("TODO")),
 				],
 				endowed_accounts(),
 				Some(50000000 * PCHU),
@@ -245,38 +250,36 @@ fn pichiu_genesis(
 		},
 		balances: pichiu_runtime::BalancesConfig { balances },
 		sudo: pichiu_runtime::SudoConfig { key: Some(root_key) },
-		council:pichiu_runtime::CouncilConfig{
-			members: Default::default(),
-			phantom: Default::default(),
-		},
-		// scheduler: pichiu_runtime::SchedulerConfig {},
 		vesting: Default::default(),
 		crowdloan_rewards: pichiu_runtime::CrowdloanRewardsConfig {
 			funded_amount: crowdloan_fund_pot,
 		},
 		parachain_info: pichiu_runtime::ParachainInfoConfig { parachain_id: id },
-		// collator_selection: pichiu_runtime::CollatorSelectionConfig {
-		// 	invulnerables: initial_authorities.iter().cloned().map(|(acc, _)| acc).collect(),
-		// 	candidacy_bond: EXISTENTIAL_DEPOSIT * 16,
-		// 	..Default::default()
-		// },
-		// session: pichiu_runtime::SessionConfig { // validator session
-        //     keys: initial_authorities
-        //         .iter()
-        //         .cloned()
-        //         .map(|(acc, aura)| {
-        //             (
-        //                 acc.clone(),                // account id
-        //                 acc,                        // validator id
-        //                 get_dev_session_keys(aura), // session keys
-        //             )
-        //         })
-        //         .collect(),
-        // },
+		collator_selection: pichiu_runtime::CollatorSelectionConfig {
+			invulnerables: initial_authorities.iter().cloned().map(|(acc, _)| acc).collect(),
+			candidacy_bond: EXISTENTIAL_DEPOSIT * 16,
+			..Default::default()
+		},
+		session: pichiu_runtime::SessionConfig { // validator session
+            keys: initial_authorities
+                .iter()
+                .cloned()
+                .map(|(acc, aura)| {
+                    (
+                        acc.clone(),                // account id
+                        acc,                        // validator id
+                        pichiu_session_keys(aura), // session keys
+                    )
+                })
+                .collect(),
+        },
 		aura_ext: Default::default(),
 		aura: pichiu_runtime::AuraConfig {
             authorities: Default::default(),
         },
 		parachain_system: Default::default(),
+		// polkadot_xcm: pichiu_runtime::PolkadotXcmConfig {
+		// 	safe_xcm_version: Some(SAFE_XCM_VERSION),
+		// },
 	}
 }
