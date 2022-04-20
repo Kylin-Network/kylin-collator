@@ -131,10 +131,12 @@ pub fn pichiu_development_network(id: ParaId) -> PichiuChainSpec {
 		ChainType::Live,
 		move || {
 			pichiu_genesis(
-				AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
+				// root key
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				// initial collators.
 				vec![
-					(AccountId32::from_str("TODO").unwrap(), get_collator_keys_from_seed("TODO")),
-					(AccountId32::from_str("TODO").unwrap(), get_collator_keys_from_seed("TODO")),
+					(get_account_id_from_seed::<sr25519::Public>("Alice"), get_collator_keys_from_seed("Alice")),
+					(get_account_id_from_seed::<sr25519::Public>("Bob"), get_collator_keys_from_seed("Bob")),
 				],
 				endowed_accounts(),
 				Some(50000000 * PCHU),
@@ -168,10 +170,12 @@ pub fn pichiu_network(id: ParaId) -> PichiuChainSpec {
 		ChainType::Live,
 		move || {
 			pichiu_genesis(
-				AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
+				// root key
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				// initial collators.
 				vec![
-					(AccountId32::from_str("TODO").unwrap(), get_collator_keys_from_seed("TODO")),
-					(AccountId32::from_str("TODO").unwrap(), get_collator_keys_from_seed("TODO")),
+					(get_account_id_from_seed::<sr25519::Public>("Alice"), get_collator_keys_from_seed("Alice")),
+					(get_account_id_from_seed::<sr25519::Public>("Bob"), get_collator_keys_from_seed("Bob")),
 				],
 				endowed_accounts(),
 				Some(50000000 * PCHU),
@@ -196,14 +200,14 @@ pub fn pichiu_network(id: ParaId) -> PichiuChainSpec {
 
 fn endowed_accounts() -> Vec<AccountId> {
 	vec![
-		AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
+		get_account_id_from_seed::<sr25519::Public>("Alice"),
+		get_account_id_from_seed::<sr25519::Public>("Bob"),
 	]
 }
 
 
 fn endowed_accounts_local() -> Vec<AccountId> {
 	vec![
-		AccountId32::from_str("5Gn1igfpf4hP7iG1Gsm1AbwPBCpR8BmHK4b6i2VrGHQS1kAJ").unwrap(),
 		get_account_id_from_seed::<sr25519::Public>("Alice"),
 		get_account_id_from_seed::<sr25519::Public>("Bob"),
 		get_account_id_from_seed::<sr25519::Public>("Charlie"),
