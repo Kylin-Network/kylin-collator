@@ -6,22 +6,7 @@ use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use pichiu_runtime::constants::currency::PCHU;
 use runtime_common::*;
-use sp_runtime::{AccountId32};
 use sc_telemetry::TelemetryEndpoints;
-use hex_literal::hex;
-use std::str::FromStr;
-use sp_core::crypto::UncheckedInto;
-
-
-
-/// Properties for Kylin.
-pub fn kylin_properties() -> Properties {
-	let mut properties = Properties::new();
-	properties.insert("ss58Format".into(), 31.into());
-	properties.insert("tokenDecimals".into(), 12.into());
-	properties.insert("tokenSymbol".into(), "KYL".into());
-	properties
-}
 
 /// Specialized `ChainSpec` for the Pichiu parachain runtime.
 pub type PichiuChainSpec = sc_service::GenericChainSpec<pichiu_runtime::GenesisConfig, Extensions>;
@@ -29,7 +14,7 @@ pub type PichiuChainSpec = sc_service::GenericChainSpec<pichiu_runtime::GenesisC
 const POLKADOT_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
 /// The default XCM version to set in genesis config.
-const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
+// const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
 
 /// Helper function to generate a crypto pair from seed
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {

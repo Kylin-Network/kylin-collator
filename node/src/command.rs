@@ -64,7 +64,7 @@ fn load_spec(
 
 		path => {
 			let chain_spec = chain_spec::PichiuChainSpec::from_json_file(path.into())?;
-			Box::new(chain_spec::PichiuChainSpec::from_json_file(path.into())?)
+			Box::new(chain_spec)
 		}
 	})
 }
@@ -104,7 +104,7 @@ impl SubstrateCli for Cli {
 		load_spec(id, self.run.parachain_id.unwrap_or(DEFAULT_PARA_ID).into())
 	}
 
-	fn native_runtime_version(spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
+	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
 		&pichiu_runtime::VERSION
 	}
 }
