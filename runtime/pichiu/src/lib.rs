@@ -208,7 +208,7 @@ parameter_types! {
 	pub const ExistentialDeposit: Balance = 1 * MICRO_PCHU;
 	pub const TransferFee: Balance = 1 * MICRO_PCHU;
 	pub const CreationFee: Balance = 1 * MICRO_PCHU;
-	pub const TransactionByteFee: Balance = 1 * (MICRO_PCHU / 100);
+	pub const TransactionByteFee: Balance = 1 * (MICRO_PCHU / 100); // 10_000_000_000
 	pub const MaxLocks: u32 = 50;
 	pub const MaxReserves: u32 = 50;
 }
