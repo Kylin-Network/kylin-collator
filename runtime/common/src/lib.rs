@@ -19,6 +19,7 @@
 
 pub use constants::*;
 pub use types::*;
+pub use currency::*;
 
 
 /// Common types for all runtimes
@@ -75,10 +76,30 @@ pub mod types {
 	pub type Salt = FixedArray<u8, 32>;
 }
 
+/// Money matters.
+pub mod currency {
+	use super::types::Balance;
+
+	pub const MICRO_KYL: Balance = 1_000_000_000_000; // 10−6 	0.000001
+	pub const MILLI_KYL: Balance = 1_000 * MICRO_KYL; // 10−3 	0.001
+	pub const CENTI_KYL: Balance = 10 * MILLI_KYL; // 10−2 	0.01
+	pub const KYL: Balance = 100 * CENTI_KYL; // 1
+
+	/// Additional fee charged when moving native tokens to target chains (in KYLs).
+	pub const NATIVE_TOKEN_TRANSFER_FEE: Balance = 2000 * KYL;
+	/// The existential deposit.
+    pub const EXISTENTIAL_DEPOSIT: Balance = 1 * MICRO_KYL;
+	/// Minimum vesting amount, in KYL/PCHU
+    pub const MIN_VESTING: Balance = 10;
+
+    pub const fn deposit(items: u32, bytes: u32) -> Balance {
+        // map to 1/10 of what the kusama relay chain charges (v9020)
+        (items as Balance * 2_000 * CENTI_KYL + (bytes as Balance) * 100 * MILLI_KYL) / 10
+    }
+}
 
 /// Common constants for all runtimes
 pub mod constants {
-	use super::types::Balance;
 	use super::types::BlockNumber;
 	use frame_support::weights::{constants::WEIGHT_PER_SECOND, Weight};
 	use sp_runtime::Perbill;
@@ -110,16 +131,4 @@ pub mod constants {
 
 	/// We allow for 0.5 seconds of compute with a 6 second average block time.
 	pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
-
-	pub const MICRO_KYL: Balance = 1_000_000_000_000; // 10−6 	0.000001
-	pub const MILLI_KYL: Balance = 1_000 * MICRO_KYL; // 10−3 	0.001
-	pub const CENTI_KYL: Balance = 10 * MILLI_KYL; // 10−2 	0.01
-	pub const KYL: Balance = 100 * CENTI_KYL;
-
-	/// Minimum vesting amount, in KYL/PCHU
-	pub const MIN_VESTING: Balance = 10;
-
-	/// Additional fee charged when moving native tokens to target chains (in KYLs).
-	pub const NATIVE_TOKEN_TRANSFER_FEE: Balance = 2000 * KYL;
-
 }

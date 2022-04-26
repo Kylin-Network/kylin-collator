@@ -40,9 +40,11 @@ use sp_runtime::{
 };
 use xcm_builder::{
     AllowUnpaidExecutionFrom, EnsureXcmOrigin, FixedWeightBounds, SignedToAccountId32,
+    LocationInverter
 };
+
 use xcm_executor::{
-    traits::{InvertLocation, TransactAsset, WeightTrader},
+    traits::{TransactAsset, WeightTrader},
     Assets, XcmExecutor,
 };
 
@@ -85,6 +87,7 @@ parameter_types! {
     pub const BlockHashCount: u64 = 250;
     pub BlockWeights: frame_system::limits::BlockWeights =
         frame_system::limits::BlockWeights::simple_max(1024);
+    pub Ancestry: MultiLocation = Here.into();
 }
 pub type LocalOriginToLocation = SignedToAccountId32<Origin, AccountId, RelayNetwork>;
 pub type Barrier = AllowUnpaidExecutionFrom<Everything>;
@@ -113,6 +116,7 @@ impl frame_system::Config for Test {
     type SystemWeightInfo = ();
     type SS58Prefix = ();
     type OnSetCode = ();
+    type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 type Extrinsic = TestXt<Call, ()>;
@@ -208,12 +212,6 @@ parameter_types! {
     pub const UnitWeightCost: Weight = 10;
     pub const MaxInstructions: u32 = 100;
 }
-pub struct InvertNothing;
-impl InvertLocation for InvertNothing {
-    fn invert_location(_: &MultiLocation) -> sp_std::result::Result<MultiLocation, ()> {
-        Ok(Here.into())
-    }
-}
 
 pub struct DummyWeightTrader;
 impl WeightTrader for DummyWeightTrader {
@@ -244,7 +242,7 @@ impl xcm_executor::Config for XcmConfig {
     type OriginConverter = pallet_xcm::XcmPassthrough<Origin>;
     type IsReserve = ();
     type IsTeleporter = ();
-    type LocationInverter = InvertNothing;
+    type LocationInverter = LocationInverter<Ancestry>;
     type Barrier = Barrier;
     type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
     type Trader = DummyWeightTrader;
@@ -262,7 +260,7 @@ impl pallet_xcm::Config for Test {
     type Event = Event;
     type SendXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
     type XcmRouter = DoNothingRouter;
-    type LocationInverter = InvertNothing;
+    type LocationInverter = LocationInverter<Ancestry>;
     type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
     type XcmExecuteFilter = Everything;
     type XcmExecutor = XcmExecutor<XcmConfig>;
@@ -295,6 +293,7 @@ fn should_save_data_onchain_for_signed_data_submissions() {
         Some(&format!("{}/hunter1", PHRASE)),
     )
     .unwrap();
+    let alice = get_account_id_from_seed::<sr25519::Public>("Alice");
 
     let mut t = sp_io::TestExternalities::default();
     t.register_extension(OffchainWorkerExt::new(offchain));
@@ -304,7 +303,7 @@ fn should_save_data_onchain_for_signed_data_submissions() {
     let expected_response = br#"{"USD": 155.23}"#.to_vec();
     t.execute_with(|| {
         KylinOracle::submit_price_feed(
-            Origin::signed(Default::default()),
+            Origin::signed(alice),
             None,
             str::from_utf8(b"btc_usd").unwrap().as_bytes().to_vec(),
         )
@@ -348,12 +347,13 @@ fn should_save_data_onchain_for_unsigned_submissions() {
     t.register_extension(OffchainWorkerExt::new(offchain));
     t.register_extension(TransactionPoolExt::new(pool));
     t.register_extension(KeystoreExt(Arc::new(keystore)));
+    let alice = get_account_id_from_seed::<sr25519::Public>("Alice");
 
     mock_submit_response(&mut offchain_state.write());
     let expected_response = br#"{"USD": 155.23}"#.to_vec();
     t.execute_with(|| {
         KylinOracle::submit_price_feed(
-            Origin::signed(Default::default()),
+            Origin::signed(alice),
             None,
             str::from_utf8(b"btc_usd").unwrap().as_bytes().to_vec(),
         )
@@ -403,12 +403,13 @@ fn should_write_data_onchain_directly_for_signed_requests() {
     t.register_extension(OffchainWorkerExt::new(offchain));
     t.register_extension(TransactionPoolExt::new(pool));
     t.register_extension(KeystoreExt(Arc::new(keystore)));
+    let alice = get_account_id_from_seed::<sr25519::Public>("Alice");
 
     let feed_name = b"test_feed".to_vec();
     let sample_data = b"{sample_data}".to_vec();
     t.execute_with(|| {
         KylinOracle::write_data_onchain(
-            Origin::signed(Default::default()),
+            Origin::signed(alice),
             feed_name,
             sample_data.clone(),
         )

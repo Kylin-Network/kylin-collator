@@ -23,3 +23,9 @@ scripts/kylin-data-proxy.env
 scripts/kylin_db/
 scripts/polkadot-launch/rococo*.json
 cumulus-parachain/*
+old/
+TODO
+localtest.txt
+cumulus_relay/
+kylin-collator-0.9.12*
+playground/
