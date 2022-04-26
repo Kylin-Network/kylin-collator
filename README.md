@@ -182,6 +182,12 @@ cd kylin-collator
 
 ```
 
+#### Start a collator on pichiu/rococo
+
+```bash
+target/release/kylin-collator --unsafe-ws-external --rpc-cors all --wasm-execution Compiled --rpc-external --rpc-methods Unsafe --chain pichiu-rococo-parachain-2102.json -d cumulus_relay/<KEY> --collator   --name <NODE_NAME>  --bootnodes /ip4/35.78.250.13/tcp/40333/p2p/12D3KooWQ3stLjQa4R1Rrccw1s9ViZHna37iuosaAcS2bmzUn9oe
+```
+
 - You should see your collator running and peering with the already running relay chain validators.  
 - Your parachain will not begin authoring blocks until you have registered it on the relay chain.
 
