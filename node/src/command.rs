@@ -234,17 +234,14 @@ pub fn run() -> Result<()> {
 			builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
 			let _ = builder.init();
 
-            let chain_spec = &load_spec(
+            let chain_spec = load_spec(
                 &params.chain.clone().unwrap_or_default(),
-                params.parachain_id.unwrap_or(10001).into(),
+                params.parachain_id.unwrap_or(DEFAULT_PARA_ID).into(),
             )?;
             let state_version = Cli::native_runtime_version(&chain_spec).state_version();
 
             let block: crate::service::Block = generate_genesis_block(
-                &load_spec(
-                    &params.chain.clone().unwrap_or_default(),
-                    params.parachain_id.unwrap_or(DEFAULT_PARA_ID).into(),
-                )?,
+                &chain_spec,
                 state_version,
             )?;
 

@@ -479,12 +479,13 @@ pub mod pallet {
 				Error::<T>::TooManyContributors
 			);
 
-			// What is the amount initialized so far?
+			// What is the amount initialized so far? first time is 0
 			let mut current_initialized_rewards = InitializedRewardAmount::<T>::get();
 
 			// Total number of contributors
 			let mut total_contributors = TotalContributors::<T>::get();
 
+			// fold sum of the rewards to incoming_rewards
 			let incoming_rewards: BalanceOf<T> = rewards
 				.iter()
 				.fold(0u32.into(), |acc: BalanceOf<T>, (_, _, reward)| {

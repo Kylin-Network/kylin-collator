@@ -266,9 +266,6 @@ fn pichiu_genesis(
 		aura: pichiu_runtime::AuraConfig {
             authorities: Default::default(),
         },
-		parachain_system: Default::default(),
-		// polkadot_xcm: pichiu_runtime::PolkadotXcmConfig {
-		// 	safe_xcm_version: Some(SAFE_XCM_VERSION),
-		// },
+		parachain_system: Default::default()
 	}
 }
