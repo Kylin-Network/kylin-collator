@@ -5373,6 +5373,115 @@ dependencies = [
 ]
 
 [[package]]
+name = "orml-tokens"
+version = "0.4.1-dev"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "orml-traits",
+ "pallet-elections-phragmen",
+ "pallet-treasury",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "orml-traits"
+version = "0.4.1-dev"
+dependencies = [
+ "frame-support",
+ "impl-trait-for-tuples",
+ "num-traits",
+ "orml-utilities",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+]
+
+[[package]]
+name = "orml-utilities"
+version = "0.4.1-dev"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "serde_json",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "orml-xcm"
+version = "0.4.1-dev"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-xcm",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-std",
+ "xcm",
+ "xcm-executor",
+]
+
+[[package]]
+name = "orml-xcm-support"
+version = "0.4.1-dev"
+dependencies = [
+ "frame-support",
+ "orml-traits",
+ "parity-scale-codec",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+ "xcm-executor",
+]
+
+[[package]]
+name = "orml-xtokens"
+version = "0.4.1-dev"
+dependencies = [
+ "cumulus-pallet-dmp-queue",
+ "cumulus-pallet-xcm",
+ "cumulus-pallet-xcmp-queue",
+ "cumulus-primitives-core",
+ "frame-support",
+ "frame-system",
+ "orml-tokens",
+ "orml-traits",
+ "orml-xcm",
+ "orml-xcm-support",
+ "pallet-balances",
+ "pallet-xcm",
+ "parachain-info",
+ "parity-scale-codec",
+ "polkadot-parachain",
+ "polkadot-runtime-parachains",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+ "xcm-builder",
+ "xcm-executor",
+ "xcm-simulator",
+]
+
+[[package]]
 name = "os_str_bytes"
 version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6698,6 +6807,9 @@ dependencies = [
  "hex-literal",
  "kylin-oracle",
  "log",
+ "orml-traits",
+ "orml-xcm",
+ "orml-xtokens",
  "pallet-assets",
  "pallet-aura",
  "pallet-authorship",
@@ -12454,6 +12566,23 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "xcm-simulator"
+version = "0.9.18"
+source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.18#9ed0c98204d25eaad8a6b40248daee8e6a40d111"
+dependencies = [
+ "frame-support",
+ "parity-scale-codec",
+ "paste 1.0.7",
+ "polkadot-core-primitives",
+ "polkadot-parachain",
+ "polkadot-runtime-parachains",
+ "sp-io",
+ "sp-std",
+ "xcm",
+ "xcm-executor",
 ]
 
 [[package]]

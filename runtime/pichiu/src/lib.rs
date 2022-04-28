@@ -103,7 +103,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("pichiu"),
 	impl_name: create_runtime_str!("pichiu"),
 	authoring_version: 1,
-	spec_version: 4,
+	spec_version: 5,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -736,6 +736,77 @@ impl pallet_session::Config for Runtime {
 	type WeightInfo = ();
 }
 
+// orml pallets
+use orml_traits::{
+	create_median_value_data_provider, parameter_type_with_key, DataFeeder, DataProviderExtended, GetByKey,
+};
+
+impl orml_xcm::Config for Runtime {
+    type Event = Event;
+    type SovereignOrigin = EnsureRoot<AccountId>;
+}
+
+// parameter_types! {
+// 	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
+// 	pub const BaseXcmWeight: Weight = 100_000_000;
+// 	pub const MaxAssetsForTransfer: usize = 1;
+// }
+
+// // Pichiu CurrencyId
+// #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, PartialOrd, Ord, codec::MaxEncodedLen, scale_info::TypeInfo)]
+// #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+// pub enum CurrencyId {
+// 	ROC,
+// 	PCHU,
+// 	KAR,
+// }
+
+// pub struct AccountIdToMultiLocation;
+// impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
+// 	fn convert(account: AccountId) -> MultiLocation {
+// 		X1(Junction::AccountId32 {
+// 			network: NetworkId::Any,
+// 			id: account.into(),
+// 		})
+// 		.into()
+// 	}
+// }
+
+// pub struct CurrencyIdtoMultiLocation<AssetXConverter>(sp_std::marker::PhantomData<AssetXConverter>);
+// impl<AssetXConverter> sp_runtime::traits::Convert<CurrencyId, Option<MultiLocation>>
+// 	for CurrencyIdtoMultiLocation<AssetXConverter>
+// where
+// 	AssetXConverter: xcm_executor::traits::Convert<MultiLocation, AssetId>,
+// {
+// 	fn convert(currency: CurrencyId) -> Option<MultiLocation> {
+// 		match currency {
+// 			CurrencyId::PichiuCurrency(asset_id) => match AssetXConverter::reverse_ref(&asset_id) {
+// 				Ok(location) => Some(location),
+// 				Err(_) => None,
+// 			},
+// 		}
+// 	}
+// }
+
+// // The XCM message wrapper wrapper
+// impl orml_xtokens::Config for Runtime {
+// 	type Event = Event;
+// 	type Balance = Balance;
+// 	type CurrencyId = CurrencyId;
+// 	type AccountIdToMultiLocation = AccountIdToMultiLocation<AccountId>;
+// 	type CurrencyIdConvert =
+// 		CurrencyIdtoMultiLocation<AssetIdLocationConvert<AssetLocation, AssetManager>>;
+// 	type XcmExecutor = XcmExecutor<XcmConfig>;
+// 	type SelfLocation = SelfLocation;
+// 	// Take note that this pallet does not have the typical configurable WeightInfo.
+// 	// It uses the Weigher configuration to calculate weights for the user callable extrinsics on this chain,
+// 	// as well as weights for execution on the destination chain. Both based on the composed xcm messages.
+// 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
+// 	type BaseXcmWeight = BaseXcmWeight;
+// 	type LocationInverter = LocationInverter<Ancestry>;
+// 	type MaxAssetsForTransfer = MaxAssetsForTransfer;
+// }
+
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -779,6 +850,9 @@ construct_runtime! {
 		// Kylin Pallets
 		KylinOraclePallet: kylin_oracle::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 54,
 		CrowdloanRewards: pallet_crowdloan_rewards::{Pallet, Call, Storage, Config<T>, Event<T>} = 55,
+
+		// orml
+		OrmlXcm: orml_xcm = 70,
 
 	}
 }
