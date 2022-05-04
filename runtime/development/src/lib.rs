@@ -37,9 +37,8 @@ use sp_runtime::{
 	ApplyExtrinsicResult, Perbill, RuntimeDebug,
 };
 
-pub mod constants;
 /// Constant values used within the runtime.
-use constants::currency::*;
+use runtime_common::*;
 
 use sp_std::{marker::PhantomData, prelude::*};
 
@@ -103,10 +102,10 @@ impl_opaque_keys! {
 /// This runtime version.
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("pichiu"),
-	impl_name: create_runtime_str!("pichiu"),
+	spec_name: create_runtime_str!("kylin-dev"),
+	impl_name: create_runtime_str!("kylin-dev"),
 	authoring_version: 1,
-	spec_version: 8,
+	spec_version: 1005,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -208,10 +207,10 @@ impl pallet_timestamp::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ExistentialDeposit: Balance = 1 * MICRO_PCHU;
-	pub const TransferFee: Balance = 1 * MICRO_PCHU;
-	pub const CreationFee: Balance = 1 * MICRO_PCHU;
-	pub const TransactionByteFee: Balance = 1 * (MICRO_PCHU / 100); // 10_000_000_000
+	pub const ExistentialDeposit: Balance = 1 * MICRO_KYL;
+	pub const TransferFee: Balance = 1 * MICRO_KYL;
+	pub const CreationFee: Balance = 1 * MICRO_KYL;
+	pub const TransactionByteFee: Balance = 1 * (MICRO_KYL / 100); // 10_000_000_000
 	pub const MaxLocks: u32 = 50;
 	pub const MaxReserves: u32 = 50;
 }
@@ -355,7 +354,7 @@ parameter_types! {
 	// One XCM operation is 1_000_000 weight - almost certainly a conservative estimate.
 	pub UnitWeightCost: Weight = 1_000_000;
 	// One ROC buys 1 second of weight.
-	pub const WeightPrice: (MultiLocation, u128) = (MultiLocation::parent(), PCHU);
+	pub const WeightPrice: (MultiLocation, u128) = (MultiLocation::parent(), KYL);
 	pub const MaxInstructions: u32 = 100;
 }
 
@@ -503,7 +502,7 @@ parameter_types! {
 	pub const InitializationPayment: Perbill = Perbill::from_percent(30);
 	pub const MaxInitContributorsBatchSizes: u32 = 500;
 	pub const RelaySignaturesThreshold: Perbill = Perbill::from_percent(100);
-	pub const SignatureNetworkIdentifier:  &'static [u8] = b"pichiu-";
+	pub const SignatureNetworkIdentifier:  &'static [u8] = b"kylindev-";
 }
 
 impl pallet_crowdloan_rewards::Config for Runtime {
@@ -646,12 +645,12 @@ where
 }
 
 parameter_types! {
-	pub const AssetDeposit: Balance = 1 * PCHU;
-	pub const AssetAccountDeposit: Balance = PCHU;
-	pub const ApprovalDeposit: Balance = 100 * MILLI_PCHU;
+	pub const AssetDeposit: Balance = 1 * KYL;
+	pub const AssetAccountDeposit: Balance = KYL;
+	pub const ApprovalDeposit: Balance = 100 * MILLI_KYL;
 	pub const AssetsStringLimit: u32 = 50;
-	pub const MetadataDepositBase: Balance = 1 * PCHU;
-	pub const MetadataDepositPerByte: Balance = 10 * MILLI_PCHU;
+	pub const MetadataDepositBase: Balance = 1 * KYL;
+	pub const MetadataDepositPerByte: Balance = 10 * MILLI_KYL;
 	pub const UnitBody: BodyId = BodyId::Unit;
 	pub const MaxAuthorities: u32 = 100_000;
 }

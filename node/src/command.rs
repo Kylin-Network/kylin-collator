@@ -2,7 +2,7 @@ use crate::{
 	chain_spec,
 	cli::{Cli, RelayChainCli, Subcommand},
 	service::{
-		new_partial, PichiuRuntimerExecutor,
+		new_partial, PichiuRuntimerExecutor, DevelopmentRuntimerExecutor
 	},
 };
 use codec::Encode;
@@ -27,7 +27,8 @@ use std::{io::Write, net::SocketAddr};
 const DEFAULT_PARA_ID: u32 = 2102;
 
 enum ChainIdentity {
-	Pichiu
+	Pichiu,
+	Development
 }
 
 trait IdentifyChain {
@@ -36,8 +37,13 @@ trait IdentifyChain {
 
 impl IdentifyChain for dyn sc_service::ChainSpec {
 	fn identify(&self) -> ChainIdentity {
-		ChainIdentity::Pichiu
-	}
+		if self.id().starts_with("pichiu")
+	   {
+		   ChainIdentity::Pichiu
+	   } else {
+		   ChainIdentity::Development
+	   }
+   }
 }
 
 impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
@@ -51,6 +57,9 @@ fn load_spec(
 	para_id: ParaId,
 ) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
+		// dev local
+		"" | "dev" => Box::new(chain_spec::development_network(para_id)),
+
 		// rococo-local
 		"pichiu-local" => Box::new(chain_spec::pichiu_local_network(para_id)),
 
@@ -64,8 +73,16 @@ fn load_spec(
 
 		path => {
 			let chain_spec = chain_spec::PichiuChainSpec::from_json_file(path.into())?;
-			Box::new(chain_spec)
+			match chain_spec.identify() {
+				ChainIdentity::Pichiu => {
+					Box::new(chain_spec::PichiuChainSpec::from_json_file(path.into())?)
+				}
+				ChainIdentity::Development => {
+					Box::new(chain_spec::DevelopmentChainSpec::from_json_file(path.into())?)
+				}
+			}
 		}
+		
 	})
 }
 
@@ -104,8 +121,11 @@ impl SubstrateCli for Cli {
 		load_spec(id, self.run.parachain_id.unwrap_or(DEFAULT_PARA_ID).into())
 	}
 
-	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		&pichiu_runtime::VERSION
+	fn native_runtime_version(spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
+		match spec.identify() {
+			ChainIdentity::Pichiu => &pichiu_runtime::VERSION,
+			ChainIdentity::Development => &development_runtime::VERSION,
+		}
 	}
 }
 
@@ -163,14 +183,28 @@ macro_rules! construct_async_run {
 	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
 		let runner = $cli.create_runner($cmd)?;
 
-		runner.async_run(|$config| {
-			let $components = new_partial::<pichiu_runtime::RuntimeApi, PichiuRuntimerExecutor, _>(
-				&$config,
-				crate::service::build_pichiu_import_queue,
-			)?;
-			let task_manager = $components.task_manager;
-			{ $( $code )* }.map(|v| (v, task_manager))
-		})
+		match runner.config().chain_spec.identify() {
+			ChainIdentity::Pichiu => {
+				runner.async_run(|$config| {
+					let $components = new_partial::<pichiu_runtime::RuntimeApi, PichiuRuntimerExecutor, _>(
+						&$config,
+						crate::service::build_pichiu_import_queue,
+					)?;
+					let task_manager = $components.task_manager;
+					{ $( $code )* }.map(|v| (v, task_manager))
+				})
+			}
+			ChainIdentity::Development => {
+				runner.async_run(|$config| {
+					let $components = new_partial::<development_runtime::RuntimeApi, DevelopmentRuntimerExecutor, _>(
+						&$config,
+						crate::service::build_development_import_queue,
+					)?;
+					let task_manager = $components.task_manager;
+					{ $( $code )* }.map(|v| (v, task_manager))
+				})
+			}
+		}
 	}}
 }
 
@@ -284,9 +318,15 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::Benchmark(cmd)) => {
 			if cfg!(feature = "runtime-benchmarks") {
 				let runner = cli.create_runner(cmd)?;
-				runner.sync_run(|config| {
-					cmd.run::<pichiu_runtime::Block, PichiuRuntimerExecutor>(config)
-				})
+		
+				match runner.config().chain_spec.identify() {
+					ChainIdentity::Pichiu => runner.sync_run(|config| {
+						cmd.run::<pichiu_runtime::Block, PichiuRuntimerExecutor>(config)
+					}),
+					ChainIdentity::Development => runner.sync_run(|config| {
+						cmd.run::<development_runtime::Block, DevelopmentRuntimerExecutor>(config)
+					}),
+				}
 			} else {
 				Err("Benchmarking wasn't enabled when building the node. \
 				You can enable it with `--features runtime-benchmarks`."
@@ -340,15 +380,20 @@ pub fn run() -> Result<()> {
 						"no"
 					}
 				);
-				crate::service::start_pichiu_node(
-					config,
-					polkadot_config,
-					collator_options,
-					id,
-				)
-				.await
-				.map(|r| r.0)
-				.map_err(Into::into)
+				match config.chain_spec.identify() {
+					ChainIdentity::Pichiu => {
+						crate::service::start_pichiu_node(config, polkadot_config, collator_options, id)
+							.await
+							.map(|r| r.0)
+							.map_err(Into::into)
+					}
+					ChainIdentity::Development => {
+						crate::service::start_development_node(config, polkadot_config, collator_options, id)
+							.await
+							.map(|r| r.0)
+							.map_err(Into::into)
+					}
+				}
 			})
 		}
 	}
