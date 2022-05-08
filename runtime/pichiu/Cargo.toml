@@ -85,7 +85,11 @@ polkadot-runtime-common = { git = "https://github.com/paritytech/polkadot", defa
 # Local orml
 orml-xcm = { path = "../../pallets/orml/xcm", default-features = false }
 orml-traits = { path = "../../pallets/orml/traits", default-features = false }
+orml-tokens = { path = "../../pallets/orml/tokens", default-features = false }
 orml-xtokens = { path = "../../pallets/orml/xtokens", default-features = false }
+orml-currencies = { path = "../../pallets/orml/currencies", default-features = false }
+orml-xcm-support = { path = "../../pallets/orml/xcm-support", default-features = false }
+orml-unknown-tokens = { path = "../../pallets/orml/unknown-tokens", default-features = false }
 
 # Local Dependencies
 kylin-oracle = { package = 'kylin-oracle', path = '../../pallets/kylin-oracle', default-features = false }
@@ -175,7 +179,11 @@ std = [
 	'xcm-executor/std',
 
 	'orml-xcm/std',
+	'orml-tokens/std',
 	'orml-xtokens/std',
+	'orml-currencies/std',
+	'orml-xcm-support/std',
+	'orml-unknown-tokens/std',
 
 	'kylin-oracle/std',
 	'pallet-crowdloan-rewards/std',
