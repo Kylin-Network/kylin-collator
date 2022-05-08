@@ -15,7 +15,7 @@ pub type DevelopmentChainSpec = sc_service::GenericChainSpec<development_runtime
 const POLKADOT_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
 /// The default XCM version to set in genesis config.
-// const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
+const SAFE_XCM_VERSION: u32 = 2;
 
 /// Helper function to generate a crypto pair from seed
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
@@ -89,7 +89,7 @@ pub fn pichiu_local_network(id: ParaId) -> PichiuChainSpec {
 					(get_account_id_from_seed::<sr25519::Public>("Bob"), get_collator_keys_from_seed("Bob")),
 				],
 				endowed_accounts_local(),
-				Some(50000000 * PCHU),
+				Some(70_000_000 * PCHU),
 				id,
 				30_000_000 * PCHU
 			)
@@ -129,7 +129,7 @@ pub fn pichiu_development_network(id: ParaId) -> PichiuChainSpec {
 					(get_account_id_from_seed::<sr25519::Public>("Bob"), get_collator_keys_from_seed("Bob")),
 				],
 				endowed_accounts(),
-				Some(50000000 * PCHU),
+				Some(70_000_000 * PCHU),
 				id,
 				30_000_000 * PCHU
 			)
@@ -168,7 +168,7 @@ pub fn pichiu_network(id: ParaId) -> PichiuChainSpec {
 					(get_account_id_from_seed::<sr25519::Public>("Bob"), get_collator_keys_from_seed("Bob")),
 				],
 				endowed_accounts(),
-				Some(100_000_000 * PCHU),
+				Some(70_000_000 * PCHU),
 				id,
 				30_000_000 * PCHU
 			)
@@ -271,7 +271,11 @@ fn pichiu_genesis(
 		aura: pichiu_runtime::AuraConfig {
             authorities: Default::default(),
         },
-		parachain_system: Default::default()
+		parachain_system: Default::default(),
+		polkadot_xcm: pichiu_runtime::PolkadotXcmConfig {
+			safe_xcm_version: Some(SAFE_XCM_VERSION),
+		},
+		orml_tokens: pichiu_runtime::OrmlTokensConfig { balances: vec![] },
 	}
 }
 
@@ -295,7 +299,7 @@ pub fn development_network(id: ParaId) -> PichiuChainSpec {
 					(get_account_id_from_seed::<sr25519::Public>("Bob"), get_collator_keys_from_seed("Bob")),
 				],
 				endowed_accounts(),
-				Some(100_000_000 * PCHU),
+				Some(70_000_000 * PCHU),
 				id,
 				30_000_000 * PCHU
 			)
@@ -373,6 +377,10 @@ fn development_genesis(
 		aura: development_runtime::AuraConfig {
             authorities: Default::default(),
         },
-		parachain_system: Default::default()
+		parachain_system: Default::default(),
+		polkadot_xcm: development_runtime::PolkadotXcmConfig {
+			safe_xcm_version: Some(SAFE_XCM_VERSION),
+		},
+		orml_tokens: development_runtime::OrmlTokensConfig { balances: vec![] },
 	}
 }
