@@ -60,6 +60,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use frame_support::pallet;
 pub use pallet::*;
 #[cfg(any(test, feature = "runtime-benchmarks"))]
 mod benchmarks;
@@ -69,33 +70,31 @@ pub(crate) mod mock;
 mod tests;
 pub mod weights;
 
-use crate::weights::WeightInfo;
-use frame_support::traits::WithdrawReasons;
-use frame_support::{
-	pallet_prelude::*,
-	traits::{Currency, ExistenceRequirement::AllowDeath},
-	PalletId,
-};
-use frame_system::pallet_prelude::*;
-use scale_info::TypeInfo;
-use sp_core::crypto::AccountId32;
-use sp_runtime::traits::{
-	AccountIdConversion, AtLeast32BitUnsigned, BlockNumberProvider, Saturating, Verify
-};
-use sp_runtime::{MultiSignature, Perbill};
-use sp_std::collections::btree_map::BTreeMap;
-use sp_std::vec;
-use sp_std::vec::Vec;
-
-#[frame_support::pallet]
+#[pallet]
 pub mod pallet {
-	use super::*;
 
+	use crate::weights::WeightInfo;
+	use frame_support::traits::WithdrawReasons;
+	use frame_support::{
+		pallet_prelude::*,
+		traits::{Currency, ExistenceRequirement::AllowDeath},
+		PalletId,
+	};
+	use frame_system::pallet_prelude::*;
+	use sp_core::crypto::AccountId32;
+	use sp_runtime::traits::{
+		AccountIdConversion, AtLeast32BitUnsigned, BlockNumberProvider, Saturating, Verify,
+	};
+	use sp_runtime::{MultiSignature, Perbill};
+	use sp_std::collections::btree_map::BTreeMap;
+	use sp_std::vec;
+	use sp_std::vec::Vec;
 	#[pallet::pallet]
 	#[pallet::without_storage_info]
+	// The crowdloan rewards pallet
 	pub struct Pallet<T>(PhantomData<T>);
 
-	pub const PALLET_ID: PalletId = PalletId(*b"Crwdloan");
+	pub const PALLET_ID: PalletId = PalletId(*b"Crowdloa");
 
 	// The wrapper around which the reward changing message needs to be wrapped
 	pub const WRAPPED_BYTES_PREFIX: &[u8] = b"<Bytes>";
@@ -127,9 +126,7 @@ pub mod pallet {
 			//TODO these AccountId32 bounds feel a little extraneous. I wonder if we can remove them.
 			+ Into<AccountId32>
 			+ From<AccountId32>
-			+ TypeInfo
-			+ Ord
-			+ MaxEncodedLen;
+			+ Ord;
 
 		// The origin that is allowed to change the reward address with relay signatures
 		type RewardAddressChangeOrigin: EnsureOrigin<Self::Origin>;
@@ -143,11 +140,7 @@ pub mod pallet {
 		type RewardAddressAssociateOrigin: EnsureOrigin<Self::Origin>;
 
 		/// The type that will be used to track vesting progress
-		type VestingBlockNumber: AtLeast32BitUnsigned
-			+ Parameter
-			+ Default
-			+ Into<BalanceOf<Self>>
-			+ MaxEncodedLen;
+		type VestingBlockNumber: AtLeast32BitUnsigned + Parameter + Default + Into<BalanceOf<Self>>;
 
 		/// The notion of time that will be used for vesting. Probably
 		/// either the relay chain or sovereign chain block number.
@@ -163,7 +156,7 @@ pub mod pallet {
 	/// Stores info about the rewards owed as well as how much has been vested so far.
 	/// For a primer on this kind of design, see the recipe on compounding interest
 	/// https://substrate.dev/recipes/fixed-point.html#continuously-compounding
-	#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, Default, TypeInfo)]
+	#[derive(Default, Clone, Encode, Decode, RuntimeDebug, PartialEq, scale_info::TypeInfo)]
 	#[scale_info(skip_type_params(T))]
 	pub struct RewardInfo<T: Config> {
 		pub total_reward: BalanceOf<T>,
@@ -486,12 +479,13 @@ pub mod pallet {
 				Error::<T>::TooManyContributors
 			);
 
-			// What is the amount initialized so far?
+			// What is the amount initialized so far? first time is 0
 			let mut current_initialized_rewards = InitializedRewardAmount::<T>::get();
 
 			// Total number of contributors
 			let mut total_contributors = TotalContributors::<T>::get();
 
+			// fold sum of the rewards to incoming_rewards
 			let incoming_rewards: BalanceOf<T> = rewards
 				.iter()
 				.fold(0u32.into(), |acc: BalanceOf<T>, (_, _, reward)| {

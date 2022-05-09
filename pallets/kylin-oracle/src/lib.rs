@@ -626,8 +626,7 @@ pub struct DataRequest<ParaId, BlockNumber, AccountId> {
     processed_block_number: Option<BlockNumber>,
     requested_timestamp: u128,
     processed_timestamp: Option<u128>,
-    // payload: BoundedVec<u8, ConstU32<MaxPayloadSize>>,
-    // feed_name: BoundedVec<u8, ConstU32<MaxFeedNameSize>>,
+
     payload: Vec<u8>,
     feed_name: Vec<u8>,
     is_query: bool,
@@ -909,10 +908,6 @@ where T::AccountId: AsRef<[u8]>
         let index = DataId::<T>::get();
         let block_number = <system::Pallet<T>>::block_number();
         let current_timestamp = T::UnixTime::now().as_millis();
-        // let boundedPayload =
-        // BoundedVec::<u8, ConstU32<MaxPayloadSize>>::try_from(payload).map_err(|()| Error::<T>::TooLarge)?;
-        // let boundedFeedName = 
-        // BoundedVec::<u8, ConstU32<MaxFeedNameSize>>::try_from(feed_name).map_err(|()| Error::<T>::TooLarge)?;
 
         <DataRequests<T>>::insert(
             index,
@@ -1016,7 +1011,7 @@ where T::AccountId: AsRef<[u8]>
                     .unwrap_or("Failed fetch data".as_bytes().to_vec());
             };
 
-            // write data to postgres dB
+            // write data to chain
             processed_requests.push(key);
             let results = signer.send_signed_transaction(|_account| Call::submit_data_signed {
                 block_number: block_number,

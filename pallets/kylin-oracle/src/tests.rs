@@ -511,7 +511,8 @@ fn should_award_query_fees() {
     let alice = get_account_id_from_seed::<sr25519::Public>("Alice");
     let bob = get_account_id_from_seed::<sr25519::Public>("Bob");
     let additional_amount = 10_000;
-    let query_fee = 31252504;
+    let query_reward_fee = 136545004;
+    let free_balance = <pallet_balances::Pallet<Test> as Currency<AccountId>>::free_balance;
 
     let (offchain, offchain_state) = testing::TestOffchainExt::new();
     let (pool, _pool_state) = testing::TestTransactionPoolExt::new();
@@ -533,12 +534,22 @@ fn should_award_query_fees() {
                     );
         
         let initial_alice_balance = <pallet_balances::Pallet<Test> as Currency<AccountId>>::free_balance(&alice);
+        let initial_bob_balance = <pallet_balances::Pallet<Test> as Currency<AccountId>>::free_balance(&bob);
 
         let sample_data = b"{sample_data}".to_vec();
         let mut processed_requests: Vec<u64> = Vec::new();
-        let key = 10000000u64;
+        let mut key = 10000000u64;
+        let mut alice_fee = 0;
+        let mut bob_fee = 0;
         processed_requests.push(key);
 
+        // key = 10000000u64, data index = 10000000u64 weight = 65_955_000 + 100 * 3 + 1000 * 3
+        //     (65_955_000 as Weight)
+        //         .saturating_add(RocksDbWeight::get().reads(3 as Weight))
+        //         .saturating_add(RocksDbWeight::get().writes(3 as Weight))
+        let submit_price_feed_fee = 65_955_000 + 100 * 3 + 1000 * 3;
+        alice_fee += submit_price_feed_fee;
+        println!("alice: submit_price_feed fee {}", submit_price_feed_fee);
         mock_submit_response(&mut offchain_state.write());       
         KylinOracle::submit_price_feed(
             Origin::signed(alice),
@@ -547,6 +558,14 @@ fn should_award_query_fees() {
         )
         .unwrap();
 
+        println!("alice step0 balance: {}", free_balance(&alice));
+
+        // (65_955_000 as Weight)
+        // .saturating_add(T::DbWeight::get().reads(3 as Weight))
+        // .saturating_add(T::DbWeight::get().writes(3 as Weight))
+        let submit_data_signed_feed_fee = 65_955_000 + 100 * 3 + 1000 * 3;
+        alice_fee += submit_data_signed_feed_fee;
+        println!("alice: submit_price_feed fee {}", submit_data_signed_feed_fee);
         KylinOracle::submit_data_signed(
             Origin::signed(alice),
             1,
@@ -554,6 +573,10 @@ fn should_award_query_fees() {
             sample_data.clone()
         )
         .unwrap();
+
+        println!("alice step1 balance: {}", free_balance(&alice));
+
+
         KylinOracle::fetch_data_and_send_raw_unsigned(1).unwrap();
         KylinOracle::clear_processed_requests_unsigned(
             Origin::none(),
@@ -561,17 +584,38 @@ fn should_award_query_fees() {
             processed_requests.clone(),
         )
         .unwrap();
+
         mock_post_response(&mut offchain_state.write());
         KylinOracle::fetch_data_and_send_raw_unsigned(2).unwrap();
     
-
+        // key = 10000001u64, data index = 10000001u64
+        key = 10000001u64;
         mock_query_response(&mut offchain_state.write());
+
+        println!("alice step2 balance: {}", free_balance(&alice));
+
+        // (121_180_000 as Weight) // Standard Error: 0
+        // .saturating_add(RocksDbWeight::get().reads(4 as Weight))
+        // .saturating_add(RocksDbWeight::get().writes(2 as Weight))
+        // base_fee + len_fee + adjested_weight_fee
+        let query_data_fee = 121_180_000 + 100 * 4 + 1000 * 2;
+        bob_fee += query_data_fee;
+        println!("bob: query_data fee {}", query_data_fee);
         KylinOracle::query_data(
             Origin::signed(bob),
             None,
             str::from_utf8(b"price_feeding").unwrap().as_bytes().to_vec(),
         )
         .unwrap();
+
+        println!("alice step3 balance: {}", free_balance(&alice));
+
+        // (20_716_000 as Weight) // Standard Error: 0
+        // .saturating_add(RocksDbWeight::get().reads(2 as Weight))
+        // .saturating_add(RocksDbWeight::get().writes(1 as Weight))
+        let submit_data_signed_fee = 20_716_000 + 100 * 2 + 1000 * 1;
+        bob_fee += submit_data_signed_fee;
+        println!("bob: submit_data_signed fee {}", submit_data_signed_fee);
         KylinOracle::submit_data_signed(
             Origin::signed(bob),
             2,
@@ -586,12 +630,20 @@ fn should_award_query_fees() {
         )
         .unwrap();
         KylinOracle::fetch_data_and_send_raw_unsigned(3).unwrap();
+        println!("alice step4 balance: {}", free_balance(&alice));
+
+
+        let free_alice_balance = free_balance(&alice);
+        let free_bob_balance = free_balance(&bob);
+
+        println!("init alice balance {}, free alice balance {}", initial_alice_balance, free_alice_balance);
+        println!("init bob balance {}, free bob balance {}", initial_bob_balance, free_bob_balance);
+        println!("alice fee used {}, bob fee used {}", alice_fee, bob_fee);
 
         assert_eq!(
-            <pallet_balances::Pallet<Test> as Currency<AccountId>>::free_balance(&alice),
-            initial_alice_balance + query_fee,
+            free_alice_balance,
+            initial_alice_balance + query_reward_fee,
         );
     });
 
 }
-

@@ -25,8 +25,9 @@ use frame_support::{
 	dispatch::UnfilteredDispatchable,
 	inherent::{InherentData, ProvideInherent},
 	parameter_types,
-	traits::{GenesisBuild, OnFinalize, OnInitialize},
+	traits::{GenesisBuild, Nothing, OnFinalize, OnInitialize},
 };
+
 use frame_system::{EnsureSigned, RawOrigin};
 use sp_core::{ed25519, Pair, H256};
 use sp_io;
@@ -63,7 +64,7 @@ parameter_types! {
 impl cumulus_pallet_parachain_system::Config for Test {
 	type SelfParaId = ParachainId;
 	type Event = Event;
-	type OnValidationData = ();
+	type OnSystemEvent = ();
 	type OutboundXcmpMessageSource = ();
 	type XcmpMessageHandler = ();
 	type ReservedXcmpWeight = ();
@@ -78,7 +79,7 @@ parameter_types! {
 }
 
 impl frame_system::Config for Test {
-	type BaseCallFilter = ();
+	type BaseCallFilter = Nothing;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type Origin = Origin;
@@ -101,6 +102,7 @@ impl frame_system::Config for Test {
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
+	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 parameter_types! {
@@ -125,6 +127,7 @@ parameter_types! {
 	pub const TestInitialized: bool = false;
 	pub const TestInitializationPayment: Perbill = Perbill::from_percent(20);
 	pub const TestRewardAddressRelayVoteThreshold: Perbill = Perbill::from_percent(50);
+	pub const TestSigantureNetworkIdentifier: &'static [u8] = b"test-";
 }
 
 impl Config for Test {
@@ -136,8 +139,12 @@ impl Config for Test {
 	type RewardCurrency = Balances;
 	type RelayChainAccountId = [u8; 32];
 	type RewardAddressRelayVoteThreshold = TestRewardAddressRelayVoteThreshold;
+	// The origin that is allowed to associate the reward
+	type RewardAddressAssociateOrigin = EnsureSigned<Self::AccountId>;
 	// The origin that is allowed to change the reward
 	type RewardAddressChangeOrigin = EnsureSigned<Self::AccountId>;
+	type SignatureNetworkIdentifier = TestSigantureNetworkIdentifier;
+
 	type VestingBlockNumber = RelayChainBlockNumber;
 	type VestingBlockProvider =
 		cumulus_pallet_parachain_system::RelaychainBlockNumberProvider<Self>;
@@ -148,6 +155,7 @@ impl pallet_utility::Config for Test {
 	type Event = Event;
 	type Call = Call;
 	type WeightInfo = ();
+	type PalletsOrigin = OriginCaller;
 }
 
 fn genesis(funded_amount: Balance) -> sp_io::TestExternalities {

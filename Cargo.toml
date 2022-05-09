@@ -9,6 +9,5 @@ members = [
 	"pallets/kylin-oracle",
 	"pallets/crowdloan-rewards",
 	"runtime/pichiu",
-	#"runtime/development",
 	"runtime/common",
 ]

@@ -6,30 +6,16 @@ use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use pichiu_runtime::constants::currency::PCHU;
 use runtime_common::*;
-use sp_runtime::{AccountId32};
 use sc_telemetry::TelemetryEndpoints;
-use hex_literal::hex;
-use std::str::FromStr;
-use sp_core::crypto::UncheckedInto;
-
-
-
-/// Properties for Kylin.
-pub fn kylin_properties() -> Properties {
-	let mut properties = Properties::new();
-	properties.insert("ss58Format".into(), 31.into());
-	properties.insert("tokenDecimals".into(), 12.into());
-	properties.insert("tokenSymbol".into(), "KYL".into());
-	properties
-}
 
 /// Specialized `ChainSpec` for the Pichiu parachain runtime.
 pub type PichiuChainSpec = sc_service::GenericChainSpec<pichiu_runtime::GenesisConfig, Extensions>;
+pub type DevelopmentChainSpec = sc_service::GenericChainSpec<development_runtime::GenesisConfig, Extensions>;
 
 const POLKADOT_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
 /// The default XCM version to set in genesis config.
-const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
+const SAFE_XCM_VERSION: u32 = 2;
 
 /// Helper function to generate a crypto pair from seed
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
@@ -75,6 +61,10 @@ where
 /// Generate the session keys from individual elements.
 ///
 /// The input must be a tuple of individual keys (a single arg for now since we have just one key).
+pub fn development_session_keys(keys: AuraId) -> development_runtime::SessionKeys {
+	development_runtime::SessionKeys { aura: keys }
+}
+
 pub fn pichiu_session_keys(keys: AuraId) -> pichiu_runtime::SessionKeys {
 	pichiu_runtime::SessionKeys { aura: keys }
 }
@@ -99,7 +89,7 @@ pub fn pichiu_local_network(id: ParaId) -> PichiuChainSpec {
 					(get_account_id_from_seed::<sr25519::Public>("Bob"), get_collator_keys_from_seed("Bob")),
 				],
 				endowed_accounts_local(),
-				Some(50000000 * PCHU),
+				Some(70_000_000 * PCHU),
 				id,
 				30_000_000 * PCHU
 			)
@@ -139,7 +129,7 @@ pub fn pichiu_development_network(id: ParaId) -> PichiuChainSpec {
 					(get_account_id_from_seed::<sr25519::Public>("Bob"), get_collator_keys_from_seed("Bob")),
 				],
 				endowed_accounts(),
-				Some(50000000 * PCHU),
+				Some(70_000_000 * PCHU),
 				id,
 				30_000_000 * PCHU
 			)
@@ -178,7 +168,7 @@ pub fn pichiu_network(id: ParaId) -> PichiuChainSpec {
 					(get_account_id_from_seed::<sr25519::Public>("Bob"), get_collator_keys_from_seed("Bob")),
 				],
 				endowed_accounts(),
-				Some(50000000 * PCHU),
+				Some(70_000_000 * PCHU),
 				id,
 				30_000_000 * PCHU
 			)
@@ -282,8 +272,115 @@ fn pichiu_genesis(
             authorities: Default::default(),
         },
 		parachain_system: Default::default(),
-		// polkadot_xcm: pichiu_runtime::PolkadotXcmConfig {
-		// 	safe_xcm_version: Some(SAFE_XCM_VERSION),
-		// },
+		polkadot_xcm: pichiu_runtime::PolkadotXcmConfig {
+			safe_xcm_version: Some(SAFE_XCM_VERSION),
+		},
+		orml_tokens: pichiu_runtime::OrmlTokensConfig { balances: vec![] },
+	}
+}
+
+
+pub fn development_network(id: ParaId) -> PichiuChainSpec {
+	let mut properties = Properties::new();
+	properties.insert("tokenSymbol".into(), "KYL".into());
+	properties.insert("tokenDecimals".into(), 18_u8.into());
+
+	PichiuChainSpec::from_genesis(
+		"Kylin Dev Testnet",
+		"Kylin_dev_testnet",
+		ChainType::Live,
+		move || {
+			pichiu_genesis(
+				// root key
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				// initial collators.
+				vec![
+					(get_account_id_from_seed::<sr25519::Public>("Alice"), get_collator_keys_from_seed("Alice")),
+					(get_account_id_from_seed::<sr25519::Public>("Bob"), get_collator_keys_from_seed("Bob")),
+				],
+				endowed_accounts(),
+				Some(70_000_000 * PCHU),
+				id,
+				30_000_000 * PCHU
+			)
+		},
+		vec![],
+		Some(
+			TelemetryEndpoints::new(vec![(POLKADOT_TELEMETRY_URL.to_string(), 0)])
+				.expect("Polkadot telemetry url is valid; qed"),
+		),
+		Some("Kylin"),
+		None,
+		Some(properties),
+		Extensions {
+			relay_chain: "rococo-local".into(),
+            para_id: id.into(),
+        },
+	)
+}
+
+fn development_genesis(
+	root_key: AccountId,
+	initial_authorities: Vec<(AccountId, AuraId)>,
+	endowed_accounts: Vec<pichiu_runtime::AccountId>,
+	total_issuance: Option<pichiu_runtime::Balance>,
+	id: ParaId,
+	crowdloan_fund_pot: Balance,
+) -> development_runtime::GenesisConfig {
+	let num_endowed_accounts = endowed_accounts.len();
+	let balances = match total_issuance {
+		Some(total_issuance) => {
+			let balance_per_endowed = total_issuance
+				.checked_div(num_endowed_accounts as development_runtime::Balance)
+				.unwrap_or(0 as development_runtime::Balance);
+			endowed_accounts
+				.iter()
+				.cloned()
+				.map(|k| (k, balance_per_endowed))
+				.collect()
+		}
+		None => vec![],
+	};
+
+	development_runtime::GenesisConfig {
+		system: development_runtime::SystemConfig {
+			code: development_runtime::WASM_BINARY
+				.expect("WASM binary was not build, please build it!")
+				.to_vec()
+		},
+		balances: development_runtime::BalancesConfig { balances },
+		sudo: development_runtime::SudoConfig { key: Some(root_key) },
+		vesting: Default::default(),
+		crowdloan_rewards: development_runtime::CrowdloanRewardsConfig {
+			funded_amount: crowdloan_fund_pot,
+		},
+		parachain_info: development_runtime::ParachainInfoConfig { parachain_id: id },
+		collator_selection: development_runtime::CollatorSelectionConfig {
+			invulnerables: initial_authorities.iter().cloned().map(|(acc, _)| acc).collect(),
+			candidacy_bond: EXISTENTIAL_DEPOSIT * 16,
+			..Default::default()
+		},
+		session: development_runtime::SessionConfig { // validator session
+            keys: initial_authorities
+                .iter()
+                .cloned()
+                .map(|(acc, aura)| {
+                    (
+                        acc.clone(),                // account id
+                        acc,                        // validator id
+                        development_session_keys(aura), // session keys
+                    )
+                })
+                .collect(),
+        },
+		aura_ext: Default::default(),
+		aura: development_runtime::AuraConfig {
+            authorities: Default::default(),
+        },
+		parachain_system: Default::default(),
+		polkadot_xcm: development_runtime::PolkadotXcmConfig {
+			safe_xcm_version: Some(SAFE_XCM_VERSION),
+		},
+		orml_tokens: development_runtime::OrmlTokensConfig { balances: vec![] },
 	}
 }

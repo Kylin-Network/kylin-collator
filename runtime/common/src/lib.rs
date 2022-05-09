@@ -131,4 +131,7 @@ pub mod constants {
 
 	/// We allow for 0.5 seconds of compute with a 6 second average block time.
 	pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
+
+	/// XCM
+	pub const BASE_XCM_WEIGHT: Weight = 100_000_000;
 }

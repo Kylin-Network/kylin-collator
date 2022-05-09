@@ -20,7 +20,7 @@ default = []
 runtime-benchmarks = [
     'polkadot-service/runtime-benchmarks',
 	'pichiu-runtime/runtime-benchmarks',
-	# 'development-runtime/runtime-benchmarks',
+	'development-runtime/runtime-benchmarks',
 ]
 
 [dependencies]
@@ -39,7 +39,7 @@ thiserror = "1.0.30"
 
 
 # Parachain runtimes
-# development-runtime = { path = '../runtime/development' }
+development-runtime = { path = '../runtime/development' }
 pichiu-runtime = { path = '../runtime/pichiu' }
 runtime-common = { path = '../runtime/common' }
 shell-runtime  = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.18" }

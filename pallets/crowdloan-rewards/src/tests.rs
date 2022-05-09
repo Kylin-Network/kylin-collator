@@ -15,14 +15,14 @@
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Unit testing
-
 use crate::*;
 use frame_support::dispatch::{DispatchError, Dispatchable};
 use frame_support::{assert_noop, assert_ok};
 use mock::*;
-use parity_scale_codec::Encode;
+use codec::Encode;
 use sp_core::Pair;
-use sp_runtime::MultiSignature;
+use sp_runtime::{MultiSignature, ModuleError};
+
 
 // Constant that reflects the desired vesting period for the tests
 // Most tests complete initialization passing initRelayBlock + VESTING as the endRelayBlock
@@ -77,7 +77,11 @@ fn geneses() {
 #[test]
 fn proving_assignation_works() {
 	let pairs = get_ed25519_pairs(3);
-	let signature: MultiSignature = pairs[0].sign(&3u64.encode()).into();
+	let mut payload = WRAPPED_BYTES_PREFIX.to_vec();
+	payload.append(&mut TestSigantureNetworkIdentifier::get().to_vec());
+	payload.append(&mut 3u64.encode());
+	payload.append(&mut WRAPPED_BYTES_POSTFIX.to_vec());
+	let signature: MultiSignature = pairs[0].sign(&payload).into();
 	let alread_associated_signature: MultiSignature = pairs[0].sign(&1u64.encode()).into();
 	empty().execute_with(|| {
 		// Insert contributors
@@ -354,7 +358,11 @@ fn paying_works_after_unclaimed_period() {
 #[test]
 fn paying_late_joiner_works() {
 	let pairs = get_ed25519_pairs(3);
-	let signature: MultiSignature = pairs[0].sign(&3u64.encode()).into();
+	let mut payload = WRAPPED_BYTES_PREFIX.to_vec();
+	payload.append(&mut TestSigantureNetworkIdentifier::get().to_vec());
+	payload.append(&mut 3u64.encode());
+	payload.append(&mut WRAPPED_BYTES_POSTFIX.to_vec());
+	let signature: MultiSignature = pairs[0].sign(&payload).into();
 	empty().execute_with(|| {
 		// Insert contributors
 		let pairs = get_ed25519_pairs(3);
@@ -617,18 +625,16 @@ fn initialize_new_addresses_with_batch() {
 		// This time should succeed trully
 		roll_to(10);
 		let init_block = Crowdloan::init_vesting_block();
-		assert_ok!(mock::Call::Utility(UtilityCall::batch_all(vec![
-			mock::Call::Crowdloan(crate::Call::initialize_reward_vec(vec![(
-				[4u8; 32].into(),
-				Some(3),
-				1250
-			)],)),
-			mock::Call::Crowdloan(crate::Call::initialize_reward_vec(vec![(
-				[5u8; 32].into(),
-				Some(1),
-				1250
-			)],))
-		]))
+		assert_ok!(mock::Call::Utility(UtilityCall::batch_all {
+			calls: vec![
+				mock::Call::Crowdloan(crate::Call::initialize_reward_vec {
+					rewards: vec![([4u8; 32].into(), Some(3), 1250)],
+				}),
+				mock::Call::Crowdloan(crate::Call::initialize_reward_vec {
+					rewards: vec![([5u8; 32].into(), Some(1), 1250)],
+				})
+			]
+		})
 		.dispatch(Origin::root()));
 		assert_ok!(Crowdloan::complete_initialization(
 			Origin::root(),
@@ -639,25 +645,25 @@ fn initialize_new_addresses_with_batch() {
 		assert_eq!(Crowdloan::end_vesting_block(), init_block + VESTING);
 
 		// Batch calls always succeed. We just need to check the inner event
-		assert_ok!(
-			mock::Call::Utility(UtilityCall::batch(vec![mock::Call::Crowdloan(
-				crate::Call::initialize_reward_vec(vec![([4u8; 32].into(), Some(3), 500)])
-			)]))
-			.dispatch(Origin::root())
-		);
+		assert_ok!(mock::Call::Utility(UtilityCall::batch {
+			calls: vec![mock::Call::Crowdloan(crate::Call::initialize_reward_vec {
+				rewards: vec![([4u8; 32].into(), Some(3), 500)]
+			})]
+		})
+		.dispatch(Origin::root()));
 
 		let expected = vec![
 			pallet_utility::Event::ItemCompleted,
 			pallet_utility::Event::ItemCompleted,
 			pallet_utility::Event::BatchCompleted,
-			pallet_utility::Event::BatchInterrupted(
-				0,
-				DispatchError::Module {
+			pallet_utility::Event::BatchInterrupted {
+				index: 0,
+				error: DispatchError::Module(ModuleError{
 					index: 2,
 					error: 8,
 					message: None,
-				},
-			),
+				}),
+			},
 		];
 		assert_eq!(batch_events(), expected);
 	});
@@ -669,24 +675,20 @@ fn floating_point_arithmetic_works() {
 		// The init relay block gets inserted
 		roll_to(2);
 		let init_block = Crowdloan::init_vesting_block();
-		assert_ok!(mock::Call::Utility(UtilityCall::batch_all(vec![
-			mock::Call::Crowdloan(crate::Call::initialize_reward_vec(vec![(
-				[4u8; 32].into(),
-				Some(1),
-				1190
-			)])),
-			mock::Call::Crowdloan(crate::Call::initialize_reward_vec(vec![(
-				[5u8; 32].into(),
-				Some(2),
-				1185
-			)])),
-			// We will work with this. This has 100/8=12.5 payable per block
-			mock::Call::Crowdloan(crate::Call::initialize_reward_vec(vec![(
-				[3u8; 32].into(),
-				Some(3),
-				125
-			)]))
-		]))
+		assert_ok!(mock::Call::Utility(UtilityCall::batch_all {
+			calls: vec![
+				mock::Call::Crowdloan(crate::Call::initialize_reward_vec {
+					rewards: vec![([4u8; 32].into(), Some(1), 1190)]
+				}),
+				mock::Call::Crowdloan(crate::Call::initialize_reward_vec {
+					rewards: vec![([5u8; 32].into(), Some(2), 1185)]
+				}),
+				// We will work with this. This has 100/8=12.5 payable per block
+				mock::Call::Crowdloan(crate::Call::initialize_reward_vec {
+					rewards: vec![([3u8; 32].into(), Some(3), 125)]
+				})
+			]
+		})
 		.dispatch(Origin::root()));
 		assert_ok!(Crowdloan::complete_initialization(
 			Origin::root(),
@@ -745,24 +747,20 @@ fn reward_below_vesting_period_works() {
 		// The init relay block gets inserted
 		roll_to(2);
 		let init_block = Crowdloan::init_vesting_block();
-		assert_ok!(mock::Call::Utility(UtilityCall::batch_all(vec![
-			mock::Call::Crowdloan(crate::Call::initialize_reward_vec(vec![(
-				[4u8; 32].into(),
-				Some(1),
-				1247
-			)])),
-			mock::Call::Crowdloan(crate::Call::initialize_reward_vec(vec![(
-				[5u8; 32].into(),
-				Some(2),
-				1247
-			)])),
-			// We will work with this. This has 5/8=0.625 payable per block
-			mock::Call::Crowdloan(crate::Call::initialize_reward_vec(vec![(
-				[3u8; 32].into(),
-				Some(3),
-				6
-			)]))
-		]))
+		assert_ok!(mock::Call::Utility(UtilityCall::batch_all {
+			calls: vec![
+				mock::Call::Crowdloan(crate::Call::initialize_reward_vec {
+					rewards: vec![([4u8; 32].into(), Some(1), 1247)]
+				}),
+				mock::Call::Crowdloan(crate::Call::initialize_reward_vec {
+					rewards: vec![([5u8; 32].into(), Some(2), 1247)]
+				}),
+				// We will work with this. This has 5/8=0.625 payable per block
+				mock::Call::Crowdloan(crate::Call::initialize_reward_vec {
+					rewards: vec![([3u8; 32].into(), Some(3), 6)]
+				})
+			]
+		})
 		.dispatch(Origin::root()));
 
 		assert_ok!(Crowdloan::complete_initialization(
@@ -943,6 +941,7 @@ fn test_relay_signatures_can_change_reward_addresses() {
 		// Threshold is set to 50%, so we need at least 3 votes to pass
 		// Let's make sure that we dont pass with 2
 		let mut payload = WRAPPED_BYTES_PREFIX.to_vec();
+		payload.append(&mut TestSigantureNetworkIdentifier::get().to_vec());
 		payload.append(&mut 2u64.encode());
 		payload.append(&mut 1u64.encode());
 		payload.append(&mut WRAPPED_BYTES_POSTFIX.to_vec());
