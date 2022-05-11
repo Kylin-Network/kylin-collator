@@ -6,8 +6,6 @@ These are instructions for starting a collator on Pichiu/Rococo test net.
 
 ### Setup
 
-You will need to [install docker](https://www.docker.com/products/docker-desktop) to launch our pre-built containers
-
 ```bash
 git clone --recursive https://github.com/Kylin-Network/kylin-collator.git
 ```
