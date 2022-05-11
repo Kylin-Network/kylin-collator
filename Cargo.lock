@@ -2017,8 +2017,12 @@ dependencies = [
  "hex-literal",
  "kylin-oracle",
  "log",
+ "orml-currencies",
+ "orml-tokens",
  "orml-traits",
+ "orml-unknown-tokens",
  "orml-xcm",
+ "orml-xcm-support",
  "orml-xtokens",
  "pallet-assets",
  "pallet-aura",
@@ -5445,6 +5449,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "orml-currencies"
+version = "0.4.1-dev"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "orml-tokens",
+ "orml-traits",
+ "orml-utilities",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "orml-tokens"
 version = "0.4.1-dev"
 dependencies = [
@@ -5473,6 +5496,23 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+]
+
+[[package]]
+name = "orml-unknown-tokens"
+version = "0.4.1-dev"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "orml-xcm-support",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -6879,8 +6919,12 @@ dependencies = [
  "hex-literal",
  "kylin-oracle",
  "log",
+ "orml-currencies",
+ "orml-tokens",
  "orml-traits",
+ "orml-unknown-tokens",
  "orml-xcm",
+ "orml-xcm-support",
  "orml-xtokens",
  "pallet-assets",
  "pallet-aura",
