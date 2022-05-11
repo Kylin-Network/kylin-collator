@@ -1,4 +1,12 @@
-containers
+# Kylin Collator on Pichiu/Rococo
+
+
+
+These are instructions for starting a collator on Pichiu/Rococo test net.
+
+### Setup
+
+You will need to [install docker](https://www.docker.com/products/docker-desktop) to launch our pre-built containers
 
 ```bash
 git clone --recursive https://github.com/Kylin-Network/kylin-collator.git
@@ -27,3 +35,4 @@ target/release/kylin-collator --collator --bootnodes /ip4/35.78.250.13/tcp/40333
 ```
 
 - You should see your collator running and peering with the already running relay chain validators.
+
