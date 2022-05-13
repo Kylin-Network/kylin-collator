@@ -105,7 +105,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("pichiu"),
 	impl_name: create_runtime_str!("pichiu"),
 	authoring_version: 1,
-	spec_version: 13,
+	spec_version: 14,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -763,6 +763,8 @@ pub enum CurrencyId {
 	ROC,
 	PCHU,
 	KAR,
+	LKSM,
+	AUSD,
 }
 
 pub struct AccountIdToMultiLocation;
@@ -793,7 +795,15 @@ impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 			// Karura paraid 2000
 			CurrencyId::KAR => Some(MultiLocation::new(
 				1,
-				X2(Parachain(2000), GeneralKey("KAR".into())),
+				X2(Parachain(2000), GeneralKey([0, 128].to_vec())),
+			)),
+			CurrencyId::AUSD => Some(MultiLocation::new(
+				1,
+				X2(Parachain(2000), GeneralKey([0, 129].to_vec())),
+			)),
+			CurrencyId::LKSM => Some(MultiLocation::new(
+				1,
+				X2(Parachain(2000), GeneralKey([0, 131].to_vec())),
 			)),
 		}
 	}
@@ -805,12 +815,16 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 			return Some(CurrencyId::ROC);
 		}
 
-		let kar: Vec<u8> = "KAR".into();
+		let kar: Vec<u8> = [0, 128].to_vec();
+		let ausd: Vec<u8> = [0, 129].to_vec();
+		let lksm: Vec<u8> = [0, 131].to_vec();
 		let pchu: Vec<u8> = "PCHU".into();
 
 		match location {
 			MultiLocation { parents, interior } if parents == 1 => match interior {
 				X2(Parachain(2000), GeneralKey(k)) if k == kar => Some(CurrencyId::KAR),
+				X2(Parachain(2000), GeneralKey(k)) if k == ausd => Some(CurrencyId::AUSD),
+				X2(Parachain(2000), GeneralKey(k)) if k == lksm => Some(CurrencyId::LKSM),
 				X2(Parachain(id), GeneralKey(k))
 					if ParaId::from(id) == ParachainInfo::parachain_id() && k == pchu =>
 				{
@@ -819,8 +833,10 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 				_ => None,
 			},
 			MultiLocation { parents, interior } if parents == 0 => match interior {
-				X1(GeneralKey(k)) if k == kar => Some(CurrencyId::KAR),
 				X1(GeneralKey(k)) if k == pchu => Some(CurrencyId::PCHU),
+				X1(GeneralKey(k)) if k == kar => Some(CurrencyId::KAR),
+				X1(GeneralKey(k)) if k == ausd => Some(CurrencyId::AUSD),
+				X1(GeneralKey(k)) if k == lksm => Some(CurrencyId::LKSM),
 				_ => None,
 			},
 			_ => None,
@@ -912,8 +928,7 @@ impl orml_tokens::Config for Runtime {
     type CurrencyId = CurrencyId;
     type WeightInfo = ();
     type ExistentialDeposits = ExistentialDeposits;
-    // type OnDust = orml_tokens::TransferDust<Runtime, NativeTreasuryAccount>;
-    type OnDust = ();
+    type OnDust = orml_tokens::TransferDust<Runtime, NativeTreasuryAccount>;
     type MaxLocks = ORMLMaxLocks;
     type DustRemovalWhitelist = Nothing;
 }
