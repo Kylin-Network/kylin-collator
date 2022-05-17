@@ -18,9 +18,8 @@ LABEL description="Multistage Docker image for kylin-collator: Data certificatio
 	io.parity.image.documentation="https://github.com/kylinnetwork/kylin-collator/"
 
 COPY --from=builder /kylin-collator/target/release/kylin-collator /usr/local/bin
-
-COPY ./pichiu-rococo-parachain-2102.json /kylin-collator
-COPY ./rococo.json /kylin-collator
+COPY --from=builder /kylin-collator/pichiu-rococo-parachain-2102.json .
+COPY --from=builder /kylin-collator/rococo.json .
 
 
 RUN useradd -m -u 1000 -U -s /bin/sh -d /kylin-collator kylin-collator && \
