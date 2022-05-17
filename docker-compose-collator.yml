@@ -1,0 +1,19 @@
+version: "3.2"
+
+services:
+  
+
+  kylin-collator:
+    container_name: kylin-collator
+    image: kylinnetworks/kylin-collator
+    ports:
+      - 40333 
+      - 9977 
+      - 8844 
+      - 9615
+    command: "--bob --collator --bootnodes /ip4/35.78.250.13/tcp/40333/p2p/12D3KooWQ3stLjQa4R1Rrccw1s9ViZHna37iuosaAcS2bmzUn9oe  --unsafe-ws-external  --name pichiu-collator-2 --pruning archive --force-authoring --parachain-id 2102 --chain ./pichiu-rococo-parachain-2102.json --port 40333 --ws-port 8844 --rpc-cors all --log parachain:debug  -- --execution wasm --chain ./rococo.json --port 30343 --ws-port 9977"
+    
+    
+    
+
+  
