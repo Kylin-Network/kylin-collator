@@ -40,7 +40,6 @@ use sp_runtime::{
 pub mod constants;
 /// Constant values used within the runtime.
 use constants::currency::*;
-
 use sp_std::{marker::PhantomData, prelude::*};
 
 #[cfg(feature = "std")]
@@ -67,10 +66,6 @@ pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 
 pub use cumulus_primitives_core::ParaId;
-use parachains_common::{
-	impls::{AssetsFrom},
-	AssetId,
-};
 
 use xcm_executor::{
 	traits::{ShouldExecute},
@@ -82,11 +77,12 @@ use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 use xcm::latest::prelude::*;
 use xcm_builder::{
-	AccountId32Aliases, EnsureXcmOrigin, FixedWeightBounds,
-	LocationInverter, NativeAsset, ParentAsSuperuser, ParentIsPreset, RelayChainAsNative,
+	AccountId32Aliases, EnsureXcmOrigin, FixedWeightBounds, FixedRateOfFungible,
+	LocationInverter, ParentAsSuperuser, ParentIsPreset, RelayChainAsNative,
 	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
-	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, UsingComponents, AllowUnpaidExecutionFrom
+	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, AllowUnpaidExecutionFrom
 };
+
 
 /// common types for the runtime.
 pub use runtime_common::*;
@@ -105,7 +101,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("pichiu"),
 	impl_name: create_runtime_str!("pichiu"),
 	authoring_version: 1,
-	spec_version: 14,
+	spec_version: 17,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -270,7 +266,7 @@ impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
 	pub const KsmLocation: MultiLocation = MultiLocation::parent();
-	pub const RelayNetwork: NetworkId = NetworkId::Polkadot;
+	pub const RelayNetwork: NetworkId = NetworkId::Kusama;
 	pub RelayChainOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 	pub CheckingAccount: AccountId = PolkadotXcm::check_account();
@@ -325,8 +321,8 @@ pub type XcmOriginToTransactDispatchOrigin = (
 );
 
 parameter_types! {
-	// One XCM operation is 1_000_000 weight - almost certainly a conservative estimate.
-	pub UnitWeightCost: Weight = 1_000_000;
+	// One XCM operation is 200_000_000 weight - almost certainly a conservative estimate.
+	pub UnitWeightCost: Weight = 200_000_000;
 	// One ROC buys 1 second of weight.
 	pub const WeightPrice: (MultiLocation, u128) = (MultiLocation::parent(), PCHU);
 	pub const MaxInstructions: u32 = 100;
@@ -376,7 +372,45 @@ parameter_types! {
 	pub StatemintLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(1000)));
 }
 
-pub type Reserves = (NativeAsset, AssetsFrom<StatemintLocation>);
+parameter_types! {
+	pub KsmPerSecond: (AssetId, u128) = (MultiLocation::parent().into(), native_token_per_second() / 1_000_000);
+	pub KarPerSecond: (AssetId, u128) = (
+		MultiLocation::new(
+			1,
+			X2(Parachain(2000), GeneralKey([0, 128].to_vec())),
+		).into(),
+		// KAR:PCHU = 1:1_000_000  // ~80_000_000_000 amount
+		native_token_per_second() / 1_000_000
+	);
+	pub AusdPerSecond: (AssetId, u128) = (
+		MultiLocation::new(
+			1,
+			X2(Parachain(2000), GeneralKey([0, 129].to_vec())),
+		).into(),
+		// AUSD:PCHU = 1:1_000_000
+		native_token_per_second() / 1_000_000
+	);
+	pub LksmPerSecond: (AssetId, u128) = (
+		MultiLocation::new(
+			1,
+			X2(Parachain(2000), GeneralKey([0, 131].to_vec())),
+		).into(),
+		// LKSM:PCHU = 1:1_000_000
+		native_token_per_second() / 1_000_000
+	);
+	pub NativeTokenPerSecond: (AssetId, u128) = (
+		MultiLocation::new(1, X1(Parachain(ParachainInfo::parachain_id().into()))).into(),
+		native_token_per_second() / 1_000_000
+	);
+}
+
+pub type Trader = (
+    FixedRateOfFungible<KsmPerSecond, ()>,
+    FixedRateOfFungible<NativeTokenPerSecond, ()>,
+    FixedRateOfFungible<KarPerSecond, ()>,
+    FixedRateOfFungible<AusdPerSecond, ()>,
+    FixedRateOfFungible<LksmPerSecond, ()>,
+);
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
@@ -391,7 +425,7 @@ impl xcm_executor::Config for XcmConfig {
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
-	type Trader = UsingComponents<IdentityFee<Balance>, KsmLocation, AccountId, Balances, ()>;
+	type Trader = Trader;
 	type ResponseHandler = PolkadotXcm;
 	type AssetTrap = PolkadotXcm;
 	type AssetClaims = PolkadotXcm;
@@ -523,18 +557,6 @@ parameter_types! {
 	pub const CouncilMaxMembers: u32 = 100;
 }
 
-// type CouncilCollective = pallet_collective::Instance1;
-// impl pallet_collective::Config<CouncilCollective> for Runtime {
-// 	type Origin = Origin;
-// 	type Proposal = Call;
-// 	type Event = Event;
-// 	type MotionDuration = CouncilMotionDuration;
-// 	type MaxProposals = CouncilMaxProposals;
-// 	type MaxMembers = CouncilMaxMembers;
-// 	type DefaultVote = pallet_collective::PrimeDefaultVote;
-// 	type WeightInfo = ();
-// 	// type WeightInfo = weights::pallet_collective_council::WeightInfo<Runtime>;
-// }
 parameter_types! {
 	pub MaximumSchedulerWeight: Weight = NORMAL_DISPATCH_RATIO * RuntimeBlockWeights::get().max_block;
 	pub const MaxScheduledPerBlock: u32 = 50;
@@ -543,8 +565,8 @@ parameter_types! {
 
 parameter_types! {
 	pub const PreimageMaxSize: u32 = 4096 * 1024;
-	pub const PreimageBaseDeposit: Balance = deposit(2, 64);
-	pub const PreimageByteDeposit: Balance = deposit(0, 1);
+	pub const PreimageBaseDeposit: Balance = runtime_common::deposit(2, 64);
+	pub const PreimageByteDeposit: Balance = runtime_common::deposit(0, 1);
 }
 
 impl pallet_preimage::Config for Runtime {
@@ -645,7 +667,7 @@ pub type AssetsForceOrigin = EnsureRoot<AccountId>;
 impl pallet_assets::Config for Runtime {
 	type Event = Event;
 	type Balance = u64;
-	type AssetId = AssetId;
+	type AssetId = parachains_common::AssetId;
 	type Currency = Balances;
 	type ForceOrigin = AssetsForceOrigin;
 	type AssetDeposit = AssetDeposit;
@@ -727,7 +749,6 @@ impl pallet_session::Config for Runtime {
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
-use orml_currencies::BasicCurrencyAdapter;
 use orml_xcm_support::{
     DepositToAlternative, IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset,
 };
@@ -766,6 +787,7 @@ pub enum CurrencyId {
 	LKSM,
 	AUSD,
 }
+
 
 pub struct AccountIdToMultiLocation;
 impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
@@ -866,7 +888,7 @@ pub type Amount = i128;
 impl orml_currencies::Config for Runtime {
     type Event = Event;
     type MultiCurrency = OrmlTokens;
-    type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
+    type NativeCurrency = orml_currencies::BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
     type GetNativeCurrencyId = GetNativeCurrencyId;
     type WeightInfo = ();
 }
@@ -957,7 +979,6 @@ construct_runtime! {
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 11,
 		Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 12,
 		Vesting: pallet_vesting::{Pallet, Call, Storage, Event<T>, Config<T>} = 13,
-
 
 		// Collator support. The order of these 4 are important and shall not change.
 		Authorship: pallet_authorship::{Pallet, Call, Storage} = 20,

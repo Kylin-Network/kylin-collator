@@ -20,7 +20,7 @@
 pub use constants::*;
 pub use types::*;
 pub use currency::*;
-
+pub use fee::*;
 
 /// Common types for all runtimes
 pub mod types {
@@ -100,8 +100,8 @@ pub mod currency {
 
 /// Common constants for all runtimes
 pub mod constants {
-	use super::types::BlockNumber;
 	use frame_support::weights::{constants::WEIGHT_PER_SECOND, Weight};
+	use super::types::BlockNumber;
 	use sp_runtime::Perbill;
 
 	/// This determines the average expected block time that we are targeting. Blocks will be
@@ -134,4 +134,18 @@ pub mod constants {
 
 	/// XCM
 	pub const BASE_XCM_WEIGHT: Weight = 100_000_000;
+}
+
+pub mod fee {
+	use frame_support::weights::{constants::{ExtrinsicBaseWeight, WEIGHT_PER_SECOND}};
+	use super::currency::KYL;
+	use super::types::Balance;
+
+	pub fn native_token_per_second() -> u128 {
+		let base_weight = Balance::from(ExtrinsicBaseWeight::get());
+		let base_tx_fee = KYL / 1000;
+		let base_tx_per_second = (WEIGHT_PER_SECOND as u128) / base_weight;
+		let fee_per_second = base_tx_per_second * base_tx_fee; // 1_000_000
+		fee_per_second / 100
+	}
 }
