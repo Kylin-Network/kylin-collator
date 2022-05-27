@@ -101,7 +101,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("pichiu"),
 	impl_name: create_runtime_str!("pichiu"),
 	authoring_version: 1,
-	spec_version: 17,
+	spec_version: 19,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -399,8 +399,8 @@ parameter_types! {
 		native_token_per_second() / 1_000_000
 	);
 	pub NativeTokenPerSecond: (AssetId, u128) = (
-		MultiLocation::new(1, X1(Parachain(ParachainInfo::parachain_id().into()))).into(),
-		native_token_per_second() / 1_000_000
+		MultiLocation::new(0, X1(GeneralKey("PCHU".into()))).into(),
+		native_token_per_second()
 	);
 }
 
