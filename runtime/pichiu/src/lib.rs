@@ -781,7 +781,7 @@ parameter_types! {
 )]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum CurrencyId {
-	ROC,
+	KSM,
 	PCHU,
 	KAR,
 	LKSM,
@@ -812,8 +812,8 @@ impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 					GeneralKey("PCHU".into()),
 				),
 			)),
-			// Rococo statemint paraid 1000
-			CurrencyId::ROC => Some(MultiLocation::parent()),
+			// Kusama statemine paraid 1000
+			CurrencyId::KSM => Some(MultiLocation::parent()),
 			// Karura paraid 2000
 			CurrencyId::KAR => Some(MultiLocation::new(
 				1,
@@ -834,7 +834,7 @@ impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 	fn convert(location: MultiLocation) -> Option<CurrencyId> {
 		if location == MultiLocation::parent() {
-			return Some(CurrencyId::ROC);
+			return Some(CurrencyId::KSM);
 		}
 
 		let kar: Vec<u8> = [0, 128].to_vec();
