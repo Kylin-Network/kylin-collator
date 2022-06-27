@@ -276,6 +276,8 @@ fn pichiu_genesis(
 			safe_xcm_version: Some(SAFE_XCM_VERSION),
 		},
 		orml_tokens: pichiu_runtime::OrmlTokensConfig { balances: vec![] },
+		democracy: DemocracyConfig::default(),
+
 	}
 }
 

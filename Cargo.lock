@@ -6933,6 +6933,7 @@ dependencies = [
  "pallet-collator-selection",
  "pallet-collective",
  "pallet-crowdloan-rewards",
+ "pallet-democracy",
  "pallet-preimage",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
