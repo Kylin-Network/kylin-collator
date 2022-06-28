@@ -277,7 +277,20 @@ fn pichiu_genesis(
 		},
 		orml_tokens: pichiu_runtime::OrmlTokensConfig { balances: vec![] },
 		democracy: DemocracyConfig::default(),
-
+		collective: Default:default(),
+		treasury: Default::default(),
+		staking: Some(StakingConfig {
+            validator_count: 10,
+            minimum_validator_count: 1,
+            stakers: initial_authorities
+                .iter()
+                .map(|x| (x.0.clone(), x.1.clone(), STASH, StakerStatus::Validator))
+                .collect(),
+            invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
+            force_era: Forcing::NotForcing,
+            slash_reward_fraction: Perbill::from_percent(10),
+            ..Default::default()
+        })
 	}
 }
 

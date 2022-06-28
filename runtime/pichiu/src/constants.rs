@@ -10,11 +10,12 @@ pub mod currency {
 	pub const PCHU: Balance = KYL;
 }
 pub mod time {
-	use primitives::{Balance, BlockNumber, Moment};
+	use polkadot_core_primitives::Moment;
+	use polkadot_core_primitives::BlockNumber;
 
 	pub const MILLISECS_PER_BLOCK: Moment = 6000;
 	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
-	pub const EPOCH_DURATION_IN_SLOTS: BlockNumber = prod_or_fast!(1 * HOURS, 1 * MINUTES);
+	// pub const EPOCH_DURATION_IN_SLOTS: BlockNumber = prod_or_fast!(1 * HOURS, 1 * MINUTES);
 
 	// These time units are defined in number of blocks.
 	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
