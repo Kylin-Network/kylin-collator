@@ -32,17 +32,21 @@ use sp_runtime::{
 	impl_opaque_keys,
 	traits::{
 		AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, ConvertInto,
-		Extrinsic as ExtrinsicT, Verify, AccountIdConversion
+		Extrinsic as ExtrinsicT, Verify, AccountIdConversion, 
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, Perbill, RuntimeDebug,
+	ApplyExtrinsicResult, Percent, Permill, Perbill, RuntimeDebug
 };
 
 pub mod constants;
 /// Constant values used within the runtime.
 use constants::{currency::*, time::*};
-use constants::currency::*;
+
 use sp_std::{marker::PhantomData, prelude::*};
+
+
+
+
 
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -52,12 +56,12 @@ use sp_version::RuntimeVersion;
 // use crate::sp_api_hidden_includes_IMPL_RUNTIME_APIS::sp_api::Encode;
 pub use frame_support::{
 	construct_runtime, ensure, match_type, parameter_types,
-	traits::{Contains, EnsureOneOf, EqualPrivilegeOnly, Everything, IsInVec, Randomness, Nothing},
+	traits::{Contains, EnsureOneOf, EqualPrivilegeOnly, Everything, IsInVec, Randomness, Nothing, ConstU32, U128CurrencyToVote},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		DispatchClass, IdentityFee, Weight,
+		DispatchClass, IdentityFee, Weight
 	},
-	PalletId, StorageValue,
+	StorageValue, PalletId
 };
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
@@ -88,6 +92,7 @@ use xcm_builder::{
 
 /// common types for the runtime.
 pub use runtime_common::*;
+
 
 pub type SessionHandlers = ();
 
@@ -193,7 +198,7 @@ impl frame_system::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
+	pub const MinimumPeriod: u64 =  constants::time::SLOT_DURATION / 2;
 }
 
 impl pallet_timestamp::Config for Runtime {
@@ -288,50 +293,7 @@ impl pallet_democracy::Config for Runtime {
 	type MaxProposals = MaxProposals;
 }
 
-parameter_types! {
-    // pub const StakingModuleId: ModuleId = ModuleId(*b"cstaking");
-    // 6 sessions in an era (6 hours).
-    pub const SessionsPerEra: SessionIndex = 6;
-    // 112 eras for unbonding (28 days).
-    pub const BondingDuration: EraIndex = 28 * 4;
-    // 108 eras in which slashes can be cancelled (slightly less than 28 days).
-    pub const SlashDeferDuration: EraIndex = 27 * 4;
-    // 1 * CRUs / TB, since we treat 1 TB = 1_000_000_000_000, so the ratio = `1`
-    pub const SPowerRatio: u128 = 1;
-    // 64 guarantors for one validator.
-    pub const MaxGuarantorRewardedPerValidator: u32 = 64;
-    // 60 eras means 15 days if era = 6 hours
-    pub const MarketStakingPotDuration: u32 = 60;
-    // free transfer amount for other locks
-    pub const UncheckedFrozenBondFund: Balance = 1 * DOLLARS;
-}
 
-impl pallet_staking::Config for Runtime {
-    // type ModuleId = StakingModuleId;
-    type Currency = Balances;
-    type UnixTime = Timestamp;
-
-    type CurrencyToVote = CurrencyToVoteHandler;
-    type RewardRemainder = ();
-    type Event = Event;
-    type Slash = Treasury;
-    type Reward = ();
-    type Randomness = RandomnessCollectiveFlip;
-    type SessionsPerEra = SessionsPerEra;
-    type BondingDuration = BondingDuration;
-    type MaxGuarantorRewardedPerValidator = MaxGuarantorRewardedPerValidator;
-    type SlashDeferDuration = SlashDeferDuration;
-
-    // A majority of the council can cancel the slash.
-    type SlashCancelOrigin = frame_system::EnsureRoot<Self::AccountId>;
-    type SessionInterface = Self;
-    type SPowerRatio = SPowerRatio;
-    type MarketStakingPot = Market;
-    type MarketStakingPotDuration = MarketStakingPotDuration;
-    type BenefitInterface = Benefits;
-    type UncheckedFrozenBondFund = UncheckedFrozenBondFund;
-    type WeightInfo = staking::weight::WeightInfo;
-}
 parameter_types! {
 	pub const CouncilMotionDuration: BlockNumber = 5 * DAYS;
 	pub const CouncilMaxProposals: u32 = 100;
@@ -369,9 +331,41 @@ impl pallet_collective::Config<TechnicalCollective> for Runtime {
 }
 
 type ApproveOrigin = EnsureRoot<AccountId>;
+type EnsureRootOrHalfCouncil = EnsureOneOf<
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
+>;
+/// For testing only. Does not check for overflow.
+pub fn dollar(b: Balance) -> Balance {
+	b * 1_000_000_000_000
+}
+parameter_types! {
+	pub const ProposalBond: Permill = Permill::from_percent(5);
+	pub ProposalBondMinimum: Balance = 5 * dollar(PCHU);
+	pub ProposalBondMaximum: Balance = 25 * dollar(PCHU);
+	pub const SpendPeriod: BlockNumber = 7 * DAYS;
+	pub const Burn: Permill = Permill::from_percent(0);
+
+	pub const TipCountdown: BlockNumber = DAYS;
+	pub const TipFindersFee: Percent = Percent::from_percent(5);
+	pub TipReportDepositBase: Balance = deposit(1, 0);
+	pub BountyDepositBase: Balance = deposit(1, 0);
+	pub const BountyDepositPayoutDelay: BlockNumber = 4 * DAYS;
+	pub const BountyUpdatePeriod: BlockNumber = 35 * DAYS;
+	pub const CuratorDepositMultiplier: Permill = Permill::from_percent(50);
+	pub CuratorDepositMin: Balance = dollar(PCHU);
+	pub CuratorDepositMax: Balance = 100 * dollar(PCHU);
+	pub BountyValueMinimum: Balance = 5 * dollar(PCHU);
+	pub DataDepositPerByte: Balance = deposit(0, 1);
+	pub const MaximumReasonLength: u32 = 8192;
+
+	pub const SevenDays: BlockNumber = 7 * DAYS;
+	pub const OneDay: BlockNumber = DAYS;
+}
 
 impl pallet_treasury::Config for Runtime {
-    // type ModuleId = TreasuryModuleId;
+    
+	type PalletId = TreasuryPalletId;
     type Currency = Balances;
     type ApproveOrigin = ApproveOrigin;
     type RejectOrigin = EnsureRootOrHalfCouncil;
@@ -383,9 +377,11 @@ impl pallet_treasury::Config for Runtime {
     type Burn = Burn;
     type BurnDestination = (); // TODO: Enable Society
     type SpendFunds = ();
-    type WeightInfo = weights::pallet_treasury::WeightInfo<Runtime>;
+	type ProposalBondMaximum = ProposalBondMaximum;
+	type WeightInfo = ();
+	type MaxApprovals = ConstU32<30>;
+    
 }
-
 
 
 
@@ -1165,11 +1161,11 @@ construct_runtime! {
 		OrmlUnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 73,
 		OrmlCurrencies: orml_currencies::{Pallet, Call, Event<T>} = 74,
 		//Democracy
-		Democracy: pallet_democracy::{Pallet, Call, Event<T>} = 75,
+		Democracy: pallet_democracy = 75,
 		Council: pallet_collective::<Instance1> = 76,
 		TechnicalCommittee: pallet_collective::<Instance2> = 77,
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 78,
-		Staking: pallet_staking::{Call, Storage, Config<T>, Event<T>} = 79,
+		
 	}
 }
 

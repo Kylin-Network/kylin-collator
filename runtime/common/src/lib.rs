@@ -101,7 +101,7 @@ pub mod currency {
 /// Common constants for all runtimes
 pub mod constants {
 	use frame_support::weights::{constants::WEIGHT_PER_SECOND, Weight};
-	use super::types::BlockNumber;
+	// use super::types::BlockNumber;
 	use sp_runtime::Perbill;
 
 	/// This determines the average expected block time that we are targeting. Blocks will be
@@ -115,9 +115,9 @@ pub mod constants {
 
 
 	// Time is measured by number of blocks.
-	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
-	pub const HOURS: BlockNumber = MINUTES * 60;
-	pub const DAYS: BlockNumber = HOURS * 24;
+	// pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
+	// pub const HOURS: BlockNumber = MINUTES * 60;
+	// pub const DAYS: BlockNumber = HOURS * 24;
 
 	/// Milliseconds per day
 	pub const MILLISECS_PER_DAY: u64 = 86400000;

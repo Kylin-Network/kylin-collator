@@ -36,7 +36,10 @@ use sp_runtime::{
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, Perbill, RuntimeDebug,
 };
-
+pub mod constants;
+/// Constant values used within the runtime.
+use constants::{currency::*, time::*};
+use constants::currency::*;
 /// Constant values used within the runtime.
 use runtime_common::*;
 
@@ -195,7 +198,7 @@ impl frame_system::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
+	pub const MinimumPeriod: u64 = constants::time::SLOT_DURATION / 2;
 }
 
 impl pallet_timestamp::Config for Runtime {
@@ -545,7 +548,7 @@ impl pallet_utility::Config for Runtime {
 }
 
 parameter_types! {
-	pub const CouncilMotionDuration: BlockNumber = 3 * DAYS;
+	pub const CouncilMotionDuration: BlockNumber = 3 * constants::time::DAYS;
 	pub const CouncilMaxProposals: u32 = 100;
 	pub const CouncilMaxMembers: u32 = 100;
 }

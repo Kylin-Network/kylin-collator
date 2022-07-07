@@ -78,7 +78,8 @@ sp-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = 
 substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 sc-rpc-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-
+pallet-staking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.18" }
+pallet-randomness-collective-flip = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.18" }
 
 # RPC related dependencies
 jsonrpc-core = "18.0.0"

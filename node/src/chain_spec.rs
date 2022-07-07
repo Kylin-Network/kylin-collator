@@ -4,7 +4,11 @@ use sc_service::{ChainType, Properties};
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
-use pichiu_runtime::constants::currency::PCHU;
+use pichiu_runtime::{ 
+	constants::currency::*, DemocracyConfig, CouncilConfig, TechnicalCommitteeConfig
+};
+// use pallet_staking::Forcing;
+
 use runtime_common::*;
 use sc_telemetry::TelemetryEndpoints;
 
@@ -61,9 +65,9 @@ where
 /// Generate the session keys from individual elements.
 ///
 /// The input must be a tuple of individual keys (a single arg for now since we have just one key).
-pub fn development_session_keys(keys: AuraId) -> development_runtime::SessionKeys {
-	development_runtime::SessionKeys { aura: keys }
-}
+// pub fn development_session_keys(keys: AuraId) -> development_runtime::SessionKeys {
+// 	development_runtime::SessionKeys { aura: keys }
+// }
 
 pub fn pichiu_session_keys(keys: AuraId) -> pichiu_runtime::SessionKeys {
 	pichiu_runtime::SessionKeys { aura: keys }
@@ -277,20 +281,18 @@ fn pichiu_genesis(
 		},
 		orml_tokens: pichiu_runtime::OrmlTokensConfig { balances: vec![] },
 		democracy: DemocracyConfig::default(),
-		collective: Default:default(),
+		// vesting: VestingConfig { vesting: vec![] },
+
 		treasury: Default::default(),
-		staking: Some(StakingConfig {
-            validator_count: 10,
-            minimum_validator_count: 1,
-            stakers: initial_authorities
-                .iter()
-                .map(|x| (x.0.clone(), x.1.clone(), STASH, StakerStatus::Validator))
-                .collect(),
-            invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
-            force_era: Forcing::NotForcing,
-            slash_reward_fraction: Perbill::from_percent(10),
-            ..Default::default()
-        })
+		council: CouncilConfig::default(),
+		technical_committee: TechnicalCommitteeConfig {
+			members: endowed_accounts
+				.iter()
+				.take((num_endowed_accounts + 1) / 2)
+				.cloned()
+				.collect(),
+			phantom: Default::default(),
+		},
 	}
 }
 
@@ -334,68 +336,68 @@ pub fn development_network(id: ParaId) -> PichiuChainSpec {
 	)
 }
 
-fn development_genesis(
-	root_key: AccountId,
-	initial_authorities: Vec<(AccountId, AuraId)>,
-	endowed_accounts: Vec<pichiu_runtime::AccountId>,
-	total_issuance: Option<pichiu_runtime::Balance>,
-	id: ParaId,
-	crowdloan_fund_pot: Balance,
-) -> development_runtime::GenesisConfig {
-	let num_endowed_accounts = endowed_accounts.len();
-	let balances = match total_issuance {
-		Some(total_issuance) => {
-			let balance_per_endowed = total_issuance
-				.checked_div(num_endowed_accounts as development_runtime::Balance)
-				.unwrap_or(0 as development_runtime::Balance);
-			endowed_accounts
-				.iter()
-				.cloned()
-				.map(|k| (k, balance_per_endowed))
-				.collect()
-		}
-		None => vec![],
-	};
+// fn development_genesis(
+// 	root_key: AccountId,
+// 	initial_authorities: Vec<(AccountId, AuraId)>,
+// 	endowed_accounts: Vec<pichiu_runtime::AccountId>,
+// 	total_issuance: Option<pichiu_runtime::Balance>,
+// 	id: ParaId,
+// 	crowdloan_fund_pot: Balance,
+// ) -> development_runtime::GenesisConfig {
+// 	let num_endowed_accounts = endowed_accounts.len();
+// 	let balances = match total_issuance {
+// 		Some(total_issuance) => {
+// 			let balance_per_endowed = total_issuance
+// 				.checked_div(num_endowed_accounts as development_runtime::Balance)
+// 				.unwrap_or(0 as development_runtime::Balance);
+// 			endowed_accounts
+// 				.iter()
+// 				.cloned()
+// 				.map(|k| (k, balance_per_endowed))
+// 				.collect()
+// 		}
+// 		None => vec![],
+// 	};
 
-	development_runtime::GenesisConfig {
-		system: development_runtime::SystemConfig {
-			code: development_runtime::WASM_BINARY
-				.expect("WASM binary was not build, please build it!")
-				.to_vec()
-		},
-		balances: development_runtime::BalancesConfig { balances },
-		sudo: development_runtime::SudoConfig { key: Some(root_key) },
-		vesting: Default::default(),
-		crowdloan_rewards: development_runtime::CrowdloanRewardsConfig {
-			funded_amount: crowdloan_fund_pot,
-		},
-		parachain_info: development_runtime::ParachainInfoConfig { parachain_id: id },
-		collator_selection: development_runtime::CollatorSelectionConfig {
-			invulnerables: initial_authorities.iter().cloned().map(|(acc, _)| acc).collect(),
-			candidacy_bond: EXISTENTIAL_DEPOSIT * 16,
-			..Default::default()
-		},
-		session: development_runtime::SessionConfig { // validator session
-            keys: initial_authorities
-                .iter()
-                .cloned()
-                .map(|(acc, aura)| {
-                    (
-                        acc.clone(),                // account id
-                        acc,                        // validator id
-                        development_session_keys(aura), // session keys
-                    )
-                })
-                .collect(),
-        },
-		aura_ext: Default::default(),
-		aura: development_runtime::AuraConfig {
-            authorities: Default::default(),
-        },
-		parachain_system: Default::default(),
-		polkadot_xcm: development_runtime::PolkadotXcmConfig {
-			safe_xcm_version: Some(SAFE_XCM_VERSION),
-		},
-		orml_tokens: development_runtime::OrmlTokensConfig { balances: vec![] },
-	}
-}
+// 	development_runtime::GenesisConfig {
+// 		system: development_runtime::SystemConfig {
+// 			code: development_runtime::WASM_BINARY
+// 				.expect("WASM binary was not build, please build it!")
+// 				.to_vec()
+// 		},
+// 		balances: development_runtime::BalancesConfig { balances },
+// 		sudo: development_runtime::SudoConfig { key: Some(root_key) },
+// 		vesting: Default::default(),
+// 		crowdloan_rewards: development_runtime::CrowdloanRewardsConfig {
+// 			funded_amount: crowdloan_fund_pot,
+// 		},
+// 		parachain_info: development_runtime::ParachainInfoConfig { parachain_id: id },
+// 		collator_selection: development_runtime::CollatorSelectionConfig {
+// 			invulnerables: initial_authorities.iter().cloned().map(|(acc, _)| acc).collect(),
+// 			candidacy_bond: EXISTENTIAL_DEPOSIT * 16,
+// 			..Default::default()
+// 		},
+// 		session: development_runtime::SessionConfig { // validator session
+//             keys: initial_authorities
+//                 .iter()
+//                 .cloned()
+//                 .map(|(acc, aura)| {
+//                     (
+//                         acc.clone(),                // account id
+//                         acc,                        // validator id
+//                         development_session_keys(aura), // session keys
+//                     )
+//                 })
+//                 .collect(),
+//         },
+// 		aura_ext: Default::default(),
+// 		aura: development_runtime::AuraConfig {
+//             authorities: Default::default(),
+//         },
+// 		parachain_system: Default::default(),
+// 		polkadot_xcm: development_runtime::PolkadotXcmConfig {
+// 			safe_xcm_version: Some(SAFE_XCM_VERSION),
+// 		},
+// 		orml_tokens: development_runtime::OrmlTokensConfig { balances: vec![] },
+// 	}
+// }
