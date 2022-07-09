@@ -90,8 +90,7 @@ pub fn pichiu_local_network(id: ParaId) -> PichiuChainSpec {
 				],
 				endowed_accounts_local(),
 				Some(70_000_000 * PCHU),
-				id,
-				30_000_000 * PCHU
+				id
 			)
 		},
 		// Bootnodes
@@ -130,8 +129,7 @@ pub fn pichiu_development_network(id: ParaId) -> PichiuChainSpec {
 				],
 				endowed_accounts(),
 				Some(70_000_000 * PCHU),
-				id,
-				30_000_000 * PCHU
+				id
 			)
 		},
 		vec![],
@@ -169,8 +167,7 @@ pub fn pichiu_network(id: ParaId) -> PichiuChainSpec {
 				],
 				endowed_accounts(),
 				Some(70_000_000 * PCHU),
-				id,
-				30_000_000 * PCHU
+				id
 			)
 		},
 		vec![],
@@ -219,7 +216,6 @@ fn pichiu_genesis(
 	endowed_accounts: Vec<pichiu_runtime::AccountId>,
 	total_issuance: Option<pichiu_runtime::Balance>,
 	id: ParaId,
-	crowdloan_fund_pot: Balance,
 ) -> pichiu_runtime::GenesisConfig {
 	let num_endowed_accounts = endowed_accounts.len();
 	let balances = match total_issuance {
@@ -245,9 +241,6 @@ fn pichiu_genesis(
 		balances: pichiu_runtime::BalancesConfig { balances },
 		sudo: pichiu_runtime::SudoConfig { key: Some(root_key) },
 		vesting: Default::default(),
-		crowdloan_rewards: pichiu_runtime::CrowdloanRewardsConfig {
-			funded_amount: crowdloan_fund_pot,
-		},
 		parachain_info: pichiu_runtime::ParachainInfoConfig { parachain_id: id },
 		collator_selection: pichiu_runtime::CollatorSelectionConfig {
 			invulnerables: initial_authorities.iter().cloned().map(|(acc, _)| acc).collect(),
@@ -300,8 +293,7 @@ pub fn development_network(id: ParaId) -> PichiuChainSpec {
 				],
 				endowed_accounts(),
 				Some(70_000_000 * PCHU),
-				id,
-				30_000_000 * PCHU
+				id
 			)
 		},
 		vec![],
@@ -325,7 +317,6 @@ fn development_genesis(
 	endowed_accounts: Vec<pichiu_runtime::AccountId>,
 	total_issuance: Option<pichiu_runtime::Balance>,
 	id: ParaId,
-	crowdloan_fund_pot: Balance,
 ) -> development_runtime::GenesisConfig {
 	let num_endowed_accounts = endowed_accounts.len();
 	let balances = match total_issuance {
@@ -351,9 +342,6 @@ fn development_genesis(
 		balances: development_runtime::BalancesConfig { balances },
 		sudo: development_runtime::SudoConfig { key: Some(root_key) },
 		vesting: Default::default(),
-		crowdloan_rewards: development_runtime::CrowdloanRewardsConfig {
-			funded_amount: crowdloan_fund_pot,
-		},
 		parachain_info: development_runtime::ParachainInfoConfig { parachain_id: id },
 		collator_selection: development_runtime::CollatorSelectionConfig {
 			invulnerables: initial_authorities.iter().cloned().map(|(acc, _)| acc).collect(),

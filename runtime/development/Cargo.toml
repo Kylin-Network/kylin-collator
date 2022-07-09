@@ -94,7 +94,6 @@ orml-unknown-tokens = { path = "../../pallets/orml/unknown-tokens", default-feat
 # Local Dependencies
 kylin-oracle = { package = 'kylin-oracle', path = '../../pallets/kylin-oracle', default-features = false }
 runtime-common = { path = "../common", default-features = false }
-pallet-crowdloan-rewards = { path = "../../pallets/crowdloan-rewards", default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.3.4"
@@ -186,7 +185,6 @@ std = [
 	'orml-unknown-tokens/std',
 
 	'kylin-oracle/std',
-	'pallet-crowdloan-rewards/std',
 ]
 
 # A feature that should be enabled when the runtime should be build for on-chain

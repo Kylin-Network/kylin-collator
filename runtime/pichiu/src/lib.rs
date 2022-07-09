@@ -524,26 +524,6 @@ parameter_types! {
 	pub const SignatureNetworkIdentifier:  &'static [u8] = b"pichiu-";
 }
 
-impl pallet_crowdloan_rewards::Config for Runtime {
-	type Event = Event;
-	type Initialized = Initialized;
-	type InitializationPayment = InitializationPayment;
-	type MaxInitContributors = MaxInitContributorsBatchSizes;
-	type MinimumReward = MinimumReward;
-	type RewardCurrency = Balances;
-	type RelayChainAccountId = AccountId;
-	// The origin that is allowed to change the reward
-	type RewardAddressChangeOrigin = EnsureSigned<Self::AccountId>;
-	type RewardAddressRelayVoteThreshold = RelaySignaturesThreshold;
-	// The origin that is allowed to associate the reward
-	type RewardAddressAssociateOrigin = EnsureSigned<Self::AccountId>;
-	type VestingBlockNumber = BlockNumber;
-	type VestingBlockProvider =
-		cumulus_pallet_parachain_system::RelaychainBlockNumberProvider<Self>;
-	type WeightInfo = pallet_crowdloan_rewards::weights::SubstrateWeight<Runtime>;
-	type SignatureNetworkIdentifier = SignatureNetworkIdentifier;
-}
-
 impl pallet_utility::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
@@ -996,7 +976,6 @@ construct_runtime! {
 
 		// Kylin Pallets
 		KylinOraclePallet: kylin_oracle::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 54,
-		CrowdloanRewards: pallet_crowdloan_rewards::{Pallet, Call, Storage, Config<T>, Event<T>} = 55,
 
 		// orml
 		OrmlXcm: orml_xcm::{Pallet, Call, Event<T>} = 70,
@@ -1180,7 +1159,6 @@ impl_runtime_apis! {
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 
-			// add_benchmark!(params, batches, pallet_crowdloan_rewards, CrowdloanRewards);
 			add_benchmark!(params, batches, kylin_oracle, KylinOraclePallet);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
@@ -1196,7 +1174,6 @@ impl_runtime_apis! {
 
 			let mut list = Vec::<BenchmarkList>::new();
 
-			// list_benchmark!(list, extra, pallet_crowdloan_rewards, CrowdloanRewards);
 			list_benchmark!(list, extra, kylin_oracle, KylinOraclePallet);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
