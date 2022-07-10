@@ -8,5 +8,6 @@ members = [
     'node',
 	"pallets/kylin-oracle",
 	"runtime/pichiu",
+	"runtime/kylin",
 	"runtime/common",
 ]

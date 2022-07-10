@@ -40,7 +40,7 @@ use sp_runtime::{
 pub mod constants;
 /// Constant values used within the runtime.
 use constants::currency::*;
-use sp_std::{marker::PhantomData, prelude::*};
+use sp_std::{marker::PhantomData, convert::TryInto, convert::TryFrom, prelude::*};
 
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -53,13 +53,13 @@ pub use frame_support::{
 	traits::{Contains, EnsureOneOf, EqualPrivilegeOnly, Everything, IsInVec, Randomness, Nothing},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		DispatchClass, IdentityFee, Weight,
+		DispatchClass, IdentityFee, Weight, ConstantMultiplier
 	},
 	PalletId, StorageValue,
 };
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot, EnsureSigned,
+	EnsureRoot,
 };
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
@@ -87,6 +87,8 @@ use xcm_builder::{
 /// common types for the runtime.
 pub use runtime_common::*;
 
+pub type ReserveIdentifier = [u8; 8];
+
 pub type SessionHandlers = ();
 
 impl_opaque_keys! {
@@ -101,7 +103,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("pichiu"),
 	impl_name: create_runtime_str!("pichiu"),
 	authoring_version: 1,
-	spec_version: 20,
+	spec_version: 21,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -222,7 +224,7 @@ impl pallet_balances::Config for Runtime {
 	type WeightInfo = ();
 	type MaxLocks = MaxLocks;
 	type MaxReserves = MaxReserves;
-	type ReserveIdentifier = [u8; 8];
+	type ReserveIdentifier = ReserveIdentifier;
 }
 
 impl pallet_randomness_collective_flip::Config for Runtime {}
@@ -233,8 +235,8 @@ parameter_types! {
 
 impl pallet_transaction_payment::Config for Runtime {
 	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
-	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = IdentityFee<Balance>;
+	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type FeeMultiplierUpdate = ();
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 }
@@ -521,7 +523,6 @@ parameter_types! {
 	pub const InitializationPayment: Perbill = Perbill::from_percent(30);
 	pub const MaxInitContributorsBatchSizes: u32 = 500;
 	pub const RelaySignaturesThreshold: Perbill = Perbill::from_percent(100);
-	pub const SignatureNetworkIdentifier:  &'static [u8] = b"pichiu-";
 }
 
 impl pallet_utility::Config for Runtime {
@@ -866,7 +867,6 @@ parameter_types! {
 pub type Amount = i128;
 
 impl orml_currencies::Config for Runtime {
-    type Event = Event;
     type MultiCurrency = OrmlTokens;
     type NativeCurrency = orml_currencies::BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
     type GetNativeCurrencyId = GetNativeCurrencyId;
@@ -875,11 +875,11 @@ impl orml_currencies::Config for Runtime {
 
 
 parameter_type_with_key! {
-	pub ParachainMinFee: |location: MultiLocation| -> u128 {
+	pub ParachainMinFee: |location: MultiLocation| -> Option<u128> {
 		#[allow(clippy::match_ref_pats)] // false positive
 		match (location.parents, location.first_interior()) {
-			(1, Some(Parachain(2102))) => 40,
-			_ => u128::MAX,
+			(1, Some(Parachain(2102))) => Some(40),
+			_ => None,
 		}
 	};
 }
@@ -916,7 +916,7 @@ parameter_type_with_key! {
 
 parameter_types! {
     pub ORMLMaxLocks: u32 = 2;
-    pub NativeTreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
+    pub NativeTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
 
 impl orml_unknown_tokens::Config for Runtime {
@@ -933,6 +933,10 @@ impl orml_tokens::Config for Runtime {
     type OnDust = orml_tokens::TransferDust<Runtime, NativeTreasuryAccount>;
     type MaxLocks = ORMLMaxLocks;
     type DustRemovalWhitelist = Nothing;
+	type OnNewTokenAccount =  ();
+	type OnKilledTokenAccount =  ();
+	type MaxReserves = MaxReserves;
+	type ReserveIdentifier = ReserveIdentifier;
 }
 
 construct_runtime! {
@@ -982,7 +986,7 @@ construct_runtime! {
 		OrmlXTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 71,
 		OrmlTokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>} = 72,
 		OrmlUnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 73,
-		OrmlCurrencies: orml_currencies::{Pallet, Call, Event<T>} = 74,
+		OrmlCurrencies: orml_currencies::{Pallet, Call} = 74,
 	}
 }
 
