@@ -42,6 +42,7 @@ jsonrpsee = { version = "0.13.1", features = ["server"] }
 # Parachain runtimes
 development-runtime = { path = '../runtime/development' }
 pichiu-runtime = { path = '../runtime/pichiu' }
+kylin-runtime = { path = '../runtime/kylin' }
 runtime-common = { path = '../runtime/common' }
 shell-runtime  = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.24" }
 

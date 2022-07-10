@@ -3798,6 +3798,7 @@ dependencies = [
  "hex-literal",
  "jsonrpc-core",
  "jsonrpsee",
+ "kylin-runtime",
  "log",
  "nix 0.17.0",
  "pallet-collective",

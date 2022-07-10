@@ -1,7 +1,7 @@
 use crate::{
 	chain_spec,
 	cli::{Cli, RelayChainCli, Subcommand},
-	service::{new_partial, DevelopmentRuntimerExecutor, PichiuRuntimerExecutor},
+	service::{new_partial, DevelopmentRuntimerExecutor, PichiuRuntimerExecutor, KylinRuntimerExecutor},
 };
 use codec::Encode;
 use cumulus_client_service::genesis::generate_genesis_block;
@@ -26,6 +26,7 @@ const DEFAULT_PARA_ID: u32 = 2102;
 enum ChainIdentity {
 	Pichiu,
 	Development,
+	Kylin,
 }
 
 trait IdentifyChain {
@@ -36,6 +37,8 @@ impl IdentifyChain for dyn sc_service::ChainSpec {
 	fn identify(&self) -> ChainIdentity {
 		if self.id().starts_with("pichiu") {
 			ChainIdentity::Pichiu
+		} else if self.id().starts_with("kylin") {
+			ChainIdentity::Kylin
 		} else {
 			ChainIdentity::Development
 		}
@@ -58,6 +61,7 @@ fn load_spec(
 
 		// rococo-local
 		"pichiu-local" => Box::new(chain_spec::pichiu_local_network(para_id)),
+		"kylin-local" => Box::new(chain_spec::kylin_local_network(para_id)),
 
 		// Westend
 		"pichiu-westend" | "pichiu-chachacha" => {
@@ -66,6 +70,7 @@ fn load_spec(
 
 		// Kusama
 		"pichiu" => Box::new(chain_spec::pichiu_network(para_id)),
+		"kylin" => Box::new(chain_spec::kylin_network(para_id)),
 
 		path => {
 			let chain_spec = chain_spec::PichiuChainSpec::from_json_file(path.into())?;
@@ -76,6 +81,9 @@ fn load_spec(
 				ChainIdentity::Development => Box::new(
 					chain_spec::DevelopmentChainSpec::from_json_file(path.into())?,
 				),
+				ChainIdentity::Kylin => {
+					Box::new(chain_spec::KylinChainSpec::from_json_file(path.into())?)
+				}
 			}
 		}
 	})
@@ -120,6 +128,7 @@ impl SubstrateCli for Cli {
 		match spec.identify() {
 			ChainIdentity::Pichiu => &pichiu_runtime::VERSION,
 			ChainIdentity::Development => &development_runtime::VERSION,
+			ChainIdentity::Kylin => &kylin_runtime::VERSION,
 		}
 	}
 }
@@ -194,6 +203,16 @@ macro_rules! construct_async_run {
 					let $components = new_partial::<development_runtime::RuntimeApi, DevelopmentRuntimerExecutor, _>(
 						&$config,
 						crate::service::build_development_import_queue,
+					)?;
+					let task_manager = $components.task_manager;
+					{ $( $code )* }.map(|v| (v, task_manager))
+				})
+			}
+			ChainIdentity::Kylin => {
+				runner.async_run(|$config| {
+					let $components = new_partial::<kylin_runtime::RuntimeApi, KylinRuntimerExecutor, _>(
+						&$config,
+						crate::service::build_kylin_import_queue,
 					)?;
 					let task_manager = $components.task_manager;
 					{ $( $code )* }.map(|v| (v, task_manager))
@@ -409,6 +428,16 @@ pub fn run() -> Result<()> {
 					.map(|r| r.0)
 					.map_err(Into::into),
 					ChainIdentity::Development => crate::service::start_development_node(
+						config,
+						polkadot_config,
+						collator_options,
+						id,
+						hwbench,
+					)
+					.await
+					.map(|r| r.0)
+					.map_err(Into::into),
+					ChainIdentity::Kylin => crate::service::start_kylin_node(
 						config,
 						polkadot_config,
 						collator_options,
