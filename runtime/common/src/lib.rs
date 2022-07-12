@@ -29,6 +29,7 @@ pub mod types {
 
 	/// An index to a block.
 	pub type BlockNumber = u32;
+	
 
 	/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
 	pub type Signature = sp_runtime::MultiSignature;
@@ -85,6 +86,11 @@ pub mod currency {
 	pub const CENTI_KYL: Balance = 10 * MILLI_KYL; // 10−2 	0.01
 	pub const KYL: Balance = 100 * CENTI_KYL; // 1
 
+	pub const MICRO_PCHU: Balance = MICRO_KYL;
+	pub const MILLI_PCHU: Balance = MILLI_KYL;
+	pub const CENTI_PCHU: Balance = CENTI_KYL;
+	pub const PCHU: Balance = KYL;
+
 	/// Additional fee charged when moving native tokens to target chains (in KYLs).
 	pub const NATIVE_TOKEN_TRANSFER_FEE: Balance = 2000 * KYL;
 	/// The existential deposit.
@@ -103,36 +109,38 @@ pub mod constants {
 	use frame_support::weights::{constants::WEIGHT_PER_SECOND, Weight};
 	use super::types::BlockNumber;
 	use sp_runtime::Perbill;
+	use polkadot_core_primitives::Moment;
+	
 
-	/// This determines the average expected block time that we are targeting. Blocks will be
-	/// produced at a minimum duration defined by `SLOT_DURATION`. `SLOT_DURATION` is picked up by
-	/// `pallet_timestamp` which is in turn picked up by `pallet_aura` to implement `fn
-	/// slot_duration()`.
-	///
-	/// Change this to adjust the block time.
+	// This determines the average expected block time that we are targeting. Blocks will be
+	// produced at a minimum duration defined by `SLOT_DURATION`. `SLOT_DURATION` is picked up by
+	// `pallet_timestamp` which is in turn picked up by `pallet_aura` to implement `fn
+	// slot_duration()`.
+	//
+	// Change this to adjust the block time.
 	pub const MILLISECS_PER_BLOCK: u64 = 12000;
 	pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
-
+	pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
 	// Time is measured by number of blocks.
 	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 	pub const HOURS: BlockNumber = MINUTES * 60;
 	pub const DAYS: BlockNumber = HOURS * 24;
 
-	/// Milliseconds per day
+	// Milliseconds per day
 	pub const MILLISECS_PER_DAY: u64 = 86400000;
 
-	/// We assume that ~5% of the block weight is consumed by `on_initialize` handlers. This is
-	/// used to limit the maximal weight of a single extrinsic.
+	// We assume that ~5% of the block weight is consumed by `on_initialize` handlers. This is
+	// used to limit the maximal weight of a single extrinsic.
 	pub const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(5);
-	/// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used by
-	/// Operational  extrinsics.
+	// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used by
+	// Operational  extrinsics.
 	pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
-	/// We allow for 0.5 seconds of compute with a 6 second average block time.
+	// We allow for 0.5 seconds of compute with a 6 second average block time.
 	pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
 
-	/// XCM
+	// XCM
 	pub const BASE_XCM_WEIGHT: Weight = 100_000_000;
 }
 

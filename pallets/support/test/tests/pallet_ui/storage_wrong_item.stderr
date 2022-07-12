@@ -1,5 +1,0 @@
-error: Invalid pallet::storage, expect item type.
-  --> $DIR/storage_wrong_item.rs:19:2
-   |
-19 |     impl Foo {}
-   |     ^^^^

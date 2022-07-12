@@ -5,7 +5,10 @@
 use super::*;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{ChangeMembers, ContainsLengthBound, Everything, GenesisBuild, SaturatingCurrencyToVote, SortedMembers},
+	traits::{
+		ChangeMembers, ConstU32, ConstU64, ContainsLengthBound, Everything, GenesisBuild, SaturatingCurrencyToVote,
+		SortedMembers,
+	},
 	PalletId,
 };
 use orml_traits::parameter_type_with_key;
@@ -20,6 +23,7 @@ use sp_std::cell::RefCell;
 pub type AccountId = AccountId32;
 pub type CurrencyId = u32;
 pub type Balance = u64;
+pub type ReserveIdentifier = [u8; 8];
 
 pub const DOT: CurrencyId = 1;
 pub const BTC: CurrencyId = 2;
@@ -32,12 +36,10 @@ pub const TREASURY_ACCOUNT: AccountId = AccountId32::new([4u8; 32]);
 pub const ID_1: LockIdentifier = *b"1       ";
 pub const ID_2: LockIdentifier = *b"2       ";
 pub const ID_3: LockIdentifier = *b"3       ";
+pub const RID_1: ReserveIdentifier = [1u8; 8];
+pub const RID_2: ReserveIdentifier = [2u8; 8];
 
 use crate as tokens;
-
-parameter_types! {
-	pub const BlockHashCount: u64 = 250;
-}
 
 impl frame_system::Config for Runtime {
 	type Origin = Origin;
@@ -50,7 +52,7 @@ impl frame_system::Config for Runtime {
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = Event;
-	type BlockHashCount = BlockHashCount;
+	type BlockHashCount = ConstU64<250>;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type Version = ();
@@ -63,7 +65,7 @@ impl frame_system::Config for Runtime {
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
 	type OnSetCode = ();
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type MaxConsumers = ConstU32<16>;
 }
 
 thread_local! {
@@ -111,9 +113,10 @@ parameter_types! {
 	pub const MaxApprovals: u32 = 100;
 }
 
+pub type MockCurrencyAdapter = CurrencyAdapter<Runtime, GetTokenId>;
 impl pallet_treasury::Config for Runtime {
 	type PalletId = TreasuryPalletId;
-	type Currency = CurrencyAdapter<Runtime, GetTokenId>;
+	type Currency = MockCurrencyAdapter;
 	type ApproveOrigin = frame_system::EnsureRoot<AccountId>;
 	type RejectOrigin = frame_system::EnsureRoot<AccountId>;
 	type Event = Event;
@@ -179,28 +182,21 @@ impl ChangeMembers<AccountId> for TestChangeMembers {
 
 parameter_types! {
 	pub const ElectionsPhragmenPalletId: LockIdentifier = *b"phrelect";
-	pub const CandidacyBond: u64 = 3;
-	pub const VotingBond: u64 = 2;
-	pub const DesiredMembers: u32 = 2;
-	pub const DesiredRunnersUp: u32 = 2;
-	pub const TermDuration: u64 = 5;
-	pub const VotingBondBase: u64 = 2;
-	pub const VotingBondFactor: u64 = 0;
 }
 
 impl pallet_elections_phragmen::Config for Runtime {
 	type PalletId = ElectionsPhragmenPalletId;
 	type Event = Event;
-	type Currency = CurrencyAdapter<Runtime, GetTokenId>;
+	type Currency = MockCurrencyAdapter;
 	type CurrencyToVote = SaturatingCurrencyToVote;
 	type ChangeMembers = TestChangeMembers;
 	type InitializeMembers = ();
-	type CandidacyBond = CandidacyBond;
-	type VotingBondBase = VotingBondBase;
-	type VotingBondFactor = VotingBondFactor;
-	type TermDuration = TermDuration;
-	type DesiredMembers = DesiredMembers;
-	type DesiredRunnersUp = DesiredRunnersUp;
+	type CandidacyBond = ConstU64<3>;
+	type VotingBondBase = ConstU64<2>;
+	type VotingBondFactor = ConstU64<0>;
+	type TermDuration = ConstU64<5>;
+	type DesiredMembers = ConstU32<2>;
+	type DesiredRunnersUp = ConstU32<2>;
 	type LoserCandidate = ();
 	type KickedMember = ();
 	type WeightInfo = ();
@@ -224,9 +220,53 @@ parameter_type_with_key! {
 	};
 }
 
+thread_local! {
+	pub static CREATED: RefCell<Vec<(AccountId, CurrencyId)>> = RefCell::new(vec![]);
+	pub static KILLED: RefCell<Vec<(AccountId, CurrencyId)>> = RefCell::new(vec![]);
+}
+
+pub struct TrackCreatedAccounts;
+impl TrackCreatedAccounts {
+	pub fn accounts() -> Vec<(AccountId, CurrencyId)> {
+		CREATED.with(|accounts| accounts.borrow().clone())
+	}
+
+	pub fn reset() {
+		CREATED.with(|accounts| {
+			accounts.replace(vec![]);
+		});
+	}
+}
+impl Happened<(AccountId, CurrencyId)> for TrackCreatedAccounts {
+	fn happened((who, currency): &(AccountId, CurrencyId)) {
+		CREATED.with(|accounts| {
+			accounts.borrow_mut().push((who.clone(), *currency));
+		});
+	}
+}
+
+pub struct TrackKilledAccounts;
+impl TrackKilledAccounts {
+	pub fn accounts() -> Vec<(AccountId, CurrencyId)> {
+		KILLED.with(|accounts| accounts.borrow().clone())
+	}
+
+	pub fn reset() {
+		KILLED.with(|accounts| {
+			accounts.replace(vec![]);
+		});
+	}
+}
+impl Happened<(AccountId, CurrencyId)> for TrackKilledAccounts {
+	fn happened((who, currency): &(AccountId, CurrencyId)) {
+		KILLED.with(|accounts| {
+			accounts.borrow_mut().push((who.clone(), *currency));
+		});
+	}
+}
+
 parameter_types! {
-	pub DustReceiver: AccountId = PalletId(*b"orml/dst").into_account();
-	pub MaxLocks: u32 = 2;
+	pub DustReceiver: AccountId = PalletId(*b"orml/dst").into_account_truncating();
 }
 
 impl Config for Runtime {
@@ -237,7 +277,11 @@ impl Config for Runtime {
 	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = TransferDust<Runtime, DustReceiver>;
-	type MaxLocks = MaxLocks;
+	type OnNewTokenAccount = TrackCreatedAccounts;
+	type OnKilledTokenAccount = TrackKilledAccounts;
+	type MaxLocks = ConstU32<2>;
+	type MaxReserves = ConstU32<2>;
+	type ReserveIdentifier = ReserveIdentifier;
 	type DustRemovalWhitelist = MockDustRemovalWhitelist;
 }
 pub type TreasuryCurrencyAdapter = <Runtime as pallet_treasury::Config>::Currency;
@@ -298,6 +342,9 @@ impl ExtBuilder {
 			.assimilate_storage(&mut t)
 			.unwrap();
 		}
+
+		TrackCreatedAccounts::reset();
+		TrackKilledAccounts::reset();
 
 		let mut ext = sp_io::TestExternalities::new(t);
 		ext.execute_with(|| System::set_block_number(1));

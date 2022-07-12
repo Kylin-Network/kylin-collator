@@ -17,10 +17,11 @@
 use crate as kylin_oracle;
 use crate::*;
 use codec::Decode;
+
 use frame_support::{
     parameter_types,
     traits::Everything,
-    weights::{IdentityFee, Weight},
+    weights::{IdentityFee, Weight, ConstantMultiplier}
 };
 
 use sp_core::{
@@ -49,7 +50,8 @@ use xcm_executor::{
 };
 
 use sp_core::{ sr25519, Pair, Public};
-
+/// Balance of an account.
+type Balance = u64;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 type AccountPublic = <Signature as Verify>::Signer;
@@ -77,7 +79,8 @@ parameter_types! {
 }
 impl pallet_transaction_payment::Config for Test {
     type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
-    type TransactionByteFee = TransactionByteFee;
+    // pub const TransactionByteFee: Balance = 1 ;
+    type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
     type OperationalFeeMultiplier = OperationalFeeMultiplier;
     type WeightToFee = IdentityFee<u64>;
     type FeeMultiplierUpdate = ();

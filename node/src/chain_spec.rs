@@ -4,12 +4,26 @@ use sc_service::{ChainType, Properties};
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
-use pichiu_runtime::constants::currency::PCHU;
+
+use pichiu_runtime::currency::PCHU;
+use pichiu_runtime::{ 
+	DemocracyConfig as PichiuDemocracyConfig, CouncilConfig as PichiuCouncilConfig, TechnicalCommitteeConfig as PichiuTechnicalCommitteeConfig
+}; 
+
+use kylin_runtime::{ 
+	DemocracyConfig as KylinDemocracyConfig, CouncilConfig as KylinCouncilConfig, TechnicalCommitteeConfig as  KylinTechnicalCommitteeConfig
+};
+
+use development_runtime::{ 
+	DemocracyConfig as DevDemocracyConfig, CouncilConfig as DevCouncilConfig, TechnicalCommitteeConfig as  DevTechnicalCommitteeConfig
+};
+
 use runtime_common::*;
 use sc_telemetry::TelemetryEndpoints;
 
 /// Specialized `ChainSpec` for the Pichiu parachain runtime.
 pub type PichiuChainSpec = sc_service::GenericChainSpec<pichiu_runtime::GenesisConfig, Extensions>;
+pub type KylinChainSpec = sc_service::GenericChainSpec<kylin_runtime::GenesisConfig, Extensions>;
 pub type DevelopmentChainSpec = sc_service::GenericChainSpec<development_runtime::GenesisConfig, Extensions>;
 
 const POLKADOT_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -69,6 +83,10 @@ pub fn pichiu_session_keys(keys: AuraId) -> pichiu_runtime::SessionKeys {
 	pichiu_runtime::SessionKeys { aura: keys }
 }
 
+pub fn kylin_session_keys(keys: AuraId) -> kylin_runtime::SessionKeys {
+	kylin_runtime::SessionKeys { aura: keys }
+}
+
 pub fn pichiu_local_network(id: ParaId) -> PichiuChainSpec {
 	let mut properties = Properties::new();
 	properties.insert("ss58Format".into(), 31_u8.into());
@@ -90,8 +108,7 @@ pub fn pichiu_local_network(id: ParaId) -> PichiuChainSpec {
 				],
 				endowed_accounts_local(),
 				Some(70_000_000 * PCHU),
-				id,
-				30_000_000 * PCHU
+				id
 			)
 		},
 		// Bootnodes
@@ -130,8 +147,7 @@ pub fn pichiu_development_network(id: ParaId) -> PichiuChainSpec {
 				],
 				endowed_accounts(),
 				Some(70_000_000 * PCHU),
-				id,
-				30_000_000 * PCHU
+				id
 			)
 		},
 		vec![],
@@ -148,6 +164,47 @@ pub fn pichiu_development_network(id: ParaId) -> PichiuChainSpec {
         },
 	)
 }
+
+pub fn kylin_local_network(id: ParaId) -> KylinChainSpec {
+	let mut properties = Properties::new();
+	properties.insert("ss58Format".into(), 31_u8.into());
+	properties.insert("tokenSymbol".into(), "KYL".into());
+	properties.insert("tokenDecimals".into(), 18_u8.into());
+
+	KylinChainSpec::from_genesis(
+		"Kylin Local Testnet",
+		"kylin_local_testnet",
+		ChainType::Local,
+		move || {
+			kylin_genesis(
+				// root key
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				// initial collators.
+				vec![
+					(get_account_id_from_seed::<sr25519::Public>("Alice"), get_collator_keys_from_seed("Alice")),
+					(get_account_id_from_seed::<sr25519::Public>("Bob"), get_collator_keys_from_seed("Bob")),
+				],
+				endowed_accounts_local(),
+				Some(70_000_000 * KYL),
+				id
+			)
+		},
+		// Bootnodes
+		Vec::new(),
+		// Telemetry
+		None,
+		// Protocol ID
+		Some("Kylin"),
+		// Fork ID
+		None,
+		Some(properties),
+		Extensions {
+			relay_chain: "rococo-local".into(),
+            para_id: id.into(),
+        },
+	)
+}
+
 
 pub fn pichiu_network(id: ParaId) -> PichiuChainSpec {
 	let mut properties = Properties::new();
@@ -169,8 +226,45 @@ pub fn pichiu_network(id: ParaId) -> PichiuChainSpec {
 				],
 				endowed_accounts(),
 				Some(70_000_000 * PCHU),
-				id,
-				30_000_000 * PCHU
+				id
+			)
+		},
+		vec![],
+		Some(
+			TelemetryEndpoints::new(vec![(POLKADOT_TELEMETRY_URL.to_string(), 0)])
+				.expect("Polkadot telemetry url is valid; qed"),
+		),
+		Some("Kylin"),
+		None,
+		Some(properties),
+		Extensions {
+			relay_chain: "kusama".into(),
+            para_id: id.into(),
+        },
+	)
+}
+
+pub fn kylin_network(id: ParaId) -> KylinChainSpec {
+	let mut properties = Properties::new();
+	properties.insert("tokenSymbol".into(), "KLY".into());
+	properties.insert("tokenDecimals".into(), 18_u8.into());
+
+	KylinChainSpec::from_genesis(
+		"Kylin Network",
+		"Kylin_Network",
+		ChainType::Live,
+		move || {
+			kylin_genesis(
+				// root key
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				// initial collators.
+				vec![
+					(get_account_id_from_seed::<sr25519::Public>("Alice"), get_collator_keys_from_seed("Alice")),
+					(get_account_id_from_seed::<sr25519::Public>("Bob"), get_collator_keys_from_seed("Bob")),
+				],
+				endowed_accounts(),
+				Some(70_000_000 * KYL),
+				id
 			)
 		},
 		vec![],
@@ -182,7 +276,7 @@ pub fn pichiu_network(id: ParaId) -> PichiuChainSpec {
 		None,
 		Some(properties),
 		Extensions {
-			relay_chain: "kusama".into(),
+			relay_chain: "polkadot".into(),
             para_id: id.into(),
         },
 	)
@@ -194,7 +288,6 @@ fn endowed_accounts() -> Vec<AccountId> {
 		get_account_id_from_seed::<sr25519::Public>("Bob"),
 	]
 }
-
 
 fn endowed_accounts_local() -> Vec<AccountId> {
 	vec![
@@ -219,7 +312,6 @@ fn pichiu_genesis(
 	endowed_accounts: Vec<pichiu_runtime::AccountId>,
 	total_issuance: Option<pichiu_runtime::Balance>,
 	id: ParaId,
-	crowdloan_fund_pot: Balance,
 ) -> pichiu_runtime::GenesisConfig {
 	let num_endowed_accounts = endowed_accounts.len();
 	let balances = match total_issuance {
@@ -245,9 +337,6 @@ fn pichiu_genesis(
 		balances: pichiu_runtime::BalancesConfig { balances },
 		sudo: pichiu_runtime::SudoConfig { key: Some(root_key) },
 		vesting: Default::default(),
-		crowdloan_rewards: pichiu_runtime::CrowdloanRewardsConfig {
-			funded_amount: crowdloan_fund_pot,
-		},
 		parachain_info: pichiu_runtime::ParachainInfoConfig { parachain_id: id },
 		collator_selection: pichiu_runtime::CollatorSelectionConfig {
 			invulnerables: initial_authorities.iter().cloned().map(|(acc, _)| acc).collect(),
@@ -276,9 +365,94 @@ fn pichiu_genesis(
 			safe_xcm_version: Some(SAFE_XCM_VERSION),
 		},
 		orml_tokens: pichiu_runtime::OrmlTokensConfig { balances: vec![] },
+		democracy: PichiuDemocracyConfig::default(),
+		// vesting: VestingConfig { vesting: vec![] },
+
+		treasury: Default::default(),
+		council: PichiuCouncilConfig::default(),
+		technical_committee: PichiuTechnicalCommitteeConfig {
+			members: endowed_accounts
+				.iter()
+				.take((num_endowed_accounts + 1) / 2)
+				.cloned()
+				.collect(),
+			phantom: Default::default(),
+		},
 	}
 }
 
+fn kylin_genesis(
+	root_key: AccountId,
+	initial_authorities: Vec<(AccountId, AuraId)>,
+	endowed_accounts: Vec<kylin_runtime::AccountId>,
+	total_issuance: Option<kylin_runtime::Balance>,
+	id: ParaId,
+) -> kylin_runtime::GenesisConfig {
+	let num_endowed_accounts = endowed_accounts.len();
+	let balances = match total_issuance {
+		Some(total_issuance) => {
+			let balance_per_endowed = total_issuance
+				.checked_div(num_endowed_accounts as kylin_runtime::Balance)
+				.unwrap_or(0 as kylin_runtime::Balance);
+			endowed_accounts
+				.iter()
+				.cloned()
+				.map(|k| (k, balance_per_endowed))
+				.collect()
+		}
+		None => vec![],
+	};
+
+	kylin_runtime::GenesisConfig {
+		system: kylin_runtime::SystemConfig {
+			code: kylin_runtime::WASM_BINARY
+				.expect("WASM binary was not build, please build it!")
+				.to_vec()
+		},
+		balances: kylin_runtime::BalancesConfig { balances },
+		sudo: kylin_runtime::SudoConfig { key: Some(root_key) },
+		vesting: Default::default(),
+		parachain_info: kylin_runtime::ParachainInfoConfig { parachain_id: id },
+		collator_selection: kylin_runtime::CollatorSelectionConfig {
+			invulnerables: initial_authorities.iter().cloned().map(|(acc, _)| acc).collect(),
+			candidacy_bond: EXISTENTIAL_DEPOSIT * 16,
+			..Default::default()
+		},
+		session: kylin_runtime::SessionConfig { // validator session
+            keys: initial_authorities
+                .iter()
+                .cloned()
+                .map(|(acc, aura)| {
+                    (
+                        acc.clone(),                // account id
+                        acc,                        // validator id
+                        kylin_session_keys(aura), // session keys
+                    )
+                })
+                .collect(),
+        },
+		aura_ext: Default::default(),
+		aura: kylin_runtime::AuraConfig {
+            authorities: Default::default(),
+        },
+		parachain_system: Default::default(),
+		polkadot_xcm: kylin_runtime::PolkadotXcmConfig {
+			safe_xcm_version: Some(SAFE_XCM_VERSION),
+		},
+		orml_tokens: kylin_runtime::OrmlTokensConfig { balances: vec![] },
+		democracy: KylinDemocracyConfig::default(),
+		treasury: Default::default(),
+		council: KylinCouncilConfig::default(),
+		technical_committee: KylinTechnicalCommitteeConfig {
+			members: endowed_accounts
+				.iter()
+				.take((num_endowed_accounts + 1) / 2)
+				.cloned()
+				.collect(),
+			phantom: Default::default(),
+		},
+	}
+}
 
 pub fn development_network(id: ParaId) -> PichiuChainSpec {
 	let mut properties = Properties::new();
@@ -300,8 +474,7 @@ pub fn development_network(id: ParaId) -> PichiuChainSpec {
 				],
 				endowed_accounts(),
 				Some(70_000_000 * PCHU),
-				id,
-				30_000_000 * PCHU
+				id
 			)
 		},
 		vec![],
@@ -325,7 +498,6 @@ fn development_genesis(
 	endowed_accounts: Vec<pichiu_runtime::AccountId>,
 	total_issuance: Option<pichiu_runtime::Balance>,
 	id: ParaId,
-	crowdloan_fund_pot: Balance,
 ) -> development_runtime::GenesisConfig {
 	let num_endowed_accounts = endowed_accounts.len();
 	let balances = match total_issuance {
@@ -351,9 +523,6 @@ fn development_genesis(
 		balances: development_runtime::BalancesConfig { balances },
 		sudo: development_runtime::SudoConfig { key: Some(root_key) },
 		vesting: Default::default(),
-		crowdloan_rewards: development_runtime::CrowdloanRewardsConfig {
-			funded_amount: crowdloan_fund_pot,
-		},
 		parachain_info: development_runtime::ParachainInfoConfig { parachain_id: id },
 		collator_selection: development_runtime::CollatorSelectionConfig {
 			invulnerables: initial_authorities.iter().cloned().map(|(acc, _)| acc).collect(),
@@ -382,5 +551,16 @@ fn development_genesis(
 			safe_xcm_version: Some(SAFE_XCM_VERSION),
 		},
 		orml_tokens: development_runtime::OrmlTokensConfig { balances: vec![] },
+		democracy: DevDemocracyConfig::default(),
+		treasury: Default::default(),
+		council: DevCouncilConfig::default(),
+		technical_committee: DevTechnicalCommitteeConfig {
+			members: endowed_accounts
+				.iter()
+				.take((num_endowed_accounts + 1) / 2)
+				.cloned()
+				.collect(),
+			phantom: Default::default(),
+		},
 	}
 }

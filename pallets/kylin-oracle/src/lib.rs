@@ -26,7 +26,7 @@ use lite_json::{
     Serialize as JsonSerialize,
 };
 use scale_info::TypeInfo;
-use sp_std::{borrow::ToOwned, convert::TryFrom, prelude::*, str, vec, vec::Vec};
+use sp_std::{borrow::ToOwned, convert::TryFrom, convert::TryInto, prelude::*, str, vec, vec::Vec};
 
 use sp_core::crypto::KeyTypeId;
 use sp_runtime::{
@@ -71,6 +71,7 @@ pub mod crypto {
         app_crypto::{app_crypto, sr25519},
         traits::Verify,
     };
+    use sp_std::{convert::TryFrom};
     use sp_runtime::{MultiSignature, MultiSigner};
     app_crypto!(sr25519, KEY_TYPE);
     pub struct TestAuthId;

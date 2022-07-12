@@ -7,8 +7,7 @@ split-debuginfo = "unpacked"
 members = [
     'node',
 	"pallets/kylin-oracle",
-	"pallets/crowdloan-rewards",
-	"pallets/democracy",
 	"runtime/pichiu",
+	"runtime/kylin",
 	"runtime/common",
 ]

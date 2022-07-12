@@ -1,5 +1,0 @@
-error: expected one of: `StorageValue`, `StorageMap`, `StorageDoubleMap`, `StorageNMap`
- --> tests/storage_alias_ui/forbid_underscore_as_prefix.rs:2:14
-  |
-2 | type Ident = CustomStorage<Hello, u32>;
-  |              ^^^^^^^^^^^^^
