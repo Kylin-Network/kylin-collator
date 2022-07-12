@@ -37,9 +37,6 @@ use sp_runtime::{
 	ApplyExtrinsicResult, Perbill, RuntimeDebug,
 };
 
-/// Constant values used within the runtime.
-use runtime_common::*;
-
 use sp_std::{marker::PhantomData, convert::TryInto, convert::TryFrom, prelude::*};
 
 #[cfg(feature = "std")]
@@ -49,7 +46,7 @@ use sp_version::RuntimeVersion;
 // A few exports that help ease life for downstream crates.
 // use crate::sp_api_hidden_includes_IMPL_RUNTIME_APIS::sp_api::Encode;
 pub use frame_support::{
-	construct_runtime, ensure, match_type, parameter_types,
+	construct_runtime, ensure, match_types, parameter_types,
 	traits::{Contains, EnsureOneOf, EqualPrivilegeOnly, Everything, IsInVec, Randomness, Nothing},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -371,13 +368,13 @@ parameter_types! {
 	pub const MaxInstructions: u32 = 100;
 }
 
-match_type! {
+match_types! {
 	pub type ParentOrParentsUnitPlurality: impl Contains<MultiLocation> = {
 		MultiLocation { parents: 1, interior: Here } |
 		MultiLocation { parents: 1, interior: X1(Plurality { id: BodyId::Unit, .. }) }
 	};
 }
-match_type! {
+match_types! {
 	pub type Statemint: impl Contains<MultiLocation> = {
 		MultiLocation { parents: 1, interior: X1(Parachain(1000)) }
 	};
