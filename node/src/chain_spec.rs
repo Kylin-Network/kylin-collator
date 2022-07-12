@@ -233,7 +233,7 @@ pub fn pichiu_network(id: ParaId) -> PichiuChainSpec {
 
 pub fn kylin_network(id: ParaId) -> KylinChainSpec {
 	let mut properties = Properties::new();
-	properties.insert("tokenSymbol".into(), "KLY".into());
+	properties.insert("tokenSymbol".into(), "KYL".into());
 	properties.insert("tokenDecimals".into(), 18_u8.into());
 
 	KylinChainSpec::from_genesis(
