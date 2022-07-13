@@ -13,7 +13,8 @@ git clone --recursive https://github.com/Kylin-Network/kylin-collator.git
 cd kylin-collator
 ```
 ```
-git submodule update --recursive --remote
+git submodule init
+git submodule update 
 git checkout 99f1199298128eecb5eb55b09d11c5c12283bd5f
 ```
 
