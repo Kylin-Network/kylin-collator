@@ -20,7 +20,7 @@ use codec::Decode;
 use frame_support::{
     parameter_types,
     traits::Everything,
-    weights::{IdentityFee, Weight},
+    weights::{IdentityFee, Weight, ConstantMultiplier},
 };
 
 use sp_core::{
@@ -29,7 +29,6 @@ use sp_core::{
     H256,
 };
 use sp_keystore::{testing::KeyStore, KeystoreExt, SyncCryptoStore};
-
 use sp_std::str;
 use sp_std::vec::Vec;
 use std::sync::Arc;
@@ -75,10 +74,12 @@ parameter_types! {
     pub const TransactionByteFee: u64 = 1;
     pub const OperationalFeeMultiplier: u8 = 5;
 }
+pub type Balance = u64;
+
 impl pallet_transaction_payment::Config for Test {
     type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
-    type TransactionByteFee = TransactionByteFee;
     type OperationalFeeMultiplier = OperationalFeeMultiplier;
+    type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
     type WeightToFee = IdentityFee<u64>;
     type FeeMultiplierUpdate = ();
 }
@@ -511,7 +512,7 @@ fn should_award_query_fees() {
     let alice = get_account_id_from_seed::<sr25519::Public>("Alice");
     let bob = get_account_id_from_seed::<sr25519::Public>("Bob");
     let additional_amount = 10_000;
-    let query_reward_fee = 136545004;
+    let query_reward_fee = 126743754;
     let free_balance = <pallet_balances::Pallet<Test> as Currency<AccountId>>::free_balance;
 
     let (offchain, offchain_state) = testing::TestOffchainExt::new();
