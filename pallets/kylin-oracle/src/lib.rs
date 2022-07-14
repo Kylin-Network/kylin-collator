@@ -43,6 +43,9 @@ pub use pallet::*;
 #[cfg(test)]
 mod tests;
 
+mod ringbuffer;
+use ringbuffer::{RingBufferTrait, RingBufferTransient};
+
 // Runtime benchmarking features
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
@@ -616,9 +619,27 @@ pub mod pallet {
     #[pallet::getter(fn feed_account_lookup)]
     pub(super) type FeedAccountLookup<T: Config> =
         StorageMap<_, Identity, Vec<u8>, (T::AccountId, Vec<u8>), OptionQuery>;
+
+    type BufferIndex = u8;
+
+    #[pallet::storage]
+	#[pallet::getter(fn get_value)]
+	pub(super) type BufferMap<T: Config> =
+		StorageMap<_, Blake2_128Concat, BufferIndex, DataRequest<ParaId, T::BlockNumber, T::AccountId>, ValueQuery>;
+
+	#[pallet::type_value]
+	pub(super) fn BufferIndexDefaultValue() -> (BufferIndex, BufferIndex) {
+		(0, 0)
+	}
+
+	#[pallet::storage]
+	#[pallet::getter(fn range)]
+	pub(super) type BufferRange<T: Config> =
+		StorageValue<_, (BufferIndex, BufferIndex), ValueQuery, BufferIndexDefaultValue>;
+
 }
 
-#[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo)]
+#[derive(Clone, PartialEq, Eq, Default, Encode, Decode, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Debug))]
 pub struct DataRequest<ParaId, BlockNumber, AccountId> {
     para_id: Option<ParaId>,
@@ -958,7 +979,9 @@ where T::AccountId: AsRef<[u8]>
             is_query: data_request.is_query,
             url: data_request.url.clone(),
         };
-        <SavedRequests<T>>::insert(key, saved_data_request.clone());
+        //<SavedRequests<T>>::insert(key, saved_data_request.clone());
+        let mut queue = Self::queue_transient();
+        queue.push(saved_data_request.clone());
     }
 
     fn send_response_to_parachain(block_number: T::BlockNumber, key: u64) -> DispatchResult {
@@ -1246,4 +1269,13 @@ where T::AccountId: AsRef<[u8]>
             .propagate(true)
             .build()
     }
+
+    fn queue_transient() -> Box<dyn RingBufferTrait<DataRequest<ParaId, T::BlockNumber, T::AccountId>>> {
+		Box::new(RingBufferTransient::<
+			DataRequest<ParaId, T::BlockNumber, T::AccountId>,
+			<Self as Store>::BufferRange,
+			<Self as Store>::BufferMap,
+			u8,
+		>::new())
+	}
 }
