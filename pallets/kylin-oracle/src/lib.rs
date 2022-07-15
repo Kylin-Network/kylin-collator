@@ -625,7 +625,7 @@ pub mod pallet {
     #[pallet::storage]
 	#[pallet::getter(fn get_value)]
 	pub(super) type BufferMap<T: Config> =
-		StorageMap<_, Blake2_128Concat, BufferIndex, DataRequest<ParaId, T::BlockNumber, T::AccountId>, ValueQuery>;
+		StorageMap<_, Blake2_128Concat, BufferIndex, RingItem<ParaId, T::BlockNumber>, ValueQuery>;
 
 	#[pallet::type_value]
 	pub(super) fn BufferIndexDefaultValue() -> (BufferIndex, BufferIndex) {
@@ -649,6 +649,20 @@ pub struct DataRequest<ParaId, BlockNumber, AccountId> {
     requested_timestamp: u128,
     processed_timestamp: Option<u128>,
 
+    payload: Vec<u8>,
+    feed_name: Vec<u8>,
+    is_query: bool,
+    url: Option<Vec<u8>>,
+}
+
+#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Debug))]
+pub struct RingItem<ParaId, BlockNumber> {
+    para_id: Option<ParaId>,
+    requested_block_number: BlockNumber,
+    processed_block_number: Option<BlockNumber>,
+    requested_timestamp: u128,
+    processed_timestamp: Option<u128>,
     payload: Vec<u8>,
     feed_name: Vec<u8>,
     is_query: bool,
@@ -967,9 +981,22 @@ where T::AccountId: AsRef<[u8]>
         data_request: DataRequest<ParaId, T::BlockNumber, T::AccountId>,
     ) -> () {
         let current_timestamp = T::UnixTime::now().as_millis();
-        let saved_data_request = DataRequest {
+        // let saved_data_request = DataRequest {
+        //     para_id: data_request.para_id.clone(),
+        //     account_id: data_request.account_id.clone(),
+        //     feed_name: data_request.feed_name.clone(),
+        //     requested_block_number: data_request.requested_block_number,
+        //     processed_block_number: Some(block_number),
+        //     requested_timestamp: data_request.requested_timestamp,
+        //     processed_timestamp: Some(current_timestamp),
+        //     payload: data_request.payload.clone(),
+        //     is_query: data_request.is_query,
+        //     url: data_request.url.clone(),
+        // };
+        //<SavedRequests<T>>::insert(key, saved_data_request.clone());
+
+        let saved_item = RingItem {
             para_id: data_request.para_id.clone(),
-            account_id: data_request.account_id.clone(),
             feed_name: data_request.feed_name.clone(),
             requested_block_number: data_request.requested_block_number,
             processed_block_number: Some(block_number),
@@ -979,9 +1006,9 @@ where T::AccountId: AsRef<[u8]>
             is_query: data_request.is_query,
             url: data_request.url.clone(),
         };
-        //<SavedRequests<T>>::insert(key, saved_data_request.clone());
+        
         let mut queue = Self::queue_transient();
-        queue.push(saved_data_request.clone());
+        queue.push(saved_item.clone());
     }
 
     fn send_response_to_parachain(block_number: T::BlockNumber, key: u64) -> DispatchResult {
@@ -1270,9 +1297,9 @@ where T::AccountId: AsRef<[u8]>
             .build()
     }
 
-    fn queue_transient() -> Box<dyn RingBufferTrait<DataRequest<ParaId, T::BlockNumber, T::AccountId>>> {
+    fn queue_transient() -> Box<dyn RingBufferTrait<RingItem<ParaId, T::BlockNumber>>> {
 		Box::new(RingBufferTransient::<
-			DataRequest<ParaId, T::BlockNumber, T::AccountId>,
+			RingItem<ParaId, T::BlockNumber>,
 			<Self as Store>::BufferRange,
 			<Self as Store>::BufferMap,
 			u8,
