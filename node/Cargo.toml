@@ -82,6 +82,8 @@ sc-rpc-api = { git = "https://github.com/paritytech/substrate", branch = "polkad
 try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sc-sysinfo = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 
+pallet-randomness-collective-flip = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
+pallet-democracy = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
 
 # RPC related dependencies
 jsonrpc-core = "18.0.0"

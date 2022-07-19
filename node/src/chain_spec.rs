@@ -4,7 +4,20 @@ use sc_service::{ChainType, Properties};
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
-use pichiu_runtime::constants::currency::PCHU;
+
+use pichiu_runtime::currency::PCHU;
+use pichiu_runtime::{ 
+	DemocracyConfig as PichiuDemocracyConfig, CouncilConfig as PichiuCouncilConfig, TechnicalCommitteeConfig as PichiuTechnicalCommitteeConfig
+}; 
+
+use kylin_runtime::{ 
+	DemocracyConfig as KylinDemocracyConfig, CouncilConfig as KylinCouncilConfig, TechnicalCommitteeConfig as  KylinTechnicalCommitteeConfig
+};
+
+use development_runtime::{ 
+	DemocracyConfig as DevDemocracyConfig, CouncilConfig as DevCouncilConfig, TechnicalCommitteeConfig as  DevTechnicalCommitteeConfig
+};
+
 use runtime_common::*;
 use sc_telemetry::TelemetryEndpoints;
 
@@ -114,17 +127,17 @@ pub fn pichiu_local_network(id: ParaId) -> PichiuChainSpec {
 	)
 }
 
-pub fn pichiu_development_network(id: ParaId) -> DevelopmentChainSpec {
+pub fn pichiu_development_network(id: ParaId) -> PichiuChainSpec {
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "PCHU".into());
 	properties.insert("tokenDecimals".into(), 18_u8.into());
 
-	DevelopmentChainSpec::from_genesis(
+	PichiuChainSpec::from_genesis(
 		"Pichiu Testnet",
 		"pichiu_testnet",
 		ChainType::Live,
 		move || {
-			development_genesis(
+			pichiu_genesis(
 				// root key
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				// initial collators.
@@ -352,6 +365,19 @@ fn pichiu_genesis(
 			safe_xcm_version: Some(SAFE_XCM_VERSION),
 		},
 		orml_tokens: pichiu_runtime::OrmlTokensConfig { balances: vec![] },
+		democracy: PichiuDemocracyConfig::default(),
+		// vesting: VestingConfig { vesting: vec![] },
+
+		treasury: Default::default(),
+		council: PichiuCouncilConfig::default(),
+		technical_committee: PichiuTechnicalCommitteeConfig {
+			members: endowed_accounts
+				.iter()
+				.take((num_endowed_accounts + 1) / 2)
+				.cloned()
+				.collect(),
+			phantom: Default::default(),
+		},
 	}
 }
 
@@ -414,6 +440,17 @@ fn kylin_genesis(
 			safe_xcm_version: Some(SAFE_XCM_VERSION),
 		},
 		orml_tokens: kylin_runtime::OrmlTokensConfig { balances: vec![] },
+		democracy: KylinDemocracyConfig::default(),
+		treasury: Default::default(),
+		council: KylinCouncilConfig::default(),
+		technical_committee: KylinTechnicalCommitteeConfig {
+			members: endowed_accounts
+				.iter()
+				.take((num_endowed_accounts + 1) / 2)
+				.cloned()
+				.collect(),
+			phantom: Default::default(),
+		},
 	}
 }
 
@@ -514,5 +551,16 @@ fn development_genesis(
 			safe_xcm_version: Some(SAFE_XCM_VERSION),
 		},
 		orml_tokens: development_runtime::OrmlTokensConfig { balances: vec![] },
+		democracy: DevDemocracyConfig::default(),
+		treasury: Default::default(),
+		council: DevCouncilConfig::default(),
+		technical_committee: DevTechnicalCommitteeConfig {
+			members: endowed_accounts
+				.iter()
+				.take((num_endowed_accounts + 1) / 2)
+				.cloned()
+				.collect(),
+			phantom: Default::default(),
+		},
 	}
 }

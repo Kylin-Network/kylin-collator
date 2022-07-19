@@ -94,6 +94,8 @@ orml-unknown-tokens = { path = "../../pallets/orml/unknown-tokens", default-feat
 # Local Dependencies
 kylin-oracle = { package = 'kylin-oracle', path = '../../pallets/kylin-oracle', default-features = false }
 runtime-common = { path = "../common", default-features = false }
+pallet-democracy = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
+pallet-treasury = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
 
 [dev-dependencies]
 hex-literal = "0.3.4"
@@ -155,6 +157,9 @@ std = [
 	'pallet-xcm/std',
 	'parachain-info/std',
 	'parachains-common/std',
+	'pallet-democracy/std',
+
+	'pallet-treasury/std',
 
 	'pallet-authorship/std',
 	'pallet-collator-selection/std',

@@ -85,6 +85,11 @@ pub mod currency {
 	pub const CENTI_KYL: Balance = 10 * MILLI_KYL; // 10−2 	0.01
 	pub const KYL: Balance = 100 * CENTI_KYL; // 1
 
+    pub const MICRO_PCHU: Balance = MICRO_KYL;
+	pub const MILLI_PCHU: Balance = MILLI_KYL;
+	pub const CENTI_PCHU: Balance = CENTI_KYL;
+	pub const PCHU: Balance = KYL;
+
 	/// Additional fee charged when moving native tokens to target chains (in KYLs).
 	pub const NATIVE_TOKEN_TRANSFER_FEE: Balance = 2000 * KYL;
 	/// The existential deposit.
