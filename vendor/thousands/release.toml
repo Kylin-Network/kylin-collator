@@ -1,0 +1,6 @@
+pre-release-replacements = [
+  { file="README.md", search="thousands = \"[0-9.]*\"", replace="thousands = \"{{version}}\"" },
+  { file="src/lib.rs", search="thousands = \"[0-9.]*\"", replace="thousands = \"{{version}}\"" },
+  { file="src/lib.rs", search="https://docs[.]rs/thousands/[0-9.]*", replace="https://docs.rs/thousands/{{version}}" },
+  { file="CHANGELOG.md", search="\\[Unreleased\\]", replace="[{{version}}] - {{date}}" }
+]

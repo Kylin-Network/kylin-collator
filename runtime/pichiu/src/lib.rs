@@ -339,14 +339,11 @@ type EnsureRootOrHalfCouncil = EnsureOneOf<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
 >;
-/// For testing only. Does not check for overflow.
-pub fn dollar(b: Balance) -> Balance {
-	b * 1_000_000_000_000
-}
+
 parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
-	pub ProposalBondMinimum: Balance = 5 * dollar(PCHU);
-	pub ProposalBondMaximum: Balance = 25 * dollar(PCHU);
+	pub ProposalBondMinimum: Balance = 5 * PCHU;
+	pub ProposalBondMaximum: Balance = 25 * PCHU;
 	pub const SpendPeriod: BlockNumber = 7 * DAYS;
 	pub const Burn: Permill = Permill::from_percent(0);
 
@@ -357,9 +354,9 @@ parameter_types! {
 	pub const BountyDepositPayoutDelay: BlockNumber = 4 * DAYS;
 	pub const BountyUpdatePeriod: BlockNumber = 35 * DAYS;
 	pub const CuratorDepositMultiplier: Permill = Permill::from_percent(50);
-	pub CuratorDepositMin: Balance = dollar(PCHU);
-	pub CuratorDepositMax: Balance = 100 * dollar(PCHU);
-	pub BountyValueMinimum: Balance = 5 * dollar(PCHU);
+	pub CuratorDepositMin: Balance = PCHU;
+	pub CuratorDepositMax: Balance = 100 * PCHU;
+	pub BountyValueMinimum: Balance = 5 * PCHU;
 	pub DataDepositPerByte: Balance = deposit(0, 1);
 	pub const MaximumReasonLength: u32 = 8192;
 
@@ -1148,10 +1145,10 @@ construct_runtime! {
 		OrmlUnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 73,
 		OrmlCurrencies: orml_currencies::{Pallet, Call} = 74,
 		//Democracy
-		Democracy: pallet_democracy = 75,
-		Council: pallet_collective::<Instance1> = 76,
-		TechnicalCommittee: pallet_collective::<Instance2> = 77,
-		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 78,
+		Democracy: pallet_democracy = 90,
+		Council: pallet_collective::<Instance1> = 91,
+		TechnicalCommittee: pallet_collective::<Instance2> = 92,
+		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 93,
 		
 	}
 }

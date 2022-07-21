@@ -1,0 +1,49 @@
+[package]
+authors = ["Parity Technologies <admin@parity.io>"]
+edition = "2021"
+name = "xcm-builder"
+description = "Tools & types for building with XCM and its executor."
+version = "0.9.24"
+
+[dependencies]
+parity-scale-codec = { version = "3.1.2", default-features = false, features = ["derive"] }
+scale-info = { version = "2.1.2", default-features = false, features = ["derive"] }
+xcm = { path = "..", default-features = false }
+xcm-executor = { path = "../xcm-executor", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.24" }
+sp-arithmetic = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.24" }
+sp-io = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.24" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.24" }
+frame-support = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.24" }
+frame-system = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.24" }
+pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.24" }
+log = { version = "0.4.17", default-features = false }
+
+# Polkadot dependencies
+polkadot-parachain = { path = "../../parachain", default-features = false }
+
+[dev-dependencies]
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+pallet-xcm = { path = "../pallet-xcm" }
+polkadot-runtime-parachains = { path = "../../runtime/parachains" }
+[features]
+default = ["std"]
+runtime-benchmarks = [
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks"
+]
+std = [
+	"log/std",
+	"parity-scale-codec/std",
+	"scale-info/std",
+	"xcm/std",
+	"xcm-executor/std",
+	"sp-std/std",
+	"sp-arithmetic/std",
+	"sp-io/std",
+	"sp-runtime/std",
+	"frame-support/std",
+	"polkadot-parachain/std",
+	"pallet-transaction-payment/std",
+]

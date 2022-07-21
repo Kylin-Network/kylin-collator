@@ -330,14 +330,11 @@ type EnsureRootOrHalfCouncil = EnsureOneOf<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
 >;
-/// For testing only. Does not check for overflow.
-pub fn dollar(b: Balance) -> Balance {
-	b * 1_000_000_000_000
-}
+
 parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
-	pub ProposalBondMinimum: Balance = 5 * dollar(PCHU);
-	pub ProposalBondMaximum: Balance = 25 * dollar(PCHU);
+	pub ProposalBondMinimum: Balance = 5 * KYL;
+	pub ProposalBondMaximum: Balance = 25 * KYL;
 	pub const SpendPeriod: BlockNumber = 7 * DAYS;
 	pub const Burn: Permill = Permill::from_percent(0);
 
@@ -348,9 +345,9 @@ parameter_types! {
 	pub const BountyDepositPayoutDelay: BlockNumber = 4 * DAYS;
 	pub const BountyUpdatePeriod: BlockNumber = 35 * DAYS;
 	pub const CuratorDepositMultiplier: Permill = Permill::from_percent(50);
-	pub CuratorDepositMin: Balance = dollar(PCHU);
-	pub CuratorDepositMax: Balance = 100 * dollar(PCHU);
-	pub BountyValueMinimum: Balance = 5 * dollar(PCHU);
+	pub CuratorDepositMin: Balance = KYL;
+	pub CuratorDepositMax: Balance = 100 * KYL;
+	pub BountyValueMinimum: Balance = 5 * KYL;
 	pub DataDepositPerByte: Balance = deposit(0, 1);
 	pub const MaximumReasonLength: u32 = 8192;
 

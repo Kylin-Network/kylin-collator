@@ -1,0 +1,5 @@
+error: no rules expected the token `as`
+ --> $DIR/type-qpath-eof3.rs:5:19
+  |
+5 |     input = [{ <T as }]
+  |                   ^^ no rules expected this token in macro call
