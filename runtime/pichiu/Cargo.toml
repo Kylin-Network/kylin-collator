@@ -72,6 +72,8 @@ parachain-info = { git = "https://github.com/paritytech/cumulus", branch = "polk
 parachains-common = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.24" , default-features = false }
 cumulus-pallet-session-benchmarking = { git = "https://github.com/paritytech/cumulus", default-features = false,  branch = "polkadot-v0.9.24" }
 pallet-collator-selection = { git = "https://github.com/paritytech/cumulus", default-features = false,  branch = "polkadot-v0.9.24" }
+pallet-democracy = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
+pallet-treasury = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
 
 
 # Polkadot Dependencies
@@ -81,6 +83,9 @@ xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "releas
 xcm-executor = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.24", default-features = false }
 pallet-xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.24", default-features = false }
 polkadot-runtime-common = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.24" }
+
+polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.24" , default-features = false } 
+
 
 # Local orml
 orml-xcm = { path = "../../pallets/orml/xcm", default-features = false }
@@ -140,6 +145,9 @@ std = [
 	'frame-executive/std',
 	'frame-system/std',
 	'frame-system-rpc-runtime-api/std',
+	'pallet-democracy/std',
+	'pallet-treasury/std',
+
 
 	'pallet-assets/std',
 	'pallet-aura/std',
