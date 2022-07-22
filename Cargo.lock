@@ -2008,6 +2008,8 @@ dependencies = [
  "frame-try-runtime",
  "hex",
  "hex-literal",
+ "kylin-feed",
+ "kylin-market",
  "kylin-oracle",
  "log",
  "orml-currencies",
@@ -2033,6 +2035,7 @@ dependencies = [
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
+ "pallet-uniques",
  "pallet-utility",
  "pallet-vesting",
  "pallet-xcm",
@@ -3808,6 +3811,7 @@ dependencies = [
  "pallet-democracy",
  "pallet-transaction-payment-rpc",
  "pallet-treasury",
+ "pallet-uniques",
  "pallet-xcm",
  "parachains-common",
  "parity-scale-codec",
@@ -3864,6 +3868,45 @@ dependencies = [
 ]
 
 [[package]]
+name = "kylin-feed"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "kylin-primitives",
+ "pallet-balances",
+ "pallet-uniques",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "kylin-market"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "kylin-feed",
+ "kylin-primitives",
+ "pallet-balances",
+ "pallet-uniques",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "kylin-oracle"
 version = "3.0.0"
 dependencies = [
@@ -3877,6 +3920,7 @@ dependencies = [
  "pallet-balances",
  "pallet-timestamp",
  "pallet-transaction-payment",
+ "pallet-uniques",
  "pallet-xcm",
  "parity-scale-codec",
  "scale-info",
@@ -3889,6 +3933,21 @@ dependencies = [
  "xcm",
  "xcm-builder",
  "xcm-executor",
+]
+
+[[package]]
+name = "kylin-primitives"
+version = "0.0.1"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -3913,6 +3972,8 @@ dependencies = [
  "frame-try-runtime",
  "hex",
  "hex-literal",
+ "kylin-feed",
+ "kylin-market",
  "kylin-oracle",
  "log",
  "orml-currencies",
@@ -3938,6 +3999,7 @@ dependencies = [
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
+ "pallet-uniques",
  "pallet-utility",
  "pallet-vesting",
  "pallet-xcm",
@@ -6386,6 +6448,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-uniques"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24#814752f60ab8cce7e2ece3ce0c1b10799b4eab28"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-utility"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24#814752f60ab8cce7e2ece3ce0c1b10799b4eab28"
@@ -6768,6 +6845,8 @@ dependencies = [
  "frame-try-runtime",
  "hex",
  "hex-literal",
+ "kylin-feed",
+ "kylin-market",
  "kylin-oracle",
  "log",
  "orml-currencies",
@@ -6793,6 +6872,7 @@ dependencies = [
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
+ "pallet-uniques",
  "pallet-utility",
  "pallet-vesting",
  "pallet-xcm",

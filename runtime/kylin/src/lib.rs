@@ -54,6 +54,8 @@ pub use frame_support::{
 	},
 	PalletId, StorageValue,
 };
+use frame_support::traits::AsEnsureOriginWithArg;
+use frame_system::EnsureSigned;
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
@@ -1083,6 +1085,70 @@ impl orml_tokens::Config for Runtime {
 	type ReserveIdentifier = ReserveIdentifier;
 }
 
+parameter_types! {
+	pub const CollectionDeposit: Balance = 10 * CENTI_PCHU;
+	pub const ItemDeposit: Balance = PCHU;
+	pub const KeyLimit: u32 = 32;
+	pub const ValueLimit: u32 = 256;
+	pub const UniquesMetadataDepositBase: Balance = 10 * CENTI_PCHU;
+	pub const AttributeDepositBase: Balance = 10 * CENTI_PCHU;
+	pub const DepositPerByte: Balance = CENTI_PCHU;
+	pub const UniquesStringLimit: u32 = 512;
+	pub const MaxPropertiesPerTheme: u32 = 100;
+	pub const MaxCollectionsEquippablePerPart: u32 = 100;
+}
+
+
+impl pallet_uniques::Config for Runtime {
+	type Event = Event;
+	type CollectionId = u32;
+	type ItemId = u32;
+	type Currency = Balances;
+	type ForceOrigin = frame_system::EnsureRoot<AccountId>;
+	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
+	type Locker = kylin_feed::Pallet<Runtime>;
+	type CollectionDeposit = CollectionDeposit;
+	type ItemDeposit = ItemDeposit;
+	type MetadataDepositBase = UniquesMetadataDepositBase;
+	type AttributeDepositBase = AttributeDepositBase;
+	type DepositPerByte = DepositPerByte;
+	type StringLimit = UniquesStringLimit;
+	type KeyLimit = KeyLimit;
+	type ValueLimit = ValueLimit;
+	type WeightInfo = ();
+}
+
+parameter_types! {
+	pub const MaxRecursions: u32 = 10;
+	pub const ResourceSymbolLimit: u32 = 10;
+	pub const PartsLimit: u32 = 25;
+	pub const MaxPriorities: u32 = 25;
+	pub const CollectionSymbolLimit: u32 = 100;
+	pub const MaxResourcesOnMint: u32 = 100;
+}
+
+impl kylin_feed::Config for Runtime {
+	type Event = Event;
+	type ProtocolOrigin = frame_system::EnsureRoot<AccountId>;
+	type MaxRecursions = MaxRecursions;
+	type ResourceSymbolLimit = ResourceSymbolLimit;
+	type PartsLimit = PartsLimit;
+	type MaxPriorities = MaxPriorities;
+	type CollectionSymbolLimit = CollectionSymbolLimit;
+	type MaxResourcesOnMint = MaxResourcesOnMint;
+}
+
+parameter_types! {
+	pub const MinimumOfferAmount: Balance = KYL / 10_000;
+}
+
+impl kylin_market::Config for Runtime {
+	type Event = Event;
+	type ProtocolOrigin = frame_system::EnsureRoot<AccountId>;
+	type Currency = Balances;
+	type MinimumOfferAmount = MinimumOfferAmount;
+}
+
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -1136,6 +1202,9 @@ construct_runtime! {
 		Council: pallet_collective::<Instance1> = 91,
 		TechnicalCommittee: pallet_collective::<Instance2> = 92,
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 93,
+		Uniques: pallet_uniques::{Pallet, Call, Storage, Event<T>} = 94,
+		KylinFeed: kylin_feed::{Pallet, Call, Event<T>, Storage} = 95,
+		KylinMarket: kylin_market::{Pallet, Call, Storage, Event<T>} = 96,
 		
 	}
 }
