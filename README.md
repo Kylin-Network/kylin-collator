@@ -1,5 +1,5 @@
 # Kylin Collator
-
+**This README is out of date, stand by for new documentation**
 Using this repository, you can choose to configure and launch your network in multiple ways. Options include:
 1) Launch a local development network including a relaychain and two Kylin parachains
 2) Launch a collator on a live test network

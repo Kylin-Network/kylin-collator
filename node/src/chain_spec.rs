@@ -114,17 +114,17 @@ pub fn pichiu_local_network(id: ParaId) -> PichiuChainSpec {
 	)
 }
 
-pub fn pichiu_development_network(id: ParaId) -> PichiuChainSpec {
+pub fn pichiu_development_network(id: ParaId) -> DevelopmentChainSpec {
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "PCHU".into());
 	properties.insert("tokenDecimals".into(), 18_u8.into());
 
-	PichiuChainSpec::from_genesis(
+	DevelopmentChainSpec::from_genesis(
 		"Pichiu Testnet",
 		"pichiu_testnet",
 		ChainType::Live,
 		move || {
-			pichiu_genesis(
+			development_genesis(
 				// root key
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				// initial collators.
@@ -233,7 +233,7 @@ pub fn pichiu_network(id: ParaId) -> PichiuChainSpec {
 
 pub fn kylin_network(id: ParaId) -> KylinChainSpec {
 	let mut properties = Properties::new();
-	properties.insert("tokenSymbol".into(), "KLY".into());
+	properties.insert("tokenSymbol".into(), "KYL".into());
 	properties.insert("tokenDecimals".into(), 18_u8.into());
 
 	KylinChainSpec::from_genesis(
