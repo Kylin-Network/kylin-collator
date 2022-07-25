@@ -11,7 +11,7 @@ use sp_runtime::{traits::StaticLookup, DispatchError, Permill};
 use kylin_primitives::nft::NftInfo;
 use kylin_primitives::priority::Priority;
 use kylin_primitives::property::Property;
-use kylin_primitives::nft::{Nft, RoyaltyInfo, AccountIdOrCollectionNftTuple};
+use kylin_primitives::nft::{Nft, AccountIdOrCollectionNftTuple};
 use kylin_primitives::resource::{Resource, ResourceInfo, ResourceTypes};
 use kylin_primitives::collection::{Collection, CollectionInfo};
 use kylin_primitives::types::*;
@@ -262,7 +262,6 @@ pub mod pallet {
 		RecipientNotSet,
 		NoAvailableNftId,
 		NotInRange,
-		RoyaltyNotSet,
 		CollectionUnknown,
 		NoPermission,
 		NoWitness,
