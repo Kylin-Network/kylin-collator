@@ -38,6 +38,9 @@ pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "
 xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.24", default-features = false }
 xcm-executor = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.24", default-features = false }
 
+orml-traits = { path = "../orml/traits", default-features = false }
+orml-utilities = { path = "../orml/utilities", default-features = false }
+
 [dev-dependencies]
 serde = { version = "1.0.136" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }

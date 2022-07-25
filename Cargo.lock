@@ -3869,6 +3869,8 @@ dependencies = [
  "frame-system",
  "hex",
  "lite-json",
+ "orml-traits",
+ "orml-utilities",
  "pallet-balances",
  "pallet-timestamp",
  "pallet-transaction-payment",

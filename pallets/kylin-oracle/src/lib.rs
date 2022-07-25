@@ -2,6 +2,10 @@
 /// Edit this file to define custom logic or remove it if it is not needed.
 /// Learn more about FRAME and the core library of Substrate FRAME pallets:
 /// <https://substrate.dev/docs/en/knowledgebase/runtime/frame>
+
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
+
 use codec::{Decode, Encode};
 use cumulus_pallet_xcm::{ensure_sibling_para, Origin as CumulusOrigin};
 use cumulus_primitives_core::ParaId;
@@ -9,7 +13,7 @@ use frame_support::{
     dispatch::DispatchResultWithPostInfo,
     log,
     pallet_prelude::*,
-    traits::{Currency, EstimateCallFee, UnixTime},
+    traits::{Currency, EstimateCallFee, UnixTime, ChangeMembers, Get, SortedMembers, Time},
     IterableStorageMap,
 };
 use frame_system::{
@@ -38,6 +42,8 @@ use sp_runtime::{
     traits::{Hash, UniqueSaturatedInto, Zero},
 };
 use xcm::latest::{prelude::*, Junction, OriginKind, SendXcm, Xcm};
+use orml_traits::{CombineData, DataFeeder, DataProvider, DataProviderExtended, OnNewData};
+use orml_utilities::OrderedSet;
 
 pub use pallet::*;
 #[cfg(test)]
@@ -100,6 +106,16 @@ pub mod crypto {
 pub mod pallet {
     use super::*;
 
+    pub(crate) type MomentOf<T> = <<T as Config>::Time as Time>::Moment;
+	pub(crate) type TimestampedValueOf<T> = TimestampedValue<<T as Config>::OracleValue, MomentOf<T>>;
+
+	#[derive(Encode, Decode, RuntimeDebug, Eq, PartialEq, Clone, Copy, Ord, PartialOrd, TypeInfo, MaxEncodedLen)]
+	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+	pub struct TimestampedValue<Value, Moment> {
+		pub value: Value,
+		pub timestamp: Moment,
+	}
+
     #[pallet::config]
     pub trait Config: CreateSignedTransaction<Call<Self>> + frame_system::Config + pallet_balances::Config
     where <Self as frame_system::Config>::AccountId: AsRef<[u8]> + ToHex
@@ -133,6 +149,27 @@ pub mod pallet {
         type EstimateCallFee: EstimateCallFee<Call<Self>, BalanceOf<Self>>;
 
         type Currency: frame_support::traits::Currency<Self::AccountId>;
+
+        /// Provide the implementation to combine raw values to produce
+		/// aggregated value
+		type CombineData: CombineData<Self::OracleKey, TimestampedValueOf<Self>>;
+
+		/// Time provider
+		type Time: Time;
+
+        /// The data key type
+		type OracleKey: Parameter + Member + MaxEncodedLen;
+
+		/// The data value type
+		type OracleValue: Parameter + Member + Ord + MaxEncodedLen;
+
+        /// Oracle operators.
+		type Members: SortedMembers<Self::AccountId>;
+
+		/// Maximum size of HasDispatched
+		#[pallet::constant]
+		type MaxHasDispatchedSize: Get<u32>;
+
     }
 
     #[pallet::pallet]
@@ -144,6 +181,10 @@ pub mod pallet {
     pub enum Error<T> {
         /// DataRequest Fields is too large to store on-chain.
         TooLarge,
+        /// Sender does not have permission
+		NoPermission,
+		/// Feeder has already feeded at this block
+		AlreadyFeeded,
     }
 
     #[pallet::hooks]
@@ -151,6 +192,16 @@ pub mod pallet {
     where
         T::AccountId: AsRef<[u8]> + ToHex + Decode
     {
+        /// `on_initialize` to return the weight used in `on_finalize`.
+		fn on_initialize(_n: T::BlockNumber) -> Weight {
+			<T as Config>::WeightInfo::on_finalize()
+		}
+
+		fn on_finalize(_n: T::BlockNumber) {
+			// cleanup for next block
+			<HasDispatched<T>>::kill();
+		}
+
         fn offchain_worker(block_number: T::BlockNumber) {
             // Note that having logs compiled to WASM may cause the size of the blob to increase
             // significantly. You can use `RuntimeDebug` custom derive to hide details of the types
@@ -494,6 +545,41 @@ pub mod pallet {
             }
         }
 
+        /// Feed the external value.
+		///
+		/// Require authorized operator.
+		#[pallet::weight(<T as Config>::WeightInfo::feed_data(values.len() as u32))]
+		pub fn feed_data(
+			origin: OriginFor<T>,
+			values: Vec<(T::OracleKey, T::OracleValue)>,
+		) -> DispatchResultWithPostInfo {
+			let feeder = ensure_signed(origin.clone())?;
+            // ensure feeder is authorized
+            ensure!(T::Members::contains(&feeder), Error::<T>::NoPermission);
+            // ensure account hasn't dispatched an updated yet
+            ensure!(
+                HasDispatched::<T>::mutate(|set| set.insert(feeder.clone())),
+                Error::<T>::AlreadyFeeded
+            );
+
+            let now = T::Time::now();
+            for (key, value) in &values {
+                let timestamped = TimestampedValue {
+                    value: value.clone(),
+                    timestamp: now,
+                };
+                RawValues::<T>::insert(&feeder, &key, timestamped);
+
+                // Update `Values` storage if `combined` yielded result.
+                if let Some(combined) = Self::combined(key) {
+                    <Values<T>>::insert(key, combined);
+                }
+            }
+
+            Self::deposit_event(Event::NewFeedData { sender: feeder, values });
+			Ok(Pays::No.into())
+		}
+
     }
 
     // #[pallet::event where <T as frame_system::Config>:: AccountId: AsRef<[u8]> + ToHex + Decode + Serialize]
@@ -544,6 +630,11 @@ pub mod pallet {
             >>::Balance,
             Vec<u8>,
         ),
+        /// New feed data is submitted.
+		NewFeedData {
+			sender: T::AccountId,
+			values: Vec<(T::OracleKey, T::OracleValue)>,
+		},
     }
 
     #[pallet::validate_unsigned]
@@ -636,6 +727,23 @@ pub mod pallet {
 	#[pallet::getter(fn range)]
 	pub(super) type BufferRange<T: Config> =
 		StorageValue<_, (BufferIndex, BufferIndex), ValueQuery, BufferIndexDefaultValue>;
+
+    /// Raw values for each oracle operators
+	#[pallet::storage]
+	#[pallet::getter(fn raw_values)]
+	pub type RawValues<T: Config> =
+		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, T::OracleKey, TimestampedValueOf<T>>;
+
+	/// Up to date combined value from Raw Values
+	#[pallet::storage]
+	#[pallet::getter(fn values)]
+	pub type Values<T: Config> =
+		StorageMap<_, Twox64Concat, <T as Config>::OracleKey, TimestampedValueOf<T>>;
+
+	/// If an oracle operator has fed a value in this block
+	#[pallet::storage]
+	pub(crate) type HasDispatched<T: Config> =
+		StorageValue<_, OrderedSet<T::AccountId, T::MaxHasDispatchedSize>, ValueQuery>;
 
 }
 
@@ -1304,5 +1412,27 @@ where T::AccountId: AsRef<[u8]>
 			<Self as Store>::BufferMap,
 			u8,
 		>::new())
+	}
+
+    pub fn read_raw_values(key: &T::OracleKey) -> Vec<TimestampedValueOf<T>> {
+		T::Members::sorted_members()
+			.iter()
+			.filter_map(|x| Self::raw_values(x, key))
+			.collect()
+	}
+
+	/// Fetch current combined value.
+	pub fn get(key: &T::OracleKey) -> Option<TimestampedValueOf<T>> {
+		Self::values(key)
+	}
+
+	#[allow(clippy::complexity)]
+	pub fn get_all_values() -> Vec<(T::OracleKey, Option<TimestampedValueOf<T>>)> {
+		<Values<T>>::iter().map(|(k, v)| (k, Some(v))).collect()
+	}
+
+	fn combined(key: &T::OracleKey) -> Option<TimestampedValueOf<T>> {
+		let values = Self::read_raw_values(key);
+		T::CombineData::combine_data(key, values, Self::values(key))
 	}
 }
