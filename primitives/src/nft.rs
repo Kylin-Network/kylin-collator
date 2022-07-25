@@ -32,7 +32,6 @@ pub enum AccountIdOrCollectionNftTuple<AccountId> {
 pub struct NftInfo<AccountId, BoundedString> {
 	/// The owner of the NFT, can be either an Account or a tuple (CollectionId, NftId)
 	pub owner: AccountIdOrCollectionNftTuple<AccountId>,
-	
 	/// Arbitrary data about an instance, e.g. IPFS hash
 	pub metadata: BoundedString,
 	/// Equipped state
