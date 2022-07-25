@@ -8,7 +8,7 @@ use sp_runtime::{
     ArithmeticError,
 };
 
-pub const SALT_MELODY_NFT: &[u8; 8] = b"MusicNft";
+pub const SALT_NFT: &[u8; 8] = b"KylinNft";
 
 impl<T: Config> Pallet<T>
     where T: pallet_uniques::Config<CollectionId = CollectionId, ItemId = NftId>,
@@ -17,7 +17,7 @@ impl<T: Config> Pallet<T>
         collection_id: CollectionId,
         nft_id: NftId,
     ) -> AccountId {
-        (SALT_MELODY_NFT, collection_id, nft_id)
+        (SALT_NFT, collection_id, nft_id)
             .using_encoded(|b| AccountId::decode(&mut TrailingZeroInput::new(b)))
             .expect("Decoding with trailing zero never fails; qed.")
     }
@@ -47,7 +47,7 @@ impl<T: Config> Pallet<T>
                 r.map(|(prefix, tuple)| (prefix, tuple, slice.to_vec()))
             }).ok()?;
         // Check prefix and suffix to avoid collision attack
-        if &prefix == SALT_MELODY_NFT && suffix.iter().all(|&x| x == 0) {
+        if &prefix == SALT_NFT && suffix.iter().all(|&x| x == 0) {
             Some(tuple)
         } else {
             None
