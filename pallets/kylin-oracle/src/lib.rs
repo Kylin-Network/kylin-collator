@@ -13,7 +13,7 @@ use frame_support::{
     dispatch::DispatchResultWithPostInfo,
     log,
     pallet_prelude::*,
-    traits::{Currency, EstimateCallFee, UnixTime, ChangeMembers, Get, SortedMembers, Time},
+    traits::{Currency, EstimateCallFee, UnixTime, ChangeMembers, Get, SortedMembers},
     IterableStorageMap,
 };
 use frame_system::{
@@ -49,6 +49,8 @@ pub use pallet::*;
 #[cfg(test)]
 mod tests;
 
+mod default_combine_data;
+pub use default_combine_data::DefaultCombineData;
 mod ringbuffer;
 use ringbuffer::{RingBufferTrait, RingBufferTransient};
 
@@ -106,8 +108,8 @@ pub mod crypto {
 pub mod pallet {
     use super::*;
 
-    pub(crate) type MomentOf<T> = <<T as Config>::Time as Time>::Moment;
-	pub(crate) type TimestampedValueOf<T> = TimestampedValue<<T as Config>::OracleValue, MomentOf<T>>;
+    //pub(crate) type MomentOf<T> = <<T as Config>::Time as Time>::Moment;
+	pub(crate) type TimestampedValueOf<T> = TimestampedValue<<T as Config>::OracleValue, u128>;
 
 	#[derive(Encode, Decode, RuntimeDebug, Eq, PartialEq, Clone, Copy, Ord, PartialOrd, TypeInfo, MaxEncodedLen)]
 	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
@@ -153,9 +155,6 @@ pub mod pallet {
         /// Provide the implementation to combine raw values to produce
 		/// aggregated value
 		type CombineData: CombineData<Self::OracleKey, TimestampedValueOf<Self>>;
-
-		/// Time provider
-		type Time: Time;
 
         /// The data key type
 		type OracleKey: Parameter + Member + MaxEncodedLen;
@@ -562,7 +561,7 @@ pub mod pallet {
                 Error::<T>::AlreadyFeeded
             );
 
-            let now = T::Time::now();
+            let now = T::UnixTime::now().as_millis();
             for (key, value) in &values {
                 let timestamped = TimestampedValue {
                     value: value.clone(),

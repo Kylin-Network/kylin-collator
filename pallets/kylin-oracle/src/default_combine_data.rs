@@ -1,27 +1,28 @@
-use crate::{Config, MomentOf, TimestampedValueOf};
-use frame_support::traits::{Get, Time};
+use crate::{Config, TimestampedValueOf};
+use frame_support::traits::{Get, UnixTime};
 use orml_traits::CombineData;
 use sp_std::{marker, prelude::*};
+use hex::ToHex;
 
 /// Sort by value and returns median timestamped value.
 /// Returns prev_value if not enough valid values.
-pub struct DefaultCombineData<T, MinimumCount, ExpiresIn, I = ()>(marker::PhantomData<(T, I, MinimumCount, ExpiresIn)>);
+pub struct DefaultCombineData<T, MinimumCount, ExpiresIn>(marker::PhantomData<(T, MinimumCount, ExpiresIn)>);
 
-impl<T, I, MinimumCount, ExpiresIn> CombineData<<T as Config<I>>::OracleKey, TimestampedValueOf<T, I>>
-	for DefaultCombineData<T, MinimumCount, ExpiresIn, I>
+impl<T,MinimumCount, ExpiresIn> CombineData<<T as Config>::OracleKey, TimestampedValueOf<T>>
+	for DefaultCombineData<T, MinimumCount, ExpiresIn>
 where
-	T: Config<I>,
-	I: 'static,
+	T: Config,
+	T::AccountId: AsRef<[u8]> + ToHex,
 	MinimumCount: Get<u32>,
-	ExpiresIn: Get<MomentOf<T, I>>,
+	ExpiresIn: Get<u128>,
 {
 	fn combine_data(
-		_key: &<T as Config<I>>::OracleKey,
-		mut values: Vec<TimestampedValueOf<T, I>>,
-		prev_value: Option<TimestampedValueOf<T, I>>,
-	) -> Option<TimestampedValueOf<T, I>> {
+		_key: &<T as Config>::OracleKey,
+		mut values: Vec<TimestampedValueOf<T>>,
+		prev_value: Option<TimestampedValueOf<T>>,
+	) -> Option<TimestampedValueOf<T>> {
 		let expires_in = ExpiresIn::get();
-		let now = T::Time::now();
+		let now = T::UnixTime::now().as_millis();
 
 		values.retain(|x| x.timestamp + expires_in > now);
 

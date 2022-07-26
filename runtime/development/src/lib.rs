@@ -47,7 +47,10 @@ use sp_version::RuntimeVersion;
 // use crate::sp_api_hidden_includes_IMPL_RUNTIME_APIS::sp_api::Encode;
 pub use frame_support::{
 	construct_runtime, ensure, match_types, parameter_types,
-	traits::{Contains, EnsureOneOf, EqualPrivilegeOnly, Everything, IsInVec, Randomness, Nothing},
+	traits::{
+		Contains, EnsureOneOf, EqualPrivilegeOnly, Everything, 
+		IsInVec, Randomness, Nothing, ConstU32, ConstU64, ConstU128
+	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		DispatchClass, IdentityFee, Weight, ConstantMultiplier
@@ -56,7 +59,7 @@ pub use frame_support::{
 };
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot,
+	EnsureRoot, 
 };
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
@@ -85,6 +88,8 @@ use xcm_builder::{
 	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
 };
 pub type ReserveIdentifier = [u8; 8];
+
+use kylin_oracle::DefaultCombineData;
 
 /// common types for the runtime.
 pub use runtime_common::*;
@@ -491,6 +496,12 @@ impl kylin_oracle::Config for Runtime {
 	type WeightInfo = kylin_oracle::weights::SubstrateWeight<Runtime>;
 	type EstimateCallFee = TransactionPayment;
 	type Currency = Balances;
+
+		type CombineData = DefaultCombineData<Self, ConstU32<3>, ConstU128<600>>;
+	type OracleKey = u64;
+	type OracleValue = u128;
+	type Members = OracleProvider;
+	type MaxHasDispatchedSize = ConstU32<100>;
 }
 
 parameter_types! {
@@ -522,23 +533,44 @@ impl pallet_utility::Config for Runtime {
 }
 
 parameter_types! {
-	pub const CouncilMotionDuration: BlockNumber = 3 * DAYS;
+	pub const CouncilMotionDuration: BlockNumber = 10 * DAYS;
 	pub const CouncilMaxProposals: u32 = 100;
 	pub const CouncilMaxMembers: u32 = 100;
 }
 
-// type CouncilCollective = pallet_collective::Instance1;
-// impl pallet_collective::Config<CouncilCollective> for Runtime {
-// 	type Origin = Origin;
-// 	type Proposal = Call;
-// 	type Event = Event;
-// 	type MotionDuration = CouncilMotionDuration;
-// 	type MaxProposals = CouncilMaxProposals;
-// 	type MaxMembers = CouncilMaxMembers;
-// 	type DefaultVote = pallet_collective::PrimeDefaultVote;
-// 	type WeightInfo = ();
-// 	// type WeightInfo = weights::pallet_collective_council::WeightInfo<Runtime>;
-// }
+type CouncilCollective = pallet_collective::Instance1;
+impl pallet_collective::Config<CouncilCollective> for Runtime {
+	type Origin = Origin;
+	type Proposal = Call;
+	type Event = Event;
+	type MotionDuration = CouncilMotionDuration;
+	type MaxProposals = CouncilMaxProposals;
+	type MaxMembers = CouncilMaxMembers;
+	type DefaultVote = pallet_collective::PrimeDefaultVote;
+	type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
+	pub const OracleProviderMaxMembers: u32 = 100;
+}
+
+type EnsureRootOrHalfCouncil = EnsureOneOf<
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 1, 2>,
+>;
+impl pallet_membership::Config<pallet_membership::Instance1> for Runtime {
+	type Event = Event;
+	type AddOrigin = EnsureRootOrHalfCouncil;
+	type RemoveOrigin = EnsureRootOrHalfCouncil;
+	type SwapOrigin = EnsureRootOrHalfCouncil;
+	type ResetOrigin = EnsureRootOrHalfCouncil;
+	type PrimeOrigin = EnsureRootOrHalfCouncil;
+	type MembershipInitialized = ();
+	type MembershipChanged = Council;
+	type MaxMembers = OracleProviderMaxMembers;
+	type WeightInfo = pallet_membership::weights::SubstrateWeight<Runtime>;
+}
+
 parameter_types! {
 	pub MaximumSchedulerWeight: Weight = NORMAL_DISPATCH_RATIO * RuntimeBlockWeights::get().max_block;
 	pub const MaxScheduledPerBlock: u32 = 50;
@@ -965,7 +997,9 @@ construct_runtime! {
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 53,
 
 		// Kylin Pallets
-		KylinOraclePallet: kylin_oracle::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 54,
+		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>} = 54,
+		OracleProvider: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>} = 55,
+		KylinOraclePallet: kylin_oracle::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 56,
 
 		// orml
 		OrmlXcm: orml_xcm = 70,
