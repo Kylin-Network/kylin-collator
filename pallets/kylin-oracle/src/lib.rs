@@ -577,6 +577,30 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+        #[pallet::weight(<T as Config>::WeightInfo::submit_api())]
+        pub fn submit_api(
+            origin: OriginFor<T>,
+            para_id: Option<ParaId>,
+            key: T::OracleKey,
+            url: Vec<u8>,
+        ) -> DispatchResultWithPostInfo {
+            ensure_signed(origin.clone())?;
+            let submitter = ensure_signed(origin.clone())?;
+            // ensure submitter is authorized
+            ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
+
+            let block_number = <system::Pallet<T>>::block_number();
+            let feed = ApiFeed {
+                    requested_block_number: block_number,
+                    para_id: para_id,
+                    url: Some(url),
+                };
+            ApiFeeds::<T>::insert(&submitter, &key, feed.clone());
+
+            Self::deposit_event(Event::NewFeed { sender: submitter, key, feed });
+			Ok(Pays::No.into())
+        }
+
     }
 
     // #[pallet::event where <T as frame_system::Config>:: AccountId: AsRef<[u8]> + ToHex + Decode + Serialize]
@@ -631,6 +655,12 @@ pub mod pallet {
 		NewFeedData {
 			sender: T::AccountId,
 			values: Vec<(T::OracleKey, T::OracleValue)>,
+		},
+        /// New feed is submitted.
+		NewFeed {
+			sender: T::AccountId,
+            key: T::OracleKey,
+            feed: ApiFeed<ParaId, T::BlockNumber>,
 		},
     }
 
@@ -708,6 +738,11 @@ pub mod pallet {
     pub(super) type FeedAccountLookup<T: Config> =
         StorageMap<_, Identity, Vec<u8>, (T::AccountId, Vec<u8>), OptionQuery>;
 
+    #[pallet::storage]
+	#[pallet::getter(fn api_feeds)]
+	pub type ApiFeeds<T: Config> =
+		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, T::OracleKey, ApiFeed<ParaId, T::BlockNumber>>;
+
     /// Raw values for each oracle operators
 	#[pallet::storage]
 	#[pallet::getter(fn raw_values)]
@@ -740,6 +775,14 @@ pub struct DataRequest<ParaId, BlockNumber, AccountId> {
     payload: Vec<u8>,
     feed_name: Vec<u8>,
     is_query: bool,
+    url: Option<Vec<u8>>,
+}
+
+#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Debug))]
+pub struct ApiFeed<ParaId, BlockNumber> {
+    requested_block_number: BlockNumber,
+    para_id: Option<ParaId>,
     url: Option<Vec<u8>>,
 }
 
