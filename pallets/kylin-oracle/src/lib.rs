@@ -14,7 +14,7 @@ use frame_support::{
     log,
     pallet_prelude::*,
     traits::{Currency, EstimateCallFee, UnixTime, ChangeMembers, Get, SortedMembers},
-    IterableStorageMap,
+    IterableStorageMap, IterableStorageDoubleMap,
 };
 use frame_system::{
     self as system,
@@ -1284,6 +1284,43 @@ where T::AccountId: AsRef<[u8]>
             if let Err(e) = result {
                 log::error!("Error clearing api queue: {:?}", e);
             }
+        }
+
+        Ok(())
+    }
+
+    /// A helper function to fetch the price and send signed transaction.
+    fn fetch_api_and_send_signed(block_number: T::BlockNumber) -> Result<(), &'static str> {
+        let signer = Signer::<T, T::AuthorityId>::all_accounts();
+        if !signer.can_sign() {
+            return Err(
+                "No local accounts available. Consider adding one via `author_insertKey` RPC.",
+            )?;
+        }
+
+        let mut values = Vec::<(T::OracleKey, T::OracleValue)>::new();
+        for (acc, key, val) in <ApiFeeds<T> as IterableStorageDoubleMap<_, _, _>>::iter() {
+            let mut response :Vec<u8>;
+            if val.url.is_some() {
+                response = Self::fetch_http_get_result(val.url.clone().unwrap())
+                    .unwrap_or("Failed fetch data".as_bytes().to_vec());
+
+                values.push((key, response.into()));
+            };
+        }
+
+        if values.iter().count() > 0 {
+            // write data to chain
+            let results = signer.send_signed_transaction(|_account| Call::feed_data {
+                values: values.clone(),
+            });
+            for (acc, res) in &results {
+                match res {
+                    Ok(()) => log::info!("[{:?}] Submitted data", acc.id),
+                    Err(e) => log::error!("[{:?}] Failed to submit transaction: {:?}", acc.id, e),
+                }
+            }
+
         }
 
         Ok(())
