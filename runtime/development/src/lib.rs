@@ -498,8 +498,8 @@ impl kylin_oracle::Config for Runtime {
 	type Currency = Balances;
 
 		type CombineData = DefaultCombineData<Self, ConstU32<3>, ConstU128<600>>;
-	type OracleKey = u64;
-	type OracleValue = u128;
+	type OracleKey = Vec<u8>;
+	type OracleValue = f64;
 	type Members = OracleProvider;
 	type MaxHasDispatchedSize = ConstU32<100>;
 }

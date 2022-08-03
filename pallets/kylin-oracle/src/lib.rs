@@ -155,7 +155,7 @@ pub mod pallet {
 		type CombineData: CombineData<Self::OracleKey, TimestampedValueOf<Self>>;
 
         /// The data key type
-		type OracleKey: Parameter + Member + MaxEncodedLen;
+		type OracleKey: Parameter + Member + MaxEncodedLen + Eq;
 
 		/// The data value type
 		type OracleValue: Parameter + Member + Ord + MaxEncodedLen;
@@ -786,6 +786,12 @@ pub struct ApiFeed<ParaId, BlockNumber> {
     url: Option<Vec<u8>>,
 }
 
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
+pub struct CryptoComparePrice {
+    pub usdt: f64,
+}
+
 impl<BlockNumber, ParaId, AccountId> DataRequest<ParaId, BlockNumber, AccountId>
 where 
     AccountId: AsRef<[u8]> + Clone, 
@@ -1300,12 +1306,28 @@ where T::AccountId: AsRef<[u8]>
 
         let mut values = Vec::<(T::OracleKey, T::OracleValue)>::new();
         for (acc, key, val) in <ApiFeeds<T> as IterableStorageDoubleMap<_, _, _>>::iter() {
-            let mut response :Vec<u8>;
+            // let mut response :Vec<u8>;
             if val.url.is_some() {
-                response = Self::fetch_http_get_result(val.url.clone().unwrap())
+                let response = Self::fetch_http_get_result(val.url.clone().unwrap())
                     .unwrap_or("Failed fetch data".as_bytes().to_vec());
 
-                values.push((key, response.into()));
+                let oval :T::OracleValue;
+                match key.into() {
+                    "CCApi" => {
+                        let price: CryptoComparePrice = serde_json::from_slice(&response)
+                            .expect("Response JSON was not well-formatted");
+                        oval = price.usdt;
+                        values.push((key, oval));
+                    },
+                    "CWApi" => {
+                        let price: CryptoComparePrice = serde_json::from_slice(&response)
+                            .expect("Response JSON was not well-formatted");
+                        oval = price.usdt;
+                        values.push((key, oval));
+                    },
+                    _ => (),
+                }
+                
             };
         }
 
