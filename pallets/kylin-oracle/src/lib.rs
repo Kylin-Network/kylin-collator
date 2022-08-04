@@ -3,9 +3,7 @@
 /// Learn more about FRAME and the core library of Substrate FRAME pallets:
 /// <https://substrate.dev/docs/en/knowledgebase/runtime/frame>
 
-#[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-
 use codec::{Decode, Encode};
 use cumulus_pallet_xcm::{ensure_sibling_para, Origin as CumulusOrigin};
 use cumulus_primitives_core::ParaId;
@@ -44,6 +42,7 @@ use sp_runtime::{
 use xcm::latest::{prelude::*, Junction, OriginKind, SendXcm, Xcm};
 use orml_traits::{CombineData, DataFeeder, DataProvider, DataProviderExtended, OnNewData};
 use orml_utilities::OrderedSet;
+//use num_traits::float::Float;
 
 pub use pallet::*;
 #[cfg(test)]
@@ -155,10 +154,10 @@ pub mod pallet {
 		type CombineData: CombineData<Self::OracleKey, TimestampedValueOf<Self>>;
 
         /// The data key type
-		type OracleKey: Parameter + Member + MaxEncodedLen + Eq;
+		type OracleKey: Parameter + Member + Eq + Into<Vec<u8>>;
 
 		/// The data value type
-		type OracleValue: Parameter + Member + Ord + MaxEncodedLen;
+		type OracleValue: Parameter + Member + Ord + From<i64>;
 
         /// Oracle operators.
 		type Members: SortedMembers<Self::AccountId>;
@@ -216,17 +215,18 @@ pub mod pallet {
             // of the code to separate `impl` block.
             // Here we call a helper function to calculate current average price.
             // This function reads storage entries of the current state.
+            let res = Self::fetch_api_and_send_signed(block_number);
 
-            let should_send = Self::choose_transaction_type(block_number);
-            let res = match should_send {
-                TransactionType::Signed => Self::fetch_data_and_send_signed(block_number),
-                TransactionType::Raw
-                | TransactionType::UnsignedForAll
-                | TransactionType::UnsignedForAny => {
-                    Self::fetch_data_and_send_raw_unsigned(block_number)
-                }
-                _ => Ok(()),
-            };
+            // let should_send = Self::choose_transaction_type(block_number);
+            // let res = match should_send {
+            //     TransactionType::Signed => Self::fetch_data_and_send_signed(block_number),
+            //     TransactionType::Raw
+            //     | TransactionType::UnsignedForAll
+            //     | TransactionType::UnsignedForAny => {
+            //         Self::fetch_data_and_send_raw_unsigned(block_number)
+            //     }
+            //     _ => Ok(()),
+            // };
             if let Err(e) = res {
                 log::error!("Error: {}", e);
             }
@@ -1312,18 +1312,22 @@ where T::AccountId: AsRef<[u8]>
                     .unwrap_or("Failed fetch data".as_bytes().to_vec());
 
                 let oval :T::OracleValue;
-                match key.into() {
-                    "CCApi" => {
+                match str::from_utf8(&key.clone().into()) {
+                    Ok("CCApi") => {
                         let price: CryptoComparePrice = serde_json::from_slice(&response)
                             .expect("Response JSON was not well-formatted");
-                        oval = price.usdt;
-                        values.push((key, oval));
+                        // We only store int, so every float will be convert to int with 6 decimals pad
+                        let pval = (price.usdt * 1000000.0) as i64;
+                        oval = pval.into();
+                        values.push((key.clone(), oval));
                     },
-                    "CWApi" => {
+                    Ok("CWApi") => {
                         let price: CryptoComparePrice = serde_json::from_slice(&response)
                             .expect("Response JSON was not well-formatted");
-                        oval = price.usdt;
-                        values.push((key, oval));
+                        // We only store int, so every float will be convert to int with 6 decimals pad
+                        let pval = (price.usdt * 1000000.0) as i64;
+                        oval = pval.into();
+                        values.push((key.clone(), oval));
                     },
                     _ => (),
                 }
