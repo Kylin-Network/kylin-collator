@@ -901,8 +901,15 @@ parameter_types! {
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum CurrencyId {
 	ROC,
+	
 	PCHU,
 	KAR,
+	
+	
+	MOVR,
+	BNC,
+	KTON,
+	RING
 }
 
 pub struct AccountIdToMultiLocation;
@@ -935,6 +942,24 @@ impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 				1,
 				X2(Parachain(2000), GeneralKey("KAR".into())),
 			)),
+			CurrencyId::MOVR => Some(MultiLocation::new(
+				1,
+				X2(Parachain(2023), GeneralKey("MOVR".into())),
+			)),
+			CurrencyId::BNC => Some(MultiLocation::new(
+				1,
+				X2(Parachain(2001), GeneralKey("BNC".into())),
+			)),
+			CurrencyId::RING => Some(MultiLocation::new(
+				1,
+				X2(Parachain(1205), GeneralKey("RING".into())),
+			)),
+			CurrencyId::KTON => Some(MultiLocation::new(
+				1,
+				X2(Parachain(1205), GeneralKey("KTON".into())),
+			)),
+
+
 		}
 	}
 }

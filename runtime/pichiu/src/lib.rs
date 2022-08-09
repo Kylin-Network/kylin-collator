@@ -924,6 +924,11 @@ pub enum CurrencyId {
 	KAR,
 	LKSM,
 	AUSD,
+	MOVR,
+	BNC,
+	KTON,
+	RING
+
 }
 
 
@@ -965,6 +970,23 @@ impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 				1,
 				X2(Parachain(2000), GeneralKey([0, 131].to_vec())),
 			)),
+			CurrencyId::MOVR => Some(MultiLocation::new(
+				1,
+				X2(Parachain(2023), GeneralKey([0, 132].to_vec())),
+			)),
+			CurrencyId::BNC => Some(MultiLocation::new(
+				1,
+				X2(Parachain(2001), GeneralKey("BNC".into())),
+			)),
+			CurrencyId::RING => Some(MultiLocation::new(
+				1,
+				X2(Parachain(1205), GeneralKey("RING".into())),
+			)),
+			CurrencyId::KTON => Some(MultiLocation::new(
+				1,
+				X2(Parachain(1205), GeneralKey("KTON".into())),
+			)),
+
 		}
 	}
 }
@@ -985,6 +1007,10 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 				X2(Parachain(2000), GeneralKey(k)) if k == kar => Some(CurrencyId::KAR),
 				X2(Parachain(2000), GeneralKey(k)) if k == ausd => Some(CurrencyId::AUSD),
 				X2(Parachain(2000), GeneralKey(k)) if k == lksm => Some(CurrencyId::LKSM),
+				X2(Parachain(2023), GeneralKey(k)) if k == lksm => Some(CurrencyId::MOVR),
+				X2(Parachain(2001), GeneralKey(k)) if k == lksm => Some(CurrencyId::BNC),
+				X2(Parachain(1205), GeneralKey(k)) if k == lksm => Some(CurrencyId::RING),
+				X2(Parachain(1205), GeneralKey(k)) if k == lksm => Some(CurrencyId::KTON),
 				X2(Parachain(id), GeneralKey(k))
 					if ParaId::from(id) == ParachainInfo::parachain_id() && k == pchu =>
 				{
@@ -997,6 +1023,10 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 				X1(GeneralKey(k)) if k == kar => Some(CurrencyId::KAR),
 				X1(GeneralKey(k)) if k == ausd => Some(CurrencyId::AUSD),
 				X1(GeneralKey(k)) if k == lksm => Some(CurrencyId::LKSM),
+				X1(GeneralKey(k)) if k == lksm => Some(CurrencyId::MOVR),
+				X1(GeneralKey(k)) if k == lksm => Some(CurrencyId::BNC),
+				X1(GeneralKey(k)) if k == lksm => Some(CurrencyId::RING),
+				X1(GeneralKey(k)) if k == lksm => Some(CurrencyId::KTON),
 				_ => None,
 			},
 			_ => None,
