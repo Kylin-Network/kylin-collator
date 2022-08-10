@@ -1004,6 +1004,7 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 		let movr: Vec<u8> = "MOVR".into();
 		let kton: Vec<u8> = "KTON".into();
 		let ring: Vec<u8> = "RING".into();
+		let bnc: Vec<u8> = "RING".into();
 
 		match location {
 			MultiLocation { parents, interior } if parents == 1 => match interior {
