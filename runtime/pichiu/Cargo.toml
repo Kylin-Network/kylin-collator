@@ -72,7 +72,6 @@ parachain-info = { git = "https://github.com/paritytech/cumulus", branch = "polk
 parachains-common = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.24" , default-features = false }
 cumulus-pallet-session-benchmarking = { git = "https://github.com/paritytech/cumulus", default-features = false,  branch = "polkadot-v0.9.24" }
 pallet-collator-selection = { git = "https://github.com/paritytech/cumulus", default-features = false,  branch = "polkadot-v0.9.24" }
-pallet-democracy = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
 pallet-treasury = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
 
 
@@ -98,6 +97,7 @@ orml-unknown-tokens = { path = "../../pallets/orml/unknown-tokens", default-feat
 
 # Local Dependencies
 kylin-oracle = { package = 'kylin-oracle', path = '../../pallets/kylin-oracle', default-features = false }
+kylin-democracy = { package = 'kylin-democracy', path = '../../pallets/kylin-democracy', default-features = false }
 runtime-common = { path = "../common", default-features = false }
 
 [dev-dependencies]
@@ -145,7 +145,7 @@ std = [
 	'frame-executive/std',
 	'frame-system/std',
 	'frame-system-rpc-runtime-api/std',
-	'pallet-democracy/std',
+	'kylin-democracy/std',
 	'pallet-treasury/std',
 
 
