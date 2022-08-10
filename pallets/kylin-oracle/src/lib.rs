@@ -584,7 +584,6 @@ pub mod pallet {
             key: T::OracleKey,
             url: Vec<u8>,
         ) -> DispatchResultWithPostInfo {
-            ensure_signed(origin.clone())?;
             let submitter = ensure_signed(origin.clone())?;
             // ensure submitter is authorized
             ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
@@ -601,6 +600,26 @@ pub mod pallet {
 			Ok(Pays::No.into())
         }
 
+        #[pallet::weight(<T as Config>::WeightInfo::clear_api())]
+        pub fn clear_api(
+            origin: OriginFor<T>,
+            key: T::OracleKey,
+        ) -> DispatchResult {
+            let submitter = ensure_signed(origin.clone())?;
+            // ensure submitter is authorized
+            ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
+
+            let feed_exists = ApiFeeds::<T>::contains_key(&submitter, &key);
+            if feed_exists {
+                let feed = Self::api_feeds(&submitter, &key).unwrap();
+                <ApiFeeds<T>>::remove(&submitter, &key);
+                Self::deposit_event(Event::FeedRemoved { sender: submitter, key, feed });
+                Ok(())
+            } else {
+                Err(DispatchError::CannotLookup)
+            }
+
+        }
     }
 
     // #[pallet::event where <T as frame_system::Config>:: AccountId: AsRef<[u8]> + ToHex + Decode + Serialize]
@@ -658,6 +677,12 @@ pub mod pallet {
 		},
         /// New feed is submitted.
 		NewFeed {
+			sender: T::AccountId,
+            key: T::OracleKey,
+            feed: ApiFeed<ParaId, T::BlockNumber>,
+		},
+        /// New feed is submitted.
+		FeedRemoved {
 			sender: T::AccountId,
             key: T::OracleKey,
             feed: ApiFeed<ParaId, T::BlockNumber>,

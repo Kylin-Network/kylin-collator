@@ -40,6 +40,7 @@ pub trait WeightInfo {
     fn feed_data(c: u32) -> Weight;
     fn on_finalize() -> Weight;
     fn submit_api() -> Weight;
+    fn clear_api() -> Weight;
 }
 
 /// Weights for kylin_oracle using the Substrate node and recommended hardware.
@@ -100,6 +101,11 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
             .saturating_add(T::DbWeight::get().reads(3 as Weight))
             .saturating_add(T::DbWeight::get().writes(3 as Weight))
     }
+    fn clear_api() -> Weight {
+        (66_168_000 as Weight)
+            .saturating_add(T::DbWeight::get().reads(3 as Weight))
+            .saturating_add(T::DbWeight::get().writes(3 as Weight))
+    }
 }
 
 // For backwards compatibility and tests
@@ -155,6 +161,11 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
     fn submit_api() -> Weight {
+        (66_168_000 as Weight)
+            .saturating_add(RocksDbWeight::get().reads(3 as Weight))
+            .saturating_add(RocksDbWeight::get().writes(3 as Weight))
+    }
+    fn clear_api() -> Weight {
         (66_168_000 as Weight)
             .saturating_add(RocksDbWeight::get().reads(3 as Weight))
             .saturating_add(RocksDbWeight::get().writes(3 as Weight))

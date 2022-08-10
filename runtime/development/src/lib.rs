@@ -497,7 +497,7 @@ impl kylin_oracle::Config for Runtime {
 	type EstimateCallFee = TransactionPayment;
 	type Currency = Balances;
 
-		type CombineData = DefaultCombineData<Self, ConstU32<3>, ConstU128<600>>;
+		type CombineData = DefaultCombineData<Self, ConstU32<1>, ConstU128<600>>;
 	type OracleKey = Vec<u8>;
 	type OracleValue = i64;
 	type Members = OracleProvider;
