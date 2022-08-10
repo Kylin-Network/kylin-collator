@@ -246,7 +246,7 @@ parameter_types! {
 	pub const MaxProposals: u32 = 100;
 }
 
-impl pallet_democracy::Config for Runtime {
+impl kylin_democracy::Config for Runtime {
 	type Proposal = Call;
 	type Event = Event;
 	type Currency = Balances;
@@ -293,7 +293,7 @@ impl pallet_democracy::Config for Runtime {
 	type Scheduler = Scheduler;
 	type PalletsOrigin = OriginCaller;
 	type MaxVotes = frame_support::traits::ConstU32<100>;
-	type WeightInfo = pallet_democracy::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = kylin_democracy::weights::SubstrateWeight<Runtime>;
 	type MaxProposals = MaxProposals;
 }
 
@@ -1145,7 +1145,7 @@ construct_runtime! {
 		OrmlUnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 73,
 		OrmlCurrencies: orml_currencies::{Pallet, Call} = 74,
 		//Democracy
-		Democracy: pallet_democracy = 90,
+		Democracy: kylin_democracy = 90,
 		Council: pallet_collective::<Instance1> = 91,
 		TechnicalCommittee: pallet_collective::<Instance2> = 92,
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 93,
