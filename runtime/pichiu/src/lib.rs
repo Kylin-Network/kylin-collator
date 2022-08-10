@@ -1004,7 +1004,7 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 		let movr: Vec<u8> = "MOVR".into();
 		let kton: Vec<u8> = "KTON".into();
 		let ring: Vec<u8> = "RING".into();
-		let bnc: Vec<u8> = "RING".into();
+		let bnc: Vec<u8> = "BNC".into();
 
 		match location {
 			MultiLocation { parents, interior } if parents == 1 => match interior {
@@ -1027,10 +1027,10 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 				X1(GeneralKey(k)) if k == kar => Some(CurrencyId::KAR),
 				X1(GeneralKey(k)) if k == ausd => Some(CurrencyId::AUSD),
 				X1(GeneralKey(k)) if k == lksm => Some(CurrencyId::LKSM),
-				X1(GeneralKey(k)) if k == lksm => Some(CurrencyId::MOVR),
-				X1(GeneralKey(k)) if k == lksm => Some(CurrencyId::BNC),
-				X1(GeneralKey(k)) if k == lksm => Some(CurrencyId::RING),
-				X1(GeneralKey(k)) if k == lksm => Some(CurrencyId::KTON),
+				X1(GeneralKey(k)) if k == movr => Some(CurrencyId::MOVR),
+				X1(GeneralKey(k)) if k == bnc => Some(CurrencyId::BNC),
+				X1(GeneralKey(k)) if k == ring => Some(CurrencyId::RING),
+				X1(GeneralKey(k)) if k == kton => Some(CurrencyId::KTON),
 				_ => None,
 			},
 			_ => None,
