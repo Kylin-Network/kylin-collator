@@ -911,6 +911,10 @@ pub enum CurrencyId {
 	ACA,
 	LDOT,
 	AUSD,
+	MOVR, 
+	BNC,
+	KTON,
+	RING
 }
 
 
@@ -951,6 +955,22 @@ impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 			CurrencyId::LDOT => Some(MultiLocation::new(
 				1,
 				X2(Parachain(2000), GeneralKey([0, 3].to_vec())),
+			)),
+			CurrencyId::MOVR => Some(MultiLocation::new(
+				1,
+				X2(Parachain(2024), GeneralKey([0, 132].to_vec())),
+			)),
+			CurrencyId::BNC => Some(MultiLocation::new(
+				1,
+				X2(Parachain(2030), GeneralKey("BNC".into())),
+			)),
+			CurrencyId::RING => Some(MultiLocation::new(
+				1,
+				X2(Parachain(2046), GeneralKey("RING".into())),
+			)),
+			CurrencyId::KTON => Some(MultiLocation::new(
+				1,
+				X2(Parachain(2046), GeneralKey("KTON".into())),
 			)),
 		}
 	}
