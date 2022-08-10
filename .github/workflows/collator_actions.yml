@@ -34,8 +34,10 @@ jobs:
           toolchain: nightly
           target: wasm32-unknown-unknown
 
+      - name: Init submodules
+        run: git submodule init
       - name: Update submodules
-        run: git submodule update --recursive --remote
+        run: git submodule update 
 
       - name: Build kylin collator 
         run: cargo build --release
