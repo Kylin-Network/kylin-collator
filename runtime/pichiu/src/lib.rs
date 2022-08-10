@@ -1001,16 +1001,19 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 		let ausd: Vec<u8> = [0, 129].to_vec();
 		let lksm: Vec<u8> = [0, 131].to_vec();
 		let pchu: Vec<u8> = "PCHU".into();
+		let movr: Vec<u8> = "MOVR".into();
+		let kton: Vec<u8> = "KTON".into();
+		let ring: Vec<u8> = "RING".into();
 
 		match location {
 			MultiLocation { parents, interior } if parents == 1 => match interior {
 				X2(Parachain(2000), GeneralKey(k)) if k == kar => Some(CurrencyId::KAR),
 				X2(Parachain(2000), GeneralKey(k)) if k == ausd => Some(CurrencyId::AUSD),
 				X2(Parachain(2000), GeneralKey(k)) if k == lksm => Some(CurrencyId::LKSM),
-				X2(Parachain(2023), GeneralKey(k)) if k == lksm => Some(CurrencyId::MOVR),
-				X2(Parachain(2001), GeneralKey(k)) if k == lksm => Some(CurrencyId::BNC),
-				X2(Parachain(1205), GeneralKey(k)) if k == lksm => Some(CurrencyId::RING),
-				X2(Parachain(1205), GeneralKey(k)) if k == lksm => Some(CurrencyId::KTON),
+				X2(Parachain(2023), GeneralKey(k)) if k == movr => Some(CurrencyId::MOVR),
+				X2(Parachain(2001), GeneralKey(k)) if k == bnc => Some(CurrencyId::BNC),
+				X2(Parachain(1205), GeneralKey(k)) if k == ring => Some(CurrencyId::RING),
+				X2(Parachain(1205), GeneralKey(k)) if k == kton => Some(CurrencyId::KTON),
 				X2(Parachain(id), GeneralKey(k))
 					if ParaId::from(id) == ParachainInfo::parachain_id() && k == pchu =>
 				{
