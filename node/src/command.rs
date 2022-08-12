@@ -1,10 +1,10 @@
 use crate::{
 	chain_spec,
 	cli::{Cli, RelayChainCli, Subcommand},
-	service::{new_partial, DevelopmentRuntimerExecutor, PichiuRuntimerExecutor, KylinRuntimerExecutor},
+	service::{new_partial, PichiuRuntimerExecutor, KylinRuntimerExecutor},
 };
 use codec::Encode;
-use cumulus_client_service::genesis::generate_genesis_block;
+use cumulus_client_cli::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
 use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 use log::info;
@@ -25,7 +25,6 @@ const DEFAULT_PARA_ID: u32 = 2102;
 
 enum ChainIdentity {
 	Pichiu,
-	Development,
 	Kylin,
 }
 
@@ -37,11 +36,9 @@ impl IdentifyChain for dyn sc_service::ChainSpec {
 	fn identify(&self) -> ChainIdentity {
 		if self.id().starts_with("pichiu") {
 			ChainIdentity::Pichiu
-		} else if self.id().starts_with("kylin") {
-			ChainIdentity::Kylin
 		} else {
-			ChainIdentity::Development
-		}
+			ChainIdentity::Kylin
+		} 
 	}
 }
 
@@ -57,16 +54,16 @@ fn load_spec(
 ) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
 		// dev local
-		"" | "dev" => Box::new(chain_spec::development_network(para_id)),
+		// "" | "dev" => Box::new(chain_spec::development_network(para_id)),
 
 		// rococo-local
 		"pichiu-local" => Box::new(chain_spec::pichiu_local_network(para_id)),
 		"kylin-local" => Box::new(chain_spec::kylin_local_network(para_id)),
 
 		// Westend
-		"pichiu-westend" | "pichiu-chachacha" => {
-			Box::new(chain_spec::pichiu_development_network(para_id))
-		}
+		//"pichiu-westend" | "pichiu-chachacha" => {
+	//		Box::new(chain_spec::pichiu_development_network(para_id))
+	//	}
 
 		// Kusama
 		"pichiu" => Box::new(chain_spec::pichiu_network(para_id)),
@@ -78,9 +75,6 @@ fn load_spec(
 				ChainIdentity::Pichiu => {
 					Box::new(chain_spec::PichiuChainSpec::from_json_file(path.into())?)
 				}
-				ChainIdentity::Development => Box::new(
-					chain_spec::DevelopmentChainSpec::from_json_file(path.into())?,
-				),
 				ChainIdentity::Kylin => {
 					Box::new(chain_spec::KylinChainSpec::from_json_file(path.into())?)
 				}
@@ -127,7 +121,7 @@ impl SubstrateCli for Cli {
 	fn native_runtime_version(spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
 		match spec.identify() {
 			ChainIdentity::Pichiu => &pichiu_runtime::VERSION,
-			ChainIdentity::Development => &development_runtime::VERSION,
+			// ChainIdentity::Development => &development_runtime::VERSION,
 			ChainIdentity::Kylin => &kylin_runtime::VERSION,
 		}
 	}
@@ -198,6 +192,7 @@ macro_rules! construct_async_run {
 					{ $( $code )* }.map(|v| (v, task_manager))
 				})
 			}
+			/* 
 			ChainIdentity::Development => {
 				runner.async_run(|$config| {
 					let $components = new_partial::<development_runtime::RuntimeApi, DevelopmentRuntimerExecutor, _>(
@@ -208,6 +203,7 @@ macro_rules! construct_async_run {
 					{ $( $code )* }.map(|v| (v, task_manager))
 				})
 			}
+			*/
 			ChainIdentity::Kylin => {
 				runner.async_run(|$config| {
 					let $components = new_partial::<kylin_runtime::RuntimeApi, KylinRuntimerExecutor, _>(
@@ -288,7 +284,8 @@ pub fn run() -> Result<()> {
 			)?;
 			let state_version = Cli::native_runtime_version(&chain_spec).state_version();
 
-			let block: Block = generate_genesis_block(&chain_spec, state_version)?;
+			let block: Block = generate_genesis_block(&*chain_spec, state_version)
+				.map_err(|e| format!("{:?}", e))?;
 
 			let raw_header = block.header().encode();
 			let output_buf = if params.raw {
@@ -396,7 +393,7 @@ pub fn run() -> Result<()> {
 
 				let state_version =
 					RelayChainCli::native_runtime_version(&config.chain_spec).state_version();
-				let block: Block = generate_genesis_block(&config.chain_spec, state_version)
+				let block: Block = generate_genesis_block(&*config.chain_spec, state_version)
 					.map_err(|e| format!("{:?}", e))?;
 				let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header().encode()));
 
@@ -418,16 +415,6 @@ pub fn run() -> Result<()> {
 				);
 				match config.chain_spec.identify() {
 					ChainIdentity::Pichiu => crate::service::start_pichiu_node(
-						config,
-						polkadot_config,
-						collator_options,
-						id,
-						hwbench,
-					)
-					.await
-					.map(|r| r.0)
-					.map_err(Into::into),
-					ChainIdentity::Development => crate::service::start_development_node(
 						config,
 						polkadot_config,
 						collator_options,

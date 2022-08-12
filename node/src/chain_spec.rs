@@ -22,7 +22,7 @@ use sc_telemetry::TelemetryEndpoints;
 /// Specialized `ChainSpec` for the Pichiu parachain runtime.
 pub type PichiuChainSpec = sc_service::GenericChainSpec<pichiu_runtime::GenesisConfig, Extensions>;
 pub type KylinChainSpec = sc_service::GenericChainSpec<kylin_runtime::GenesisConfig, Extensions>;
-pub type DevelopmentChainSpec = sc_service::GenericChainSpec<development_runtime::GenesisConfig, Extensions>;
+// pub type DevelopmentChainSpec = sc_service::GenericChainSpec<development_runtime::GenesisConfig, Extensions>;
 
 const POLKADOT_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
@@ -119,7 +119,7 @@ pub fn pichiu_local_network(id: ParaId) -> PichiuChainSpec {
         },
 	)
 }
-
+/*
 pub fn pichiu_development_network(id: ParaId) -> PichiuChainSpec {
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "PCHU".into());
@@ -157,6 +157,7 @@ pub fn pichiu_development_network(id: ParaId) -> PichiuChainSpec {
         },
 	)
 }
+*/
 
 pub fn kylin_local_network(id: ParaId) -> KylinChainSpec {
 	let mut properties = Properties::new();
@@ -446,7 +447,7 @@ fn kylin_genesis(
 		},
 	}
 }
-
+/*
 pub fn development_network(id: ParaId) -> PichiuChainSpec {
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "KYL".into());
@@ -484,4 +485,4 @@ pub fn development_network(id: ParaId) -> PichiuChainSpec {
         },
 	)
 }
-
+*/
