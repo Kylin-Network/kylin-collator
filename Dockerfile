@@ -1,13 +1,16 @@
 # This is the build stage for kylin-collator. Here we create the binary in a temporary image.
-FROM docker.io/paritytech/ci-linux:production as builder
+#FROM docker.io/paritytech/ci-linux:production as builder
+FROM rust:1.61-slim as builder
 
 WORKDIR /kylin-collator
 COPY . /kylin-collator
-
+RUN apt-get update && apt-get install -y git cmake pkg-config libssl-dev git clang libclang-dev
+RUN rustup default nightly && rustup target add wasm32-unknown-unknown
 RUN cargo build --locked --release
 
 # This is the 2nd stage: a very small image where we copy the kylin-collator binary."
-FROM docker.io/library/ubuntu:20.04
+# FROM docker.io/library/ubuntu:20.04
+FROM debian:bullseye-slim
 
 LABEL description="Multistage Docker image for kylin-collator: Data certification for web3" \
 	io.parity.image.type="builder" \
@@ -22,16 +25,10 @@ COPY --from=builder /kylin-collator/pichiu-rococo-parachain-2102.json .
 COPY --from=builder /kylin-collator/rococo.json .
 
 
-RUN useradd -m -u 1000 -U -s /bin/sh -d /kylin-collator kylin-collator && \
-	mkdir -p /data /kylin-collator/.local/share && \
-	chown -R kylin-collator:kylin-collator /data && \
+RUN mkdir -p /data /kylin-collator/.local/share && \
 	ln -s /data /kylin-collator/.local/share/kylin-collator && \
-# unclutter and minimize the attack surface
-	rm -rf /usr/bin /usr/sbin && \
 # check if executable works in this container
 	/usr/local/bin/kylin-collator --version
-
-USER kylin-collator
 
 EXPOSE 40333 9977 8844 9615 
 VOLUME ["/data"]
