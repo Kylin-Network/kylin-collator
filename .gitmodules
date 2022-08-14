@@ -1,3 +1,4 @@
 [submodule "pallets/orml"]
 	path = pallets/orml
 	url = https://github.com/open-web3-stack/open-runtime-module-library.git
+	branch = polkadot-v0.9.24
