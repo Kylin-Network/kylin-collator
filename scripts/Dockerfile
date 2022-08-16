@@ -1,45 +1,36 @@
-# build kylin-collator
-FROM kylinnetwork/polkadot:latest as builder
+# This is the build stage for kylin-collator. Here we create the binary in a temporary image.
+#FROM docker.io/paritytech/ci-linux:production as builder
+FROM rust:1.61-slim as builder
 
-LABEL maintainer="kylin-dev"
-ARG PROFILE=release
-ARG KYLIN_GIT_REPO="https://github.com/Kylin-Network/kylin-collator.git"
-ARG GIT_BRANCH="main"
-ARG GIT_CLONE_DEPTH="--depth 1"
-WORKDIR /builds/
+WORKDIR /kylin-collator
+COPY . /kylin-collator
+RUN apt-get update && apt-get install -y git cmake pkg-config libssl-dev git clang libclang-dev
+RUN rustup default nightly && rustup target add wasm32-unknown-unknown
+RUN cargo build --locked --release
 
-#Build kylin-collator
-RUN git clone --recursive ${KYLIN_GIT_REPO} ${GIT_CLONE_DEPTH}
+# This is the 2nd stage: a very small image where we copy the kylin-collator binary."
+# FROM docker.io/library/ubuntu:20.04
+FROM debian:bullseye-slim
 
-WORKDIR /builds/kylin-collator
-RUN git checkout ${GIT_BRANCH}
-RUN cargo build --${PROFILE}
-RUN cp target/${PROFILE}/kylin-collator /kylin-collator
+LABEL description="Multistage Docker image for kylin-collator: Data certification for web3" \
+	io.parity.image.type="builder" \
+	io.parity.image.authors="chevdor@gmail.com, devops-team@parity.io" \
+	io.parity.image.vendor="Parity Technologies" \
+	io.parity.image.description="kylin-collator:  Data certification for web3" \
+	io.parity.image.source="https://github.com/paritytech/kylin-collator/blob/${VCS_REF}/Dockerfile" \
+	io.parity.image.documentation="https://github.com/kylinnetwork/kylin-collator/"
 
-FROM ubuntu
-ENV DEBIAN_FRONTEND noninteractive
-RUN apt update && apt install git gnupg2 curl ca-certificates vim npm nodejs wget awscli -y
-RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+COPY --from=builder /kylin-collator/target/release/kylin-collator /usr/local/bin
+COPY --from=builder /kylin-collator/pichiu-rococo-parachain-2102.json .
+COPY --from=builder /kylin-collator/rococo.json .
 
-WORKDIR /builds/
-RUN apt update && apt install yarn -y
-RUN apt purge nodejs npm -y
 
-RUN apt-get install -y \
-    software-properties-common \
-    npm
-RUN npm install npm@latest -g && \
-    npm install n -g && \
-    n stable
+RUN mkdir -p /data /kylin-collator/.local/share && \
+	ln -s /data /kylin-collator/.local/share/kylin-collator && \
+# check if executable works in this container
+	/usr/local/bin/kylin-collator --version
 
-ARG POLKADOT_LAUNCH_REPO="https://github.com/Kylin-Network/polkadot-launch.git"
-RUN git clone --recursive ${POLKADOT_LAUNCH_REPO} ${GIT_CLONE_DEPTH}
-WORKDIR /builds/polkadot-launch
-RUN yarn global add polkadot-launch
+EXPOSE 40333 9977 8844 9615 
+VOLUME ["/data"]
 
-WORKDIR /
-COPY --from=builder /kylin-collator /
-COPY --from=builder /polkadot /
-COPY --from=builder /subkey /
-
-EXPOSE 30330-30345 9933-9960 8080 3001
+ENTRYPOINT ["/usr/local/bin/kylin-collator"]
