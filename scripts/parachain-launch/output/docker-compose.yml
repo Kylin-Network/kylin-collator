@@ -159,7 +159,7 @@ services:
       - --force-authoring
       - --execution=wasm
       - --alice
-      - --node-key=35cc58fa50e6668fb75a5c6023c5134505782824e96ab804ac51c030a2ff0c2d
+      - --node-key=b5facb7ae1dae48b98b35647beaeee38ee352971ea9936e61eb30a12de1c2593
       - --listen-addr=/ip4/0.0.0.0/tcp/30333
       - --
       - --chain=/app/rococo-local.json
@@ -189,7 +189,7 @@ services:
       - --force-authoring
       - --execution=wasm
       - --bob
-      - --bootnodes=/dns/parachain-2000-0/tcp/30333/p2p/12D3KooWD49PoDJ99dJHSx499Lu33PyTo9D8A3BXwncxGatmB3w8
+      - --bootnodes=/dns/parachain-2000-0/tcp/30333/p2p/12D3KooWHPy5p7GwF28Z1qXodpsHPHr3MxMSHSDpo3K1eRDC9DWb
       - --listen-addr=/ip4/0.0.0.0/tcp/30333
       - --
       - --chain=/app/rococo-local.json
@@ -218,7 +218,7 @@ services:
       - --force-authoring
       - --execution=wasm
       - --charlie
-      - --bootnodes=/dns/parachain-2000-0/tcp/30333/p2p/12D3KooWD49PoDJ99dJHSx499Lu33PyTo9D8A3BXwncxGatmB3w8
+      - --bootnodes=/dns/parachain-2000-0/tcp/30333/p2p/12D3KooWHPy5p7GwF28Z1qXodpsHPHr3MxMSHSDpo3K1eRDC9DWb
       - --listen-addr=/ip4/0.0.0.0/tcp/30333
       - --
       - --chain=/app/rococo-local.json
