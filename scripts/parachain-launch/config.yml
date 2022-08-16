@@ -1,0 +1,60 @@
+# Relaychain Configuration
+relaychain:
+  image: parity/polkadot:v0.9.24 # the docker image to use
+  chain: rococo-local # the chain to use
+  runtimeGenesisConfig: # additonal genesis override
+    configuration:
+      config:
+        validation_upgrade_cooldown: 10
+        validation_upgrade_delay: 10
+  flags: # additional CLI flags for all relaychain nodes
+    - --rpc-methods=unsafe
+  nodes: # nodes config
+    - name: alice # the node name and session key, this imply `--alice`
+      wsPort: 9944 # default ws port number is `9944 + global_node_index`
+      rpcPort: 9933 # default rpc port number is `9933 + global_node_index`
+      port: 30333 # default libp2p port number is `30333 + global_node_index`
+      flags: # additional CLI flags for this node
+        - --force-authoring
+    - name: bob
+    - name: charlie
+    - name: dave
+    - name: eve
+    - name: ferdie
+
+# Parachain Configuration
+parachains:
+# Config for first parachain
+- image: kylinnetworks/kylin-collator:v0.0.3
+  chain: # this could be a string like `dev` or a config object
+    base: pichiu-local # the chain to use
+    collators: # override collators
+      - alice # this imply //Alice
+      - 5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty # or could be a session key public address
+      - charlie
+    sudo: alice # override sudo key to //Alice
+    runtimeGenesisConfig: # additonal genesis override
+      balances:
+        balances:
+          - [5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty, 10000000000000000]
+  id: 2000 # override parachain id
+  parachain: true # this is parachain, not parathread
+  flags: # CLI flags for this parachain nodes
+    - --rpc-methods=unsafe
+    - --force-authoring
+    - --execution=wasm
+  relaychainFlags: # CLI flags for the relaychain port
+    - --execution=wasm
+  volumePath: /kylin/data # The path to mount volume and base path, default to /data
+  nodes: # nodes config
+  - wsPort: 8844
+    rpcPort: 8833
+    port: 40336
+    flags: # additional CLI flags for this node
+      - --alice
+    relaychainFlags: # additional CLI flags for relaychain part
+      - --name=relaychain-alice
+  - flags:
+    - --bob
+  - flags:
+    - --charlie

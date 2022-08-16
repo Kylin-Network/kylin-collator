@@ -44,7 +44,7 @@ docker ps
     - frontend
     - kylin-kibana   
     - kylin-es
- 
+
 2) Check the container logs
 ```bash 
 docker logs launch
@@ -94,37 +94,34 @@ We will discuss both approaches in detail.
     cargo build --release
     ```
 
-### 2a) Launch using Polkadot-Launch Configuration
+### 2a) Launch using parachain-launch Configuration
 
-The `polkadot-launch` utility allows you to launch your network seamlessly by providing a custom json configuration file.
+The `parachain-launch` utility allows you to launch your network seamlessly by providing a custom json configuration file.
 
-- #### Install polkadot-launch
+- #### Install parachain-launch
 
-  - To install polkadot-launch, run:
+  - To install parachain-launch, run:
 
     ```bash
-    yarn global add polkadot-launch
+    yarn global add @open-web3/parachain-launch
 
-    Check installation
-
-    polkadot-launch --version
-
-    ```
-
+    parachain-launch --version
+```
+  
 - #### Define the configuration file
 
-  Once we have the `polkadot-launch` utility installed, we need to define the configuration file.
+  Once we have the `parachain-launch` utility installed, we need to define the configuration file.
 
-  A configuration file has been provided within the repository at `scripts/polkadot-launch/kylinLaunchConfig.json`. You can customize it based on your requirements.
+  A configuration file has been provided within the repository at `scripts/parachain-launch/config.json`. You can customize it based on your requirements.
 
   - There are two sections in the file which are essential: `relaychain` and `parachains` 
   - relaychain: 3 key parameters
-    - bin: Specify the location of the polkadot binary (in our case we built polkadot in a step above, so we can find the binary at `target/release/polkadot` in the polkadot directory). You can provide a relative or absolute path of the binary.
+    - image: Specify the polkadot image (in our case we use parity/polkadot:v0.9.24). You can provide another version of polkadot image.
     - chain: Specify the type of the chain (in our case we will use rococo-local as we are launching a local network)
     - nodes: Configure the number of validators you want to have (we've added six validators, feel free to change per your requirement. The rule of thumb is at least two validators per collator). You can pass the name of the validators, additional flags, and both the tcp and websocket ports to be exposed.
 
   - parachains: 4 key parameters
-    - bin: Specify the location of the kylin-collator binary
+    - image: Specify the kylin-collator image
     - id: Specify the Para ID for the chain
     - balance: Set initial balance of your parachain
     - nodes: Node configurations for your parachain
@@ -132,13 +129,10 @@ The `polkadot-launch` utility allows you to launch your network seamlessly by pr
 - #### Launch the network
 
 ```bash
-polkadot-launch scripts/polkadot-launch/kylinLaunchConfig.json
-```
-
-If the launch is successful, you will see:
-
-```bash
-🚀 POLKADOT LAUNCH COMPLETE 🚀
+cd scripts/parachain-launch/
+parachain-launch generate --config=./config.yml -y
+cd output
+docker-compose up -d --build
 ```
 
 ### 2b) Launch manually
@@ -215,7 +209,7 @@ target/release/kylin-collator --collator --bootnodes /ip4/35.78.250.13/tcp/40333
 }
 ```
 **NOTE:** If you launched your network using docker or polkadot-launch, your parachains should be automatically registered to the relaychain and you can skip the below two steps and can continue [here](#submit-data-request).
-   
+
 #### Register the parachain
 
 1. Switch to custom endpoint 9944 for sudo access
