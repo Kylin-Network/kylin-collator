@@ -37,7 +37,7 @@ pallet-xcm = { git = "https://github.com/paritytech/polkadot", branch = "release
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.24", default-features = false }
 xcm-executor = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.24", default-features = false }
-
+pallet-uniques = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
 [dev-dependencies]
 serde = { version = "1.0.136" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
@@ -67,6 +67,7 @@ std = [
 	"pallet-timestamp/std",
 	"pallet-balances/std",
 	"pallet-xcm/std",
+	"pallet-uniques/std",
 	"xcm-builder/std",
 	"xcm-executor/std",
 ]
