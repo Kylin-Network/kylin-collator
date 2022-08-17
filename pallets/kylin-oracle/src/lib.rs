@@ -169,9 +169,14 @@ pub mod pallet {
     }
 
     #[pallet::pallet]
-    #[pallet::generate_store(pub(super) trait Store)]
+    #[pallet::generate_store(trait Store)]
     #[pallet::without_storage_info]
     pub struct Pallet<T>(_);
+
+    #[pallet::storage]
+    #[pallet::getter( fn running_status)]
+    type SystemRunnig<T> = StorageValue<_, bool, ValueQuery>;
+
 
 	#[pallet::error]
     pub enum Error<T> {
@@ -364,7 +369,7 @@ pub mod pallet {
             // https://substrate.dev/docs/en/knowledgebase/runtime/origin
             ensure_signed(origin.clone())?;
             let submitter_account_id = ensure_signed(origin.clone())?;
-
+            
             let data_request = Self::data_requests(key).unwrap();
             let saved_request = DataRequest {
                 para_id: data_request.para_id,

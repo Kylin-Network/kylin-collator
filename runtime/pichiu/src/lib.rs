@@ -385,6 +385,10 @@ impl pallet_treasury::Config for Runtime {
 	type ProposalBondMaximum = ProposalBondMaximum;
 	type WeightInfo = ();
 	type MaxApprovals = ConstU32<30>;
+	/// The origin required for approving spends from the treasury outside of the proposal
+	/// process. The `Success` value is the maximum amount that this origin is allowed to
+	/// spend at a time.
+	type SpendOrigin: EnsureOrigin<Self::Origin>;
     
 }
 
