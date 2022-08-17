@@ -1,6 +1,6 @@
 # Relaychain Configuration
 relaychain:
-  image: parity/polkadot:v0.9.16 # the docker image to use
+  image: parity/polkadot:v0.9.24 # the docker image to use
   chain: rococo-local # the chain to use
   runtimeGenesisConfig: # additonal genesis override
     configuration:
@@ -25,7 +25,7 @@ relaychain:
 # Parachain Configuration
 parachains:
 # Config for first parachain
-- image: kylin-collator:ver02
+- image: kylinnetworks/kylin-collator:v0.0.3
   chain: # this could be a string like `dev` or a config object
     base: pichiu-local # the chain to use
     collators: # override collators

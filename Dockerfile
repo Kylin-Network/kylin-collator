@@ -25,16 +25,10 @@ COPY --from=builder /kylin-collator/pichiu-rococo-parachain-2102.json .
 COPY --from=builder /kylin-collator/rococo.json .
 
 
-RUN useradd -m -u 1000 -U -s /bin/sh -d /kylin-collator kylin-collator && \
-	mkdir -p /data /kylin-collator/.local/share && \
-	chown -R kylin-collator:kylin-collator /data && \
+RUN mkdir -p /data /kylin-collator/.local/share && \
 	ln -s /data /kylin-collator/.local/share/kylin-collator && \
-# unclutter and minimize the attack surface
-	rm -rf /usr/bin /usr/sbin && \
 # check if executable works in this container
 	/usr/local/bin/kylin-collator --version
-
-USER kylin-collator
 
 EXPOSE 40333 9977 8844 9615 
 VOLUME ["/data"]
