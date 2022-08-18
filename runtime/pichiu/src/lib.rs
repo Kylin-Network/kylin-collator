@@ -388,7 +388,7 @@ impl pallet_treasury::Config for Runtime {
 	/// The origin required for approving spends from the treasury outside of the proposal
 	/// process. The `Success` value is the maximum amount that this origin is allowed to
 	/// spend at a time.
-	type SpendOrigin: EnsureOrigin<Self::Origin>;
+	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<u128>;
     
 }
 
@@ -429,6 +429,7 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type XcmpMessageHandler = XcmpQueue;
 	type ReservedXcmpWeight = ReservedXcmpWeight;
 	type OnSystemEvent = ();
+	type CheckAssociatedRelayNumber = cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 }
 
 impl parachain_info::Config for Runtime {}

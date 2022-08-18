@@ -833,10 +833,11 @@ where
         let para_key = str::from_utf8(b"para_id").unwrap().chars().collect();
         if self.para_id.is_some() {
             let para_id_number_value = NumberValue {
-                integer: self.para_id.unwrap().into() as i64,
+                integer: self.para_id.unwrap().into() as u64,
                 fraction: 0,
                 fraction_length: 0,
                 exponent: 0,
+                negative: false
             };
             object_elements.push((para_key, JsonValue::Number(para_id_number_value)));
         } else {
@@ -859,10 +860,11 @@ where
             .chars()
             .collect();
         let requested_block_number = NumberValue {
-            integer: self.requested_block_number.clone().unique_saturated_into() as i64,
+            integer: self.requested_block_number.clone().unique_saturated_into() as u64,
             fraction: 0,
             fraction_length: 0,
             exponent: 0,
+            negative: false
         };
         object_elements.push((
             requested_block_number_key,
@@ -878,10 +880,11 @@ where
                 .processed_block_number
                 .clone()
                 .unwrap()
-                .unique_saturated_into() as i64,
+                .unique_saturated_into() as u64,
             fraction: 0,
             fraction_length: 0,
             exponent: 0,
+            negative: false
         };
         object_elements.push((
             processed_block_number_key,
@@ -893,10 +896,11 @@ where
             .chars()
             .collect();
         let requested_timestamp = NumberValue {
-            integer: i64::try_from(self.requested_timestamp).unwrap(),
+            integer: u64::try_from(self.requested_timestamp).unwrap(),
             fraction: 0,
             fraction_length: 0,
             exponent: 0,
+            negative: false
         };
         object_elements.push((
             requested_timestamp_key,
@@ -908,10 +912,11 @@ where
             .chars()
             .collect();
         let processed_timestamp = NumberValue {
-            integer: self.processed_timestamp.clone().unwrap() as i64,
+            integer: self.processed_timestamp.clone().unwrap() as u64,
             fraction: 0,
             fraction_length: 0,
             exponent: 0,
+            negative: false
         };
         object_elements.push((
             processed_timestamp_key,

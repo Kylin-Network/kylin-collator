@@ -92,7 +92,8 @@ pallet-collective = { git = "https://github.com/paritytech/substrate", branch = 
 pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25" }
 
 # Cumulus dependencies
-cumulus-client-cli  = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.25" }
+
+# cumulus-client-cli  = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.25" }
 cumulus-client-consensus-aura = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.25" }
 cumulus-client-consensus-relay-chain = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.25" }
 cumulus-client-consensus-common = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.25" }
@@ -119,9 +120,9 @@ xcm = { git = "https://github.com/paritytech/polkadot", default-features = false
 substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25" }
 
 [dev-dependencies]
-assert_cmd = "0.12"
-nix = "0.17"
-rand = "0.7.3"
+assert_cmd = "2.0.4"
+nix = "0.25.0"
+rand = "0.8.5"
 tempfile = "3.2.0"
 tokio = { version = "1.10.0", features = ["macros"] }
 

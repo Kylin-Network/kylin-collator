@@ -6,7 +6,7 @@ use std::{sync::Arc, time::Duration};
 // rpc
 use jsonrpsee::RpcModule;
 
-use cumulus_client_cli::CollatorOptions;
+use crate::cumulus_client_cli::CollatorOptions;
 // Local Runtime Types
 pub use parachains_common::{AccountId, Balance, Block, Hash, Header, Index as Nonce};
 

@@ -1,6 +1,7 @@
 use crate::chain_spec;
 use clap::Parser;
 use std::path::PathBuf;
+use crate::cumulus_client_cli;
 
 /// Sub-commands supported by the collator.
 #[derive(Debug, clap::Subcommand)]
