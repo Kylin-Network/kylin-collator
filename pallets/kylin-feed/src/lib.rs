@@ -3,7 +3,7 @@
 #![allow(clippy::too_many_arguments)]
 
 use frame_support::{
-	dispatch::DispatchResult, ensure, traits::tokens::nonfungibles::*, transactional, BoundedVec,
+	dispatch::DispatchResult, ensure, traits::tokens::nonfungibles::*, BoundedVec,
 };
 use frame_system::ensure_signed;
 
@@ -286,7 +286,6 @@ pub mod pallet {
 		where T: pallet_uniques::Config<CollectionId = CollectionId, ItemId = NftId>,
 	{
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		#[transactional]
 		pub fn create_collection(
 			origin: OriginFor<T>,
 			metadata: BoundedVec<u8, T::StringLimit>,
@@ -315,7 +314,6 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		#[transactional]
 		pub fn set_property(
 			origin: OriginFor<T>,
 			#[pallet::compact] collection_id: CollectionId,
@@ -332,7 +330,6 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		#[transactional]
 		pub fn add_basic_resource(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -349,7 +346,6 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		#[transactional]
 		pub fn accept_resource(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -381,7 +377,6 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		#[transactional]
 		pub fn remove_resource(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -397,7 +392,6 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		#[transactional]
 		pub fn accept_resource_removal(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -413,7 +407,6 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		#[transactional]
 		pub fn set_priority(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -427,7 +420,6 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		#[transactional]
 		pub fn destroy_collection(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -451,7 +443,6 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		#[transactional]
 		pub fn lock_collection(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -465,7 +456,6 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		#[transactional]
 		pub fn change_collection_issuer(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -496,7 +486,6 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		#[transactional]
 		pub fn mint_nft(
 			origin: OriginFor<T>,
 			owner: Option<T::AccountId>,
@@ -546,7 +535,6 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		#[transactional]
 		pub fn burn_nft(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -566,7 +554,6 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		#[transactional]
 		pub fn send(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -597,7 +584,6 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		#[transactional]
 		pub fn accept_nft(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -626,7 +612,6 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		#[transactional]
 		pub fn reject_nft(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,

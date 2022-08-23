@@ -1,7 +1,6 @@
 use crate::chain_spec;
 use clap::Parser;
 use std::path::PathBuf;
-use crate::cumulus_client_cli;
 
 /// Sub-commands supported by the collator.
 #[derive(Debug, clap::Subcommand)]
@@ -47,7 +46,7 @@ pub enum Subcommand {
 #[derive(Debug, Parser)]
 pub struct ExportGenesisStateCommand {
 	/// Output file name or stdout if unspecified.
-	#[clap(parse(from_os_str))]
+	#[clap(value_parser)]
 	pub output: Option<PathBuf>,
 
     /// Id of the parachain this state is for.
@@ -69,7 +68,7 @@ pub struct ExportGenesisStateCommand {
 #[derive(Debug, Parser)]
 pub struct ExportGenesisWasmCommand {
 	/// Output file name or stdout if unspecified.
-	#[clap(parse(from_os_str))]
+	#[clap(value_parser)]
 	pub output: Option<PathBuf>,
 
 	/// Write output in binary. Default is to write in hex.

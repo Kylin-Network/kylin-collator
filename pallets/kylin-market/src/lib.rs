@@ -6,7 +6,7 @@ use frame_support::{
 	dispatch::DispatchResult,
 	ensure,
 	traits::{Currency, ExistenceRequirement, ReservableCurrency},
-	transactional, BoundedVec,
+	BoundedVec,
 };
 use frame_system::{ensure_signed, RawOrigin};
 
@@ -151,7 +151,6 @@ pub mod pallet {
 		where T: pallet_uniques::Config<CollectionId = CollectionId, ItemId = NftId>,
 	{
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		#[transactional]
 		pub fn buy(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -164,7 +163,6 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		#[transactional]
 		pub fn list(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -204,7 +202,6 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		#[transactional]
 		pub fn unlist(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -228,7 +225,6 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		#[transactional]
 		pub fn make_offer(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -271,7 +267,6 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		#[transactional]
 		pub fn withdraw_offer(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -306,7 +301,6 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		#[transactional]
 		pub fn accept_offer(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,

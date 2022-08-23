@@ -3910,6 +3910,7 @@ dependencies = [
  "assert_cmd",
  "async-trait",
  "clap",
+ "cumulus-client-cli",
  "cumulus-client-collator",
  "cumulus-client-consensus-aura",
  "cumulus-client-consensus-common",
