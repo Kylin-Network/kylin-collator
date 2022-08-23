@@ -36,8 +36,7 @@ hex-literal = "0.3.4"
 async-trait = "0.1.53"
 clap = { version = "3.1", features = ["derive"] }
 thiserror = "1.0.30"
-jsonrpsee = { version = "0.13.1", features = ["server"] }
-
+jsonrpsee = { version = "0.14.0", features = ["server"] }
 
 # Parachain runtimes
 development-runtime = { path = '../runtime/development' }
