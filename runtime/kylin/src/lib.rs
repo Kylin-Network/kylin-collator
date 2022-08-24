@@ -48,7 +48,7 @@ use sp_version::RuntimeVersion;
 pub use frame_support::{
 	construct_runtime, ensure, match_types, parameter_types,
 	traits::{
-		Contains, EnsureOneOf, EqualPrivilegeOnly, Everything, 
+		Contains, EitherOfDiverse, EqualPrivilegeOnly, Everything, 
 		IsInVec, Randomness, Nothing, ConstU32, ConstU64, ConstU128
 	},
 	weights::{
@@ -272,7 +272,7 @@ impl kylin_democracy::Config for Runtime {
 		pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 2, 3>;
 	// To cancel a proposal before it has been passed, the technical committee must be unanimous or
 	// Root must agree.
-	type CancelProposalOrigin = EnsureOneOf<
+	type CancelProposalOrigin = EitherOfDiverse<
 		EnsureRoot<AccountId>,
 		pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCollective, 1, 1>,
 	>;
@@ -329,7 +329,7 @@ impl pallet_collective::Config<TechnicalCollective> for Runtime {
 }
 
 type ApproveOrigin = EnsureRoot<AccountId>;
-type EnsureRootOrHalfCouncil = EnsureOneOf<
+type EnsureRootOrHalfCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
 >;
