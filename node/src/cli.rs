@@ -1,18 +1,21 @@
-use crate::chain_spec;
-use clap::Parser;
-use std::path::PathBuf;
+
+use std::{
+	fs,
+	io::{self, Write},
+	path::PathBuf,
+};
+use sc_chain_spec::ChainSpec;
+use sp_core::hexdisplay::HexDisplay;
+use sp_runtime::{
+	traits::{Block as BlockT},
+	StateVersion,
+};
+use codec::Encode;
+use cumulus_client_cli::generate_genesis_block;
 
 /// Sub-commands supported by the collator.
 #[derive(Debug, clap::Subcommand)]
 pub enum Subcommand {
-	/// Export the genesis state of the parachain.
-	#[clap(name = "export-genesis-state")]
-	ExportGenesisState(ExportGenesisStateCommand),
-
-	/// Export the genesis wasm of the parachain.
-	#[clap(name = "export-genesis-wasm")]
-	ExportGenesisWasm(ExportGenesisWasmCommand),
-
 	/// Build a chain specification.
 	BuildSpec(sc_cli::BuildSpecCmd),
 
@@ -28,11 +31,19 @@ pub enum Subcommand {
 	/// Import blocks.
 	ImportBlocks(sc_cli::ImportBlocksCmd),
 
+	/// Revert the chain to a previous state.
+	Revert(sc_cli::RevertCmd),
+
 	/// Remove the whole chain.
 	PurgeChain(cumulus_client_cli::PurgeChainCmd),
 
-	/// Revert the chain to a previous state.
-	Revert(sc_cli::RevertCmd),
+	/// Export the genesis state of the parachain.
+	#[clap(name = "export-genesis-state")]
+	ExportGenesisState(ExportGenesisStateCommand),
+
+	/// Export the genesis wasm of the parachain.
+	#[clap(name = "export-genesis-wasm")]
+	ExportGenesisWasm(cumulus_client_cli::ExportGenesisWasmCommand),
 
 	/// The custom benchmark subcommmand benchmarking runtime pallets.
 	#[clap(subcommand)]
@@ -43,13 +54,13 @@ pub enum Subcommand {
 }
 
 /// Command for exporting the genesis state of the parachain
-#[derive(Debug, Parser)]
+#[derive(Debug, clap::Parser)]
 pub struct ExportGenesisStateCommand {
 	/// Output file name or stdout if unspecified.
-	#[clap(parse(from_os_str))]
+	#[clap(action)]
 	pub output: Option<PathBuf>,
 
-    /// Id of the parachain this state is for.
+	/// Id of the parachain this state is for.
     ///
     /// Default: 100
     #[structopt(long)]
@@ -59,28 +70,43 @@ pub struct ExportGenesisStateCommand {
 	#[clap(short, long)]
 	pub raw: bool,
 
-	/// The name of the chain for that the genesis state should be exported.
-	#[clap(long)]
-	pub chain: Option<String>,
+	#[allow(missing_docs)]
+	#[clap(flatten)]
+	pub shared_params: sc_cli::SharedParams,
 }
 
-/// Command for exporting the genesis wasm file.
-#[derive(Debug, Parser)]
-pub struct ExportGenesisWasmCommand {
-	/// Output file name or stdout if unspecified.
-	#[clap(parse(from_os_str))]
-	pub output: Option<PathBuf>,
+impl ExportGenesisStateCommand {
+	/// Run the export-genesis-state command
+	pub fn run<Block: BlockT>(
+		&self,
+		chain_spec: &dyn ChainSpec,
+		genesis_state_version: StateVersion,
+	) -> sc_cli::Result<()> {
+		let block: Block = generate_genesis_block(chain_spec, genesis_state_version)?;
+		let raw_header = block.header().encode();
+		let output_buf = if self.raw {
+			raw_header
+		} else {
+			format!("0x{:?}", HexDisplay::from(&block.header().encode())).into_bytes()
+		};
 
-	/// Write output in binary. Default is to write in hex.
-	#[clap(short, long)]
-	pub raw: bool,
+		if let Some(output) = &self.output {
+			fs::write(output, output_buf)?;
+		} else {
+			io::stdout().write_all(&output_buf)?;
+		}
 
-	/// The name of the chain for that the genesis wasm file should be exported.
-	#[clap(long)]
-	pub chain: Option<String>,
+		Ok(())
+	}
 }
 
-#[derive(Debug, Parser)]
+impl sc_cli::CliConfiguration for ExportGenesisStateCommand {
+	fn shared_params(&self) -> &sc_cli::SharedParams {
+		&self.shared_params
+	}
+}
+
+#[derive(Debug, clap::Parser)]
 #[clap(
 	propagate_version = true,
 	args_conflicts_with_subcommands = true,
@@ -108,7 +134,7 @@ pub struct Cli {
 	pub relay_chain_args: Vec<String>,
 }
 
-#[derive(Debug, Parser)]
+#[derive(Debug, clap::Parser)]
 pub struct RunCmd {
     #[clap(flatten)]
 	pub base: cumulus_client_cli::RunCmd,
@@ -144,9 +170,9 @@ impl RelayChainCli {
 		para_config: &sc_service::Configuration,
 		relay_chain_args: impl Iterator<Item = &'a String>,
 	) -> Self {
-		let extension = chain_spec::Extensions::try_get(&*para_config.chain_spec);
+		let extension = crate::chain_spec::Extensions::try_get(&*para_config.chain_spec);
 		let chain_id = extension.map(|e| e.relay_chain.clone());
 		let base_path = para_config.base_path.as_ref().map(|x| x.path().join("polkadot"));
-		Self { base_path, chain_id, base: polkadot_cli::RunCmd::parse_from(relay_chain_args) }
+		Self { base_path, chain_id, base: clap::Parser::parse_from(relay_chain_args) }
 	}
 }

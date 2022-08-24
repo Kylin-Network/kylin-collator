@@ -56,7 +56,7 @@ use sp_version::RuntimeVersion;
 pub use frame_support::{
 	construct_runtime, ensure, match_types, parameter_types,
 	traits::{
-		Contains, EnsureOneOf, EqualPrivilegeOnly, Everything, 
+		Contains, EitherOfDiverse, EqualPrivilegeOnly, Everything, 
 		IsInVec, Randomness, Nothing, ConstU32, ConstU64, ConstU128
 	},
 	weights::{
@@ -282,7 +282,7 @@ impl kylin_democracy::Config for Runtime {
 		pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 2, 3>;
 	// To cancel a proposal before it has been passed, the technical committee must be unanimous or
 	// Root must agree.
-	type CancelProposalOrigin = EnsureOneOf<
+	type CancelProposalOrigin = EitherOfDiverse<
 		EnsureRoot<AccountId>,
 		pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCollective, 1, 1>,
 	>;
@@ -339,7 +339,7 @@ impl pallet_collective::Config<TechnicalCollective> for Runtime {
 }
 
 type ApproveOrigin = EnsureRoot<AccountId>;
-type EnsureRootOrHalfCouncil = EnsureOneOf<
+type EnsureRootOrHalfCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
 >;
@@ -385,6 +385,10 @@ impl pallet_treasury::Config for Runtime {
 	type ProposalBondMaximum = ProposalBondMaximum;
 	type WeightInfo = ();
 	type MaxApprovals = ConstU32<30>;
+	/// The origin required for approving spends from the treasury outside of the proposal
+	/// process. The `Success` value is the maximum amount that this origin is allowed to
+	/// spend at a time.
+	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<u128>;
     
 }
 
@@ -425,6 +429,7 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type XcmpMessageHandler = XcmpQueue;
 	type ReservedXcmpWeight = ReservedXcmpWeight;
 	type OnSystemEvent = ();
+	type CheckAssociatedRelayNumber = cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 }
 
 impl parachain_info::Config for Runtime {}

@@ -1,2 +1,2 @@
-FROM parity/polkadot:v0.9.24
+FROM parity/polkadot:v0.9.25
 COPY . /app
