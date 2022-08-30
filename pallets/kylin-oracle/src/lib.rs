@@ -582,10 +582,44 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+        #[pallet::weight(<T as Config>::WeightInfo::feed_data(values.len() as u32))]
+		pub fn xcm_feed_data(
+			origin: OriginFor<T>,
+			values: Vec<(T::OracleKey, T::OracleValue)>,
+		) -> DispatchResultWithPostInfo {
+            let para_id =
+                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
+			let feeder = ensure_signed(origin.clone())?;
+
+            // ensure feeder is authorized
+            ensure!(T::Members::contains(&feeder), Error::<T>::NoPermission);
+            // ensure account hasn't dispatched an updated yet
+            ensure!(
+                HasDispatched::<T>::mutate(|set| set.insert(feeder.clone())),
+                Error::<T>::AlreadyFeeded
+            );
+
+            let now = T::UnixTime::now().as_millis();
+            for (key, value) in &values {
+                let timestamped = TimestampedValue {
+                    value: value.clone(),
+                    timestamp: now,
+                };
+                RawValues::<T>::insert(&feeder, &key, timestamped);
+
+                // Update `Values` storage if `combined` yielded result.
+                if let Some(combined) = Self::combined(key) {
+                    <Values<T>>::insert(key, combined);
+                }
+            }
+
+            Self::deposit_event(Event::NewParaFeedData {para_id, sender: feeder, values });
+			Ok(Pays::No.into())
+		}
+
         #[pallet::weight(<T as Config>::WeightInfo::submit_api())]
         pub fn submit_api(
             origin: OriginFor<T>,
-            para_id: Option<ParaId>,
             key: T::OracleKey,
             url: Vec<u8>,
         ) -> DispatchResultWithPostInfo {
@@ -596,12 +630,11 @@ pub mod pallet {
             let block_number = <system::Pallet<T>>::block_number();
             let feed = ApiFeed {
                     requested_block_number: block_number,
-                    para_id: para_id,
                     url: Some(url),
                 };
             ApiFeeds::<T>::insert(&submitter, &key, feed.clone());
 
-            Self::deposit_event(Event::NewFeed { sender: submitter, key, feed });
+            Self::deposit_event(Event::NewApiFeed { sender: submitter, key, feed });
 			Ok(Pays::No.into())
         }
 
@@ -618,13 +651,14 @@ pub mod pallet {
             if feed_exists {
                 let feed = Self::api_feeds(&submitter, &key).unwrap();
                 <ApiFeeds<T>>::remove(&submitter, &key);
-                Self::deposit_event(Event::FeedRemoved { sender: submitter, key, feed });
+                Self::deposit_event(Event::ApiFeedRemoved { sender: submitter, key, feed });
                 Ok(())
             } else {
                 Err(DispatchError::CannotLookup)
             }
-
         }
+
+        
     }
 
     // #[pallet::event where <T as frame_system::Config>:: AccountId: AsRef<[u8]> + ToHex + Decode + Serialize]
@@ -680,17 +714,23 @@ pub mod pallet {
 			sender: T::AccountId,
 			values: Vec<(T::OracleKey, T::OracleValue)>,
 		},
-        /// New feed is submitted.
-		NewFeed {
+        /// New feed data is submitted.
+		NewParaFeedData {
+            para_id: ParaId,
 			sender: T::AccountId,
-            key: T::OracleKey,
-            feed: ApiFeed<ParaId, T::BlockNumber>,
+			values: Vec<(T::OracleKey, T::OracleValue)>,
 		},
         /// New feed is submitted.
-		FeedRemoved {
+		NewApiFeed {
 			sender: T::AccountId,
             key: T::OracleKey,
-            feed: ApiFeed<ParaId, T::BlockNumber>,
+            feed: ApiFeed<T::BlockNumber>,
+		},
+        /// Apifeed is removed.
+		ApiFeedRemoved {
+			sender: T::AccountId,
+            key: T::OracleKey,
+            feed: ApiFeed<T::BlockNumber>,
 		},
     }
 
@@ -771,7 +811,12 @@ pub mod pallet {
     #[pallet::storage]
 	#[pallet::getter(fn api_feeds)]
 	pub type ApiFeeds<T: Config> =
-		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, T::OracleKey, ApiFeed<ParaId, T::BlockNumber>>;
+		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, T::OracleKey, ApiFeed<T::BlockNumber>>;
+
+    #[pallet::storage]
+	#[pallet::getter(fn para_feeds)]
+	pub type ParaFeeds<T: Config> =
+		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, T::OracleKey, ParaFeed<ParaId, T::BlockNumber>>;
 
     /// Raw values for each oracle operators
 	#[pallet::storage]
@@ -810,11 +855,18 @@ pub struct DataRequest<ParaId, BlockNumber, AccountId> {
 
 #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Debug))]
-pub struct ApiFeed<ParaId, BlockNumber> {
+pub struct ApiFeed<BlockNumber> {
     requested_block_number: BlockNumber,
-    para_id: Option<ParaId>,
     url: Option<Vec<u8>>,
 }
+
+#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Debug))]
+pub struct ParaFeed<ParaId, BlockNumber> {
+    requested_block_number: BlockNumber,
+    para_id: Option<ParaId>,
+}
+
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
