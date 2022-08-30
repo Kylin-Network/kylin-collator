@@ -149,10 +149,6 @@ pub mod pallet {
 
         type Currency: frame_support::traits::Currency<Self::AccountId>;
 
-        /// Provide the implementation to combine raw values to produce
-		/// aggregated value
-		type CombineData: CombineData<Self::OracleKey, TimestampedValueOf<Self>>;
-
         /// The data key type
 		type OracleKey: Parameter + Member + Eq + Into<Vec<u8>>;
 
@@ -162,9 +158,6 @@ pub mod pallet {
         /// Oracle operators.
 		type Members: SortedMembers<Self::AccountId>;
 
-		/// Maximum size of HasDispatched
-		#[pallet::constant]
-		type MaxHasDispatchedSize: Get<u32>;
 
     }
 
@@ -211,18 +204,7 @@ pub mod pallet {
             // Here we call a helper function to calculate current average price.
             // This function reads storage entries of the current state.
             
-            //let res = Self::fetch_api_and_send_signed(block_number);
-
-            // let should_send = Self::choose_transaction_type(block_number);
-            // let res = match should_send {
-            //     TransactionType::Signed => Self::fetch_data_and_send_signed(block_number),
-            //     TransactionType::Raw
-            //     | TransactionType::UnsignedForAll
-            //     | TransactionType::UnsignedForAny => {
-            //         Self::fetch_data_and_send_raw_unsigned(block_number)
-            //     }
-            //     _ => Ok(()),
-            // };
+            let res = Self::fetch_api_and_feed_data(block_number);
             if let Err(e) = res {
                 log::error!("Error: {}", e);
             }
@@ -237,55 +219,57 @@ pub mod pallet {
     where
         T::AccountId: AsRef<[u8]> + ToHex + Decode
     {
-
-        #[pallet::weight(0)]
-        pub fn xcm_receive_data(
+        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+        pub fn submit_data(
             origin: OriginFor<T>,
-            feed_name: Vec<u8>,
-            response: Vec<u8>,
+            para_id: ParaId,
+            values: Vec<(T::OracleKey, T::OracleValue)>,
         ) -> DispatchResult {
-            let para_id = ensure_sibling_para(<T as Config>::Origin::from(origin))?;
-            let block_number = <system::Pallet<T>>::block_number();
-            Self::deposit_event(Event::ResponseReceived(
-                para_id,
-                feed_name.clone(),
-                response.clone(),
-                block_number,
-            ));
-            Ok(())
+            feed_data_to_parachain(ParaId, values)
         }
 
-
-        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-        pub fn xcm_submit_data(
+        #[pallet::weight(<T as Config>::WeightInfo::submit_api())]
+        pub fn submit_api(
             origin: OriginFor<T>,
+            para_id: Option<ParaId>,
+            key: T::OracleKey,
             url: Vec<u8>,
-            feed_name: Vec<u8>,
+        ) -> DispatchResultWithPostInfo {
+            let submitter = ensure_signed(origin.clone())?;
+            // ensure submitter is authorized
+            ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
+
+            let block_number = <system::Pallet<T>>::block_number();
+            let feed = ApiFeed {
+                    requested_block_number: block_number,
+                    para_id: para_id,
+                    url: Some(url),
+                };
+            ApiFeeds::<T>::insert(&submitter, &key, feed.clone());
+
+            Self::deposit_event(Event::NewFeed { sender: submitter, key, feed });
+			Ok(Pays::No.into())
+        }
+
+        #[pallet::weight(<T as Config>::WeightInfo::clear_api())]
+        pub fn clear_api(
+            origin: OriginFor<T>,
+            key: T::OracleKey,
         ) -> DispatchResult {
-            let requester_para_id =
-                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
-            let submitter_account_id = ensure_signed(origin.clone())?;
-            let new_feed_name = (str::from_utf8(b"custom_").unwrap().to_owned()
-                + str::from_utf8(&feed_name).unwrap())
-            .as_bytes()
-            .to_vec();
-            let result = Self::ensure_account_owns_table(
-                submitter_account_id.clone(),
-                new_feed_name.clone(),
-            );
-            match result {
-                Ok(()) => Self::add_data_request(
-                    Some(submitter_account_id),
-                    Some(requester_para_id),
-                    Some(url),
-                    new_feed_name,
-                    Vec::new(),
-                    false,
-                ),
-                _ => result,
+            let submitter = ensure_signed(origin.clone())?;
+            // ensure submitter is authorized
+            ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
+
+            let feed_exists = ApiFeeds::<T>::contains_key(&submitter, &key);
+            if feed_exists {
+                let feed = Self::api_feeds(&submitter, &key).unwrap();
+                <ApiFeeds<T>>::remove(&submitter, &key);
+                Self::deposit_event(Event::FeedRemoved { sender: submitter, key, feed });
+                Ok(())
+            } else {
+                Err(DispatchError::CannotLookup)
             }
         }
-
 
     }
 
@@ -348,7 +332,7 @@ pub mod pallet {
             key: T::OracleKey,
             feed: ApiFeed<ParaId, T::BlockNumber>,
 		},
-        /// New feed is submitted.
+        /// Feed is removed.
 		FeedRemoved {
 			sender: T::AccountId,
             key: T::OracleKey,
@@ -395,80 +379,13 @@ pub mod pallet {
         }
     }
 
-    #[pallet::type_value]
-    pub fn InitialDataId<T: Config>() -> u64
-    where
-        <T as frame_system::Config>::AccountId: AsRef<[u8]> + ToHex
-    {
-        10000000u64
-    }
-
-    #[pallet::storage]
-    pub type DataId<T: Config> = StorageValue<_, u64, ValueQuery, InitialDataId<T>>;
-
-    #[pallet::storage]
-    #[pallet::getter(fn data_requests)]
-    pub type DataRequests<T: Config> =
-        StorageMap<_, Identity, u64, DataRequest<ParaId, T::BlockNumber, T::AccountId>, OptionQuery>;
-
-    #[pallet::storage]
-    #[pallet::getter(fn saved_data_requests)]
-    pub type SavedRequests<T: Config> =
-        StorageMap<_, Identity, u64, DataRequest<ParaId, T::BlockNumber, T::AccountId>, OptionQuery>;
-
-    #[pallet::storage]
-    #[pallet::getter(fn api_queue)]
-    pub type ApiQueue<T: Config> =
-        StorageMap<_, Identity, u64, DataRequest<ParaId, T::BlockNumber, T::AccountId>, OptionQuery>;
-
-    #[pallet::storage]
-    #[pallet::getter(fn next_unsigned_at)]
-    pub(super) type NextUnsignedAt<T: Config> = StorageValue<_, T::BlockNumber, ValueQuery>;
-
-    #[pallet::storage]
-    #[pallet::getter(fn feed_account_lookup)]
-    pub(super) type FeedAccountLookup<T: Config> =
-        StorageMap<_, Identity, Vec<u8>, (T::AccountId, Vec<u8>), OptionQuery>;
-
     #[pallet::storage]
 	#[pallet::getter(fn api_feeds)]
 	pub type ApiFeeds<T: Config> =
 		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, T::OracleKey, ApiFeed<ParaId, T::BlockNumber>>;
 
-    /// Raw values for each oracle operators
-	#[pallet::storage]
-	#[pallet::getter(fn raw_values)]
-	pub type RawValues<T: Config> =
-		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, T::OracleKey, TimestampedValueOf<T>>;
-
-	/// Up to date combined value from Raw Values
-	#[pallet::storage]
-	#[pallet::getter(fn values)]
-	pub type Values<T: Config> =
-		StorageMap<_, Twox64Concat, <T as Config>::OracleKey, TimestampedValueOf<T>>;
-
-	/// If an oracle operator has fed a value in this block
-	#[pallet::storage]
-	pub(crate) type HasDispatched<T: Config> =
-		StorageValue<_, OrderedSet<T::AccountId, T::MaxHasDispatchedSize>, ValueQuery>;
-
 }
 
-#[derive(Clone, PartialEq, Eq, Default, Encode, Decode, TypeInfo)]
-#[cfg_attr(feature = "std", derive(Debug))]
-pub struct DataRequest<ParaId, BlockNumber, AccountId> {
-    para_id: Option<ParaId>,
-    account_id: Option<AccountId>,
-    requested_block_number: BlockNumber,
-    processed_block_number: Option<BlockNumber>,
-    requested_timestamp: u128,
-    processed_timestamp: Option<u128>,
-
-    payload: Vec<u8>,
-    feed_name: Vec<u8>,
-    is_query: bool,
-    url: Option<Vec<u8>>,
-}
 
 #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Debug))]
@@ -496,21 +413,128 @@ enum TransactionType {
 impl<T: Config> Pallet<T>
 where T::AccountId: AsRef<[u8]>
 {
+    /// A helper function to fetch the price and send signed transaction.
+    fn fetch_api_and_feed_data(block_number: T::BlockNumber) -> Result<(), &'static str> {
+        let signer = Signer::<T, T::AuthorityId>::all_accounts();
+        if !signer.can_sign() {
+            return Err(
+                "No local accounts available. Consider adding one via `author_insertKey` RPC.",
+            )?;
+        }
 
-    fn send_response_to_parachain(block_number: T::BlockNumber, key: u64) -> DispatchResult {
+        let mut values = Vec::<(T::OracleKey, T::OracleValue)>::new();
+        for (acc, key, val) in <ApiFeeds<T> as IterableStorageDoubleMap<_, _, _>>::iter() {
+            // let mut response :Vec<u8>;
+            if val.url.is_some() {
+                let response = Self::fetch_http_get_result(val.url.clone().unwrap())
+                    .unwrap_or("Failed fetch data".as_bytes().to_vec());
+
+                let oval :T::OracleValue;
+                match str::from_utf8(&key.clone().into()) {
+                    Ok("CCApi") => {
+                        let price: CryptoComparePrice = serde_json::from_slice(&response)
+                            .expect("Response JSON was not well-formatted");
+                        // We only store int, so every float will be convert to int with 6 decimals pad
+                        let pval = (price.usdt * 1000000.0) as i64;
+                        oval = pval.into();
+                        values.push((key.clone(), oval));
+                    },
+                    Ok("CWApi") => {
+                        let price: CryptoComparePrice = serde_json::from_slice(&response)
+                            .expect("Response JSON was not well-formatted");
+                        // We only store int, so every float will be convert to int with 6 decimals pad
+                        let pval = (price.usdt * 1000000.0) as i64;
+                        oval = pval.into();
+                        values.push((key.clone(), oval));
+                    },
+                    _ => (),
+                }
+                
+            };
+        }
+
+        if values.iter().count() > 0 {
+            // write data to chain
+            let results = signer.send_signed_transaction(|_account| Call::feed_data {
+                values: values.clone(),
+            });
+            for (acc, res) in &results {
+                match res {
+                    Ok(()) => log::info!("[{:?}] Submitted data", acc.id),
+                    Err(e) => log::error!("[{:?}] Failed to submit transaction: {:?}", acc.id, e),
+                }
+            }
+
+        }
+
+        Ok(())
+    }
+
+    /// Fetch current price and return the result in cents.
+    fn fetch_http_get_result(url: Vec<u8>) -> Result<Vec<u8>, http::Error> {
+        // We want to keep the offchain worker execution time reasonable, so we set a hard-coded
+        // deadline to 2s to complete the external call.
+        // You can also wait idefinitely for the response, however you may still get a timeout
+        // coming from the host machine.
+        let deadline = sp_io::offchain::timestamp().add(Duration::from_millis(10_000));
+        // Initiate an external HTTP GET request.
+        // This is using high-level wrappers from `sp_runtime`, for the low-level calls that
+        // you can find in `sp_io`. The API is trying to be similar to `reqwest`, but
+        // since we are running in a custom WASM execution environment we can't simply
+        // import the library here.
+        let request = http::Request::get(str::from_utf8(&url).unwrap());
+
+        // We set the deadline for sending of the request, note that awaiting response can§
+        // have a separate deadline. Next we send the request, before that it's also possible
+        // to alter request headers or stream body content in case of non-GET requests.
+        let pending = request
+            .deadline(deadline)
+            .send()
+            .map_err(|_| http::Error::IoError)?;
+
+        // The request is already being processed by the host, we are free to do anything
+        // else in the worker (we can send multiple concurrent requests too).
+        // At some point however we probably want to check the response though,
+        // so we can block current thread and wait for it to finish.
+        // Note that since the request is being driven by the host, we don't have to wait
+        // for the request to have it complete, we will just not read the response.
+        let response = pending
+            .try_wait(deadline)
+            .map_err(|_| http::Error::DeadlineReached)??;
+
+        // Let's check the status code before we proceed to reading the response.
+        if response.code != 200 {
+            log::info!("Unexpected status code: {}", response.code);
+            return Err(http::Error::Unknown);
+        }
+
+        // Next we want to fully read the response body and collect it to a vector of bytes.
+        // Note that the return object allows you to read the body in chunks as well
+        // with a way to control the deadline.
+        let body = response.body().collect::<Vec<u8>>();
+        // Create a str slice from the body.
+        let body_str = sp_std::str::from_utf8(&body).map_err(|_| {
+            log::info!("No UTF8 body");
+            http::Error::Unknown
+        })?;
+
+        Ok(body_str.clone().as_bytes().to_vec())
+    }
+
+    fn feed_data_to_parachain(para_id: ParaId, values: Vec<(T::OracleKey, T::OracleValue)>) -> DispatchResult {
         let saved_request = Self::saved_data_requests(key).unwrap();
         if saved_request.para_id.is_some() {
+
             match T::XcmSender::send_xcm(
                 (
                     1,
-                    Junction::Parachain(saved_request.para_id.unwrap().into()),
+                    Junction::Parachain(para_id.into()),
                 ),
                 Xcm(vec![Transact {
                     origin_type: OriginKind::Native,
                     require_weight_at_most: 1_000,
-                    call: <T as Config>::Call::from(Call::<T>::receive_response_from_parachain {
-                        feed_name: saved_request.feed_name.clone(),
-                        response: saved_request.payload.clone(),
+                    call: <T as Config>::Call::from(Call::<T>::xcm_feed_data {
+                        values: values.clone(),
                     })
                     .encode()
                     .into(),
