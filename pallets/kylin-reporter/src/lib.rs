@@ -68,7 +68,7 @@ type BalanceOf<T> =
 /// `KeyTypeId` from the keystore and use the ones it finds to sign the transaction.
 /// The keys can be inserted manually via RPC (see `author_insertKey`).
 /// ocpf mean off-chain worker price fetch
-pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"ocpf");
+pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"ocrp");
 /// Based on the above `KeyTypeId` we need to generate a pallet-specific crypto type wrappers.
 /// We can use from supported crypto kinds (`sr25519`, `ed25519` and `ecdsa`) and augment
 /// the types with this pallet-specific identifier.
@@ -133,8 +133,6 @@ pub mod pallet {
 
         type XcmSender: SendXcm;
 
-        type UnixTime: UnixTime;
-
         /// A configuration for base priority of unsigned transactions.
         ///
         /// This is exposed so that it can be tuned for particular runtime, when
@@ -144,8 +142,6 @@ pub mod pallet {
 
         /// Type representing the weight of this pallet
         type WeightInfo: WeightInfo;
-
-        type EstimateCallFee: EstimateCallFee<Call<Self>, BalanceOf<Self>>;
 
         type Currency: frame_support::traits::Currency<Self::AccountId>;
 
@@ -158,18 +154,12 @@ pub mod pallet {
         /// Oracle operators.
 		type Members: SortedMembers<Self::AccountId>;
 
-
     }
 
     #[pallet::pallet]
     #[pallet::generate_store(trait Store)]
     #[pallet::without_storage_info]
     pub struct Pallet<T>(_);
-
-    #[pallet::storage]
-    #[pallet::getter( fn running_status)]
-    type SystemRunnig<T> = StorageValue<_, bool, ValueQuery>;
-
 
 	#[pallet::error]
     pub enum Error<T> {
@@ -281,51 +271,6 @@ pub mod pallet {
     where
         T::AccountId: AsRef<[u8]> + ToHex + Decode,
     {
-        RemovedFeedAccount(Vec<u8>),
-        SubmitNewData(
-            Option<ParaId>,
-            Vec<u8>,
-            Option<Vec<u8>>,
-            Option<T::AccountId>,
-            T::BlockNumber,
-        ),
-        SavedToDWH(
-            Option<ParaId>,
-            Vec<u8>,
-            Vec<u8>,
-            DataRequest<ParaId, T::BlockNumber, T::AccountId>,
-            T::BlockNumber,
-        ),
-        ReadFromDWH(
-            Option<ParaId>,
-            Vec<u8>,
-            Vec<u8>,
-            DataRequest<ParaId, T::BlockNumber, T::AccountId>,
-            T::BlockNumber,
-        ),
-        ResponseSent(
-            ParaId,
-            DataRequest<ParaId, T::BlockNumber, T::AccountId>,
-            T::BlockNumber,
-        ),
-        ErrorSendingResponse(
-            SendError,
-            ParaId,
-            DataRequest<ParaId, T::BlockNumber, T::AccountId>,
-        ),
-        ResponseReceived(ParaId, Vec<u8>, Vec<u8>, T::BlockNumber),
-        QueryFeeAwarded(
-            T::AccountId,
-            <<T as pallet::Config>::Currency as Currency<
-                <T as frame_system::Config>::AccountId,
-            >>::Balance,
-            Vec<u8>,
-        ),
-        /// New feed data is submitted.
-		NewFeedData {
-			sender: T::AccountId,
-			values: Vec<(T::OracleKey, T::OracleValue)>,
-		},
         /// New feed is submitted.
 		NewFeed {
 			sender: T::AccountId,
@@ -401,7 +346,6 @@ pub struct CryptoComparePrice {
     pub usdt: f64,
 }
 
-
 enum TransactionType {
     Signed,
     UnsignedForAny,
@@ -455,7 +399,7 @@ where T::AccountId: AsRef<[u8]>
 
         if values.iter().count() > 0 {
             // write data to chain
-            let results = signer.send_signed_transaction(|_account| Call::feed_data {
+            let results = signer.send_signed_transaction(|_account| Call::submit_data {
                 values: values.clone(),
             });
             for (acc, res) in &results {
@@ -555,7 +499,6 @@ where T::AccountId: AsRef<[u8]>
         Ok(())
     }
 
-
     fn validate_transaction(block_number: &T::BlockNumber) -> TransactionValidity {
         // Now let's check if the transaction has any chance to succeed.
         let next_unsigned_at = <NextUnsignedAt<T>>::get();
@@ -573,23 +516,5 @@ where T::AccountId: AsRef<[u8]>
             .propagate(true)
             .build()
     }
-
-    pub fn read_raw_values(key: &T::OracleKey) -> Vec<TimestampedValueOf<T>> {
-		T::Members::sorted_members()
-			.iter()
-			.filter_map(|x| Self::raw_values(x, key))
-			.collect()
-	}
-
-	/// Fetch current combined value.
-	pub fn get(key: &T::OracleKey) -> Option<TimestampedValueOf<T>> {
-		Self::values(key)
-	}
-
-	#[allow(clippy::complexity)]
-	pub fn get_all_values() -> Vec<(T::OracleKey, Option<TimestampedValueOf<T>>)> {
-		<Values<T>>::iter().map(|(k, v)| (k, Some(v))).collect()
-	}
-
 
 }
