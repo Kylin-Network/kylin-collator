@@ -48,9 +48,6 @@ pub use pallet::*;
 #[cfg(test)]
 mod tests;
 
-mod default_combine_data;
-pub use default_combine_data::DefaultCombineData;
-
 // Runtime benchmarking features
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
@@ -133,13 +130,6 @@ pub mod pallet {
 
         type XcmSender: SendXcm;
 
-        /// A configuration for base priority of unsigned transactions.
-        ///
-        /// This is exposed so that it can be tuned for particular runtime, when
-        /// multiple pallets send unsigned transactions.
-        #[pallet::constant]
-        type UnsignedPriority: Get<TransactionPriority>;
-
         /// Type representing the weight of this pallet
         type WeightInfo: WeightInfo;
 
@@ -210,18 +200,26 @@ pub mod pallet {
         T::AccountId: AsRef<[u8]> + ToHex + Decode
     {
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+        pub fn set_kylin_id(
+            origin: OriginFor<T>,
+            para_id: ParaId,
+        ) -> DispatchResult {
+            <KylinParaId<T>>::put(para_id);
+            Ok(())
+        }
+
+        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
         pub fn submit_data(
             origin: OriginFor<T>,
             para_id: ParaId,
             values: Vec<(T::OracleKey, T::OracleValue)>,
         ) -> DispatchResult {
-            feed_data_to_parachain(ParaId, values)
+            Self::feed_data_to_parachain(para_id, values)
         }
 
         #[pallet::weight(<T as Config>::WeightInfo::submit_api())]
         pub fn submit_api(
             origin: OriginFor<T>,
-            para_id: Option<ParaId>,
             key: T::OracleKey,
             url: Vec<u8>,
         ) -> DispatchResultWithPostInfo {
@@ -232,7 +230,6 @@ pub mod pallet {
             let block_number = <system::Pallet<T>>::block_number();
             let feed = ApiFeed {
                     requested_block_number: block_number,
-                    para_id: para_id,
                     url: Some(url),
                 };
             ApiFeeds::<T>::insert(&submitter, &key, feed.clone());
@@ -271,17 +268,24 @@ pub mod pallet {
     where
         T::AccountId: AsRef<[u8]> + ToHex + Decode,
     {
+        FeedDataSent(
+            ParaId,
+        ),
+        FeedDataError(
+            SendError,
+            ParaId,
+        ),
         /// New feed is submitted.
 		NewFeed {
 			sender: T::AccountId,
             key: T::OracleKey,
-            feed: ApiFeed<ParaId, T::BlockNumber>,
+            feed: ApiFeed<T::BlockNumber>,
 		},
         /// Feed is removed.
 		FeedRemoved {
 			sender: T::AccountId,
             key: T::OracleKey,
-            feed: ApiFeed<ParaId, T::BlockNumber>,
+            feed: ApiFeed<T::BlockNumber>,
 		},
     }
 
@@ -299,44 +303,26 @@ pub mod pallet {
         /// here we make sure that some particular calls (the ones produced by offchain worker)
         /// are being whitelisted and marked as valid.
         fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
-            if let Call::submit_data_unsigned {
-                block_number,
-                key: _,
-                data: _,
-            } = call
-            {
-                Self::validate_transaction(block_number)
-            } else if let Call::clear_processed_requests_unsigned {
-                block_number,
-                processed_requests: _,
-            } = call
-            {
-                Self::validate_transaction(block_number)
-            } else if let Call::clear_api_queue_unsigned {
-                block_number,
-                processed_requests: _,
-            } = call
-            {
-                Self::validate_transaction(block_number)
-            } else {
-                InvalidTransaction::Call.into()
-            }
+            InvalidTransaction::Call.into()
         }
     }
 
     #[pallet::storage]
+    #[pallet::getter(fn get_kylin_id)]
+    pub(super) type KylinParaId<T: Config> = StorageValue<_, ParaId, OptionQuery>;
+
+    #[pallet::storage]
 	#[pallet::getter(fn api_feeds)]
 	pub type ApiFeeds<T: Config> =
-		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, T::OracleKey, ApiFeed<ParaId, T::BlockNumber>>;
+		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, T::OracleKey, ApiFeed<T::BlockNumber>>;
 
 }
 
 
 #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Debug))]
-pub struct ApiFeed<ParaId, BlockNumber> {
+pub struct ApiFeed<BlockNumber> {
     requested_block_number: BlockNumber,
-    para_id: Option<ParaId>,
     url: Option<Vec<u8>>,
 }
 
@@ -398,17 +384,19 @@ where T::AccountId: AsRef<[u8]>
         }
 
         if values.iter().count() > 0 {
-            // write data to chain
-            let results = signer.send_signed_transaction(|_account| Call::submit_data {
-                values: values.clone(),
-            });
-            for (acc, res) in &results {
-                match res {
-                    Ok(()) => log::info!("[{:?}] Submitted data", acc.id),
-                    Err(e) => log::error!("[{:?}] Failed to submit transaction: {:?}", acc.id, e),
+            if let Some(para_id) = <KylinParaId<T>>::get() {
+                // write data to chain
+                let results = signer.send_signed_transaction(|_account| Call::submit_data {
+                    para_id: para_id,
+                    values: values.clone(),
+                });
+                for (acc, res) in &results {
+                    match res {
+                        Ok(()) => log::info!("[{:?}] Submitted data", acc.id),
+                        Err(e) => log::error!("[{:?}] Failed to submit transaction: {:?}", acc.id, e),
+                    }
                 }
             }
-
         }
 
         Ok(())
@@ -466,9 +454,6 @@ where T::AccountId: AsRef<[u8]>
     }
 
     fn feed_data_to_parachain(para_id: ParaId, values: Vec<(T::OracleKey, T::OracleValue)>) -> DispatchResult {
-        let saved_request = Self::saved_data_requests(key).unwrap();
-        if saved_request.para_id.is_some() {
-
             match T::XcmSender::send_xcm(
                 (
                     1,
@@ -484,37 +469,16 @@ where T::AccountId: AsRef<[u8]>
                     .into(),
                 }]),
             ) {
-                Ok(()) => Self::deposit_event(Event::ResponseSent(
-                    saved_request.para_id.unwrap(),
-                    saved_request.clone(),
-                    block_number,
+                Ok(()) => Self::deposit_event(Event::FeedDataSent(
+                    para_id,
                 )),
-                Err(e) => Self::deposit_event(Event::ErrorSendingResponse(
+                Err(e) => Self::deposit_event(Event::FeedDataError(
                     e,
-                    saved_request.para_id.unwrap(),
-                    saved_request.clone(),
+                    para_id,
                 )),
             }
-        }
-        Ok(())
-    }
 
-    fn validate_transaction(block_number: &T::BlockNumber) -> TransactionValidity {
-        // Now let's check if the transaction has any chance to succeed.
-        let next_unsigned_at = <NextUnsignedAt<T>>::get();
-        if &next_unsigned_at > block_number {
-            return InvalidTransaction::Stale.into();
-        }
-        // Let's make sure to reject transactions from the future.
-        let current_block = <system::Pallet<T>>::block_number();
-        if &current_block < block_number {
-            return InvalidTransaction::Future.into();
-        }
-        ValidTransaction::with_tag_prefix("KylinOCW")
-            .priority(T::UnsignedPriority::get())
-            .longevity(5)
-            .propagate(true)
-            .build()
+        Ok(())
     }
 
 }
