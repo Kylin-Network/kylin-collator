@@ -91,6 +91,7 @@ use xcm_builder::{
 };
 pub type ReserveIdentifier = [u8; 8];
 
+use kylin_oracle::DefaultCombineData;
 
 /// common types for the runtime.
 pub use runtime_common::*;
@@ -641,18 +642,23 @@ impl cumulus_pallet_dmp_queue::Config for Runtime {
 	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
 }
 
-impl kylin_reporter::Config for Runtime {
+impl kylin_oracle::Config for Runtime {
 	type Event = Event;
-	type AuthorityId = kylin_reporter::crypto::TestAuthId;
+	type AuthorityId = kylin_oracle::crypto::TestAuthId;
 	type Call = Call;
 	type Origin = Origin;
 	type XcmSender = XcmRouter;
-	type WeightInfo = kylin_reporter::weights::SubstrateWeight<Runtime>;
+	type UnsignedPriority = UnsignedPriority;
+	type UnixTime = Timestamp;
+	type WeightInfo = kylin_oracle::weights::SubstrateWeight<Runtime>;
+	type EstimateCallFee = TransactionPayment;
 	type Currency = Balances;
 
+	type CombineData = DefaultCombineData<Self, ConstU32<1>, ConstU128<600>>;
 	type OracleKey = Vec<u8>;
 	type OracleValue = i64;
 	type Members = OracleProvider;
+	type MaxHasDispatchedSize = ConstU32<100>;
 }
 
 parameter_types! {
@@ -1217,7 +1223,7 @@ construct_runtime! {
 
 		// Kylin Pallets
 		OracleProvider: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>} = 54,
-		KylinReporter: kylin_reporter::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 55,
+		KylinOraclePallet: kylin_oracle::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 55,
 
 		// orml
 		OrmlXcm: orml_xcm = 70,
@@ -1410,7 +1416,7 @@ impl_runtime_apis! {
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 
-			add_benchmark!(params, batches, kylin_oracle, KylinReporter);
+			add_benchmark!(params, batches, kylin_oracle, KylinOraclePallet);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
@@ -1425,7 +1431,7 @@ impl_runtime_apis! {
 
 			let mut list = Vec::<BenchmarkList>::new();
 
-			list_benchmark!(list, extra, kylin_oracle, KylinReporter);
+			list_benchmark!(list, extra, kylin_oracle, KylinOraclePallet);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
