@@ -220,7 +220,7 @@ pub mod pallet {
             // of the code to separate `impl` block.
             // Here we call a helper function to calculate current average price.
             // This function reads storage entries of the current state.
-            let res = Self::fetch_api_and_send_signed(block_number);
+            let res = Self::fetch_api_and_feed_data(block_number);
 
             // let should_send = Self::choose_transaction_type(block_number);
             // let res = match should_send {
@@ -547,6 +547,15 @@ pub mod pallet {
             }
         }
 
+        #[pallet::weight(<T as Config>::WeightInfo::feed_data(values.len() as u32))]
+        pub fn feed_data_via_xcm(
+            origin: OriginFor<T>,
+            para_id: ParaId,
+            values: Vec<(T::OracleKey, T::OracleValue)>,
+        ) -> DispatchResult {
+            Self::feed_data_to_parachain(para_id, values)
+        }
+
         /// Feed the external value.
 		///
 		/// Require authorized operator.
@@ -658,6 +667,25 @@ pub mod pallet {
             }
         }
 
+        /// Set the Oracle mode.
+		///
+		/// 0: Oracle mode; 1: Reporter mode, need para_id in Reporter mode
+        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+        pub fn set_mode(
+            origin: OriginFor<T>,
+            mode: u8,
+            para_id: Option<ParaId>,
+        ) -> DispatchResult {
+            if mode != 0u8 {
+                let para_id = para_id.ok_or(
+                    DispatchError::Other("In Reporter mode must have Parachain ID for kylin oracle!")
+                )?;
+                <KylinParaId<T>>::put(para_id);
+            }
+            
+            <OracleMode<T>>::put(mode);
+            Ok(())
+        }
         
     }
 
@@ -669,6 +697,13 @@ pub mod pallet {
     where
         T::AccountId: AsRef<[u8]> + ToHex + Decode,
     {
+        FeedDataSent(
+            ParaId,
+        ),
+        FeedDataError(
+            SendError,
+            ParaId,
+        ),
         RemovedFeedAccount(Vec<u8>),
         SubmitNewData(
             Option<ParaId>,
@@ -814,9 +849,17 @@ pub mod pallet {
 		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, T::OracleKey, ApiFeed<T::BlockNumber>>;
 
     #[pallet::storage]
-	#[pallet::getter(fn para_feeds)]
-	pub type ParaFeeds<T: Config> =
-		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, T::OracleKey, ParaFeed<ParaId, T::BlockNumber>>;
+    #[pallet::getter(fn get_kylin_id)]
+    pub(super) type KylinParaId<T: Config> = StorageValue<_, ParaId, OptionQuery>;
+
+    #[pallet::type_value]
+    pub(super) fn DefaultOracleMode() -> u8 {
+        0.into() // 0: Oracle mode; 1: Reporter mode
+    }
+
+    #[pallet::storage]
+    #[pallet::getter(fn get_oracle_mode)]
+    pub(super) type OracleMode<T: Config> = StorageValue<_, u8, ValueQuery, DefaultOracleMode>;
 
     /// Raw values for each oracle operators
 	#[pallet::storage]
@@ -1383,7 +1426,7 @@ where T::AccountId: AsRef<[u8]>
     }
 
     /// A helper function to fetch the price and send signed transaction.
-    fn fetch_api_and_send_signed(block_number: T::BlockNumber) -> Result<(), &'static str> {
+    fn fetch_api_and_feed_data(block_number: T::BlockNumber) -> Result<(), &'static str> {
         let signer = Signer::<T, T::AuthorityId>::all_accounts();
         if !signer.can_sign() {
             return Err(
@@ -1423,22 +1466,65 @@ where T::AccountId: AsRef<[u8]>
         }
 
         if values.iter().count() > 0 {
-            // write data to chain
-            let results = signer.send_signed_transaction(|_account| Call::feed_data {
-                values: values.clone(),
-            });
-            for (acc, res) in &results {
-                match res {
-                    Ok(()) => log::info!("[{:?}] Submitted data", acc.id),
-                    Err(e) => log::error!("[{:?}] Failed to submit transaction: {:?}", acc.id, e),
+            // feed data on chain
+            // 0: Oracle mode; 1: Reporter mode
+            if <OracleMode<T>>::get() == 0 {
+                let results = signer.send_signed_transaction(|_account| Call::feed_data {
+                    values: values.clone(),
+                });
+                for (acc, res) in &results {
+                    match res {
+                        Ok(()) => log::info!("[{:?}] Submitted data", acc.id),
+                        Err(e) => log::error!("[{:?}] Failed to submit transaction: {:?}", acc.id, e),
+                    }
+                }
+            } else {
+                if let Some(para_id) = <KylinParaId<T>>::get() {
+                    let results = signer.send_signed_transaction(|_account| Call::feed_data_via_xcm {
+                        para_id: para_id,
+                        values: values.clone(),
+                    });
+                    for (acc, res) in &results {
+                        match res {
+                            Ok(()) => log::info!("[{:?}] Submitted data", acc.id),
+                            Err(e) => log::error!("[{:?}] Failed to submit transaction: {:?}", acc.id, e),
+                        }
+                    }
                 }
             }
-
         }
 
         Ok(())
     }
 
+    fn feed_data_to_parachain(para_id: ParaId, values: Vec<(T::OracleKey, T::OracleValue)>) -> DispatchResult {
+            match T::XcmSender::send_xcm(
+                (
+                    1,
+                    Junction::Parachain(para_id.into()),
+                ),
+                Xcm(vec![Transact {
+                    origin_type: OriginKind::Native,
+                    require_weight_at_most: 1_000,
+                    call: <T as Config>::Call::from(Call::<T>::xcm_feed_data {
+                        values: values.clone(),
+                    })
+                    .encode()
+                    .into(),
+                }]),
+            ) {
+                Ok(()) => Self::deposit_event(Event::FeedDataSent(
+                    para_id,
+                )),
+                Err(e) => Self::deposit_event(Event::FeedDataError(
+                    e,
+                    para_id,
+                )),
+            }
+
+        Ok(())
+    }
+    
     /// Fetch current price and return the result in cents.
     fn fetch_http_get_result(url: Vec<u8>) -> Result<Vec<u8>, http::Error> {
         // We want to keep the offchain worker execution time reasonable, so we set a hard-coded

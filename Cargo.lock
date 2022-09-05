@@ -2025,7 +2025,7 @@ dependencies = [
  "kylin-democracy",
  "kylin-feed",
  "kylin-market",
- "kylin-reporter",
+ "kylin-oracle",
  "log",
  "orml-currencies",
  "orml-tokens",
@@ -4009,38 +4009,6 @@ dependencies = [
  "serde",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "kylin-reporter"
-version = "3.0.0"
-dependencies = [
- "cumulus-pallet-xcm",
- "cumulus-primitives-core",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "hex",
- "lite-json",
- "orml-traits",
- "orml-utilities",
- "pallet-balances",
- "pallet-timestamp",
- "pallet-transaction-payment",
- "pallet-uniques",
- "pallet-xcm",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "serde_json",
- "sp-core",
- "sp-io",
- "sp-keystore",
- "sp-runtime",
- "sp-std",
- "xcm",
- "xcm-builder",
- "xcm-executor",
 ]
 
 [[package]]
