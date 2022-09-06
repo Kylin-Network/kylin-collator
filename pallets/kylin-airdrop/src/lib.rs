@@ -1,365 +1,1074 @@
-
-//! Kylin-airdrop module provide a mapping between Substrate accounts and
-//! original Etherum account where initial KYL tokens resides and gives
-//! the ability to recieve airdrop tokens.
-
 #![cfg_attr(not(feature = "std"), no_std)]
-#![allow(clippy::unused_unit)]
 
-use codec::Encode;
-use frame_support::{
-	ensure,
-	pallet_prelude::*,
-	traits::{Currency, IsType, OnKilledAccount},
-	transactional,
-};
-use frame_system::{ensure_signed, pallet_prelude::*};
-use module_evm_utility_macro::keccak256;
-use module_support::{AddressMapping, EVMAccountsManager};
-use orml_traits::currency::TransferAll;
-use primitives::{evm::EthKYLAddress, to_bytes, AccountIndex};
-use sp_core::crypto::AccountId32;
-use sp_core::{H160, H256};
-use sp_io::{
-	crypto::secp256k1_ecdsa_recover,
-	hashing::{blake2_256, keccak_256},
-};
-use sp_runtime::{
-	traits::{LookupError, StaticLookup, Zero},
-	MultiAddress,
-};
-use sp_std::{marker::PhantomData, vec::Vec};
+pub use pallet::*;
 
-mod mock;
-mod tests;
+pub mod models;
 pub mod weights;
 
-pub use module::*;
-pub use weights::WeightInfo;
-
-/// A signature (a 512-bit value, plus 8 bits for recovery ID).
-pub type Eip712Signature = [u8; 65];
+#[cfg(any(feature = "runtime-benchmarks", test))]
+mod benchmarking;
+mod mocks;
 
 #[frame_support::pallet]
-pub mod module {
-	use super::*;
+pub mod pallet {
+	use crate::{
+		models::{Airdrop, AirdropState, Identity, Proof, RecipientFund},
+		weights::WeightInfo,
+	};
+	use codec::{Codec, FullCodec, MaxEncodedLen};
+	use kylin_support::{
+		abstractions::{
+			nonce::Nonce,
+			utils::{
+				increment::{Increment, SafeIncrement},
+				start_at::ZeroInit,
+			},
+		},
+		math::safe::{SafeAdd, SafeSub},
+		signature_verification,
+	};
+	
+	/// Contains functions necessary for the business logic for managing Airdrops
+pub trait Airdropper {
+	type AccountId;
+	type AirdropId;
+	type AirdropStart;
+	type Balance;
+	type Proof;
+	type Recipient;
+	type RecipientCollection;
+	type Identity;
+	type VestingSchedule;
+
+	/// Create a new Airdrop.
+	fn create_airdrop(
+		creator_id: Self::AccountId,
+		start: Option<Self::AirdropStart>,
+		schedule: Self::VestingSchedule,
+	) -> DispatchResult;
+
+	/// Add one or more recipients to an Airdrop.
+	fn add_recipient(
+		origin_id: Self::AccountId,
+		airdrop_id: Self::AirdropId,
+		recipients: Self::RecipientCollection,
+	) -> DispatchResult;
+
+	/// Remove a recipient from an Airdrop.
+	fn remove_recipient(
+		origin_id: Self::AccountId,
+		airdrop_id: Self::AirdropId,
+		recipient: Self::Recipient,
+	) -> DispatchResult;
+
+	/// Start an Airdrop.
+	fn enable_airdrop(origin_id: Self::AccountId, airdrop_id: Self::AirdropId) -> DispatchResult;
+
+	/// Stop an Airdrop.
+	fn disable_airdrop(
+		origin_id: Self::AccountId,
+		airdrop_id: Self::AirdropId,
+	) -> Result<Self::Balance, DispatchError>;
+
+	/// Claim a recipient reward from an Airdrop.
+	fn claim(
+		airdrop_id: Self::AirdropId,
+		remote_account: Self::Identity,
+		reward_account: Self::AccountId,
+	) -> DispatchResultWithPostInfo;
+}
+
+	use frame_support::{
+		dispatch::PostDispatchInfo,
+		pallet_prelude::*,
+		traits::{
+			fungible::{Inspect, Transfer},
+			Time,
+		},
+		transactional, Blake2_128Concat, PalletId, Parameter,
+	};
+	use frame_system::pallet_prelude::*;
+	use scale_info::TypeInfo;
+	use sp_runtime::{
+		traits::{
+			AccountIdConversion, AtLeast32Bit, AtLeast32BitUnsigned, CheckedAdd, CheckedMul,
+			CheckedSub, Convert, One, Saturating, Zero,
+		},
+		AccountId32, DispatchErrorWithPostInfo,
+	};
+	use sp_std::{fmt::Debug, vec::Vec};
+
+	/// [`AccountId`](frame_system::Config::AccountId) as configured by the pallet.
+	pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
+	/// [`AirdropId`](Config::AirdropId) as configured by the pallet.
+	pub type AirdropIdOf<T> = <T as Config>::AirdropId;
+	/// [`Airdrop`](crate::models::Airdrop) as configured by the pallet.
+	pub type AirdropOf<T> = Airdrop<
+		<T as frame_system::Config>::AccountId,
+		<T as Config>::Balance,
+		<T as Config>::Moment,
+	>;
+	/// [`Balance`](Config::Balance) as configured by the pallet.
+	pub type BalanceOf<T> = <T as Config>::Balance;
+	/// [`RecipientFund`](crate::models::RecipientFund) as configured by the pallet.
+	pub type RecipientFundOf<T> = RecipientFund<<T as Config>::Balance, <T as Config>::Moment>;
+	/// [`Moment`](Config::Moment) as configured by the pallet.
+	pub type MomentOf<T> = <T as Config>::Moment;
+	/// ['Proof'](crate::models::Proof) as configured by the pallet
+	pub type ProofOf<T> = Proof<<T as Config>::RelayChainAccountId>;
+	pub type IdentityOf<T> = Identity<<T as Config>::RelayChainAccountId>;
+
+	#[pallet::event]
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+	pub enum Event<T: Config> {
+		AirdropCreated {
+			airdrop_id: T::AirdropId,
+			by: T::AccountId,
+		},
+		RecipientsAdded {
+			airdrop_id: T::AirdropId,
+			number: u32,
+			unclaimed_funds: T::Balance,
+		},
+		RecipientRemoved {
+			airdrop_id: T::AirdropId,
+			recipient_id: IdentityOf<T>,
+			unclaimed_funds: T::Balance,
+		},
+		AirdropStarted {
+			airdrop_id: T::AirdropId,
+			at: T::Moment,
+		},
+		AirdropEnded {
+			airdrop_id: T::AirdropId,
+			at: T::Moment,
+		},
+		Claimed {
+			identity: IdentityOf<T>,
+			recipient_account: T::AccountId,
+			amount: T::Balance,
+		},
+	}
+
+	#[pallet::error]
+	pub enum Error<T> {
+		AirdropAlreadyStarted,
+		AirdropDoesNotExist,
+		AirdropIsNotEnabled,
+		ArithmiticError,
+		AssociatedWithAnohterAccount,
+		BackToTheFuture,
+		NotAirdropCreator,
+		NothingToClaim,
+		RecipientAlreadyClaimed,
+		RecipientNotFound,
+		InvalidProof,
+		UnclaimedFundsRemaining,
+	}
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
-		/// The Currency for managing Evm account assets.
-		type Currency: Currency<Self::AccountId>;
+		/// Airdrop ID
+		type AirdropId: Copy
+			+ Clone
+			+ Eq
+			+ Debug
+			+ Zero
+			+ One
+			+ SafeAdd
+			+ FullCodec
+			+ MaxEncodedLen
+			+ Parameter
+			+ TypeInfo;
 
-		/// Mapping from address to account id.
-		type AddressMapping: AddressMapping<Self::AccountId>;
+		/// Representation of some amount of tokens
+		type Balance: Default
+			+ Parameter
+			+ Codec
+			+ Copy
+			+ Ord
+			+ CheckedAdd
+			+ CheckedSub
+			+ CheckedMul
+			+ AtLeast32BitUnsigned
+			+ MaybeSerializeDeserialize
+			+ MaxEncodedLen
+			+ Zero;
 
-		/// Chain ID of EVM.
+		/// Conversion function from [`Self::Moment`] to [`Self::Balance`]
+		type Convert: Convert<Self::Moment, Self::Balance>;
+
+		/// Time stamp
+		type Moment: AtLeast32Bit + Parameter + Default + Copy + MaxEncodedLen + FullCodec;
+
+		/// Relay chain account ID
+		type RelayChainAccountId: Parameter
+			+ MaybeSerializeDeserialize
+			+ MaxEncodedLen
+			+ Into<AccountId32>
+			+ Ord;
+
+		/// The asset type Recipients will claim from the Airdrops.
+		type RecipientFundAsset: Inspect<Self::AccountId, Balance = Self::Balance>
+			+ Transfer<Self::AccountId, Balance = Self::Balance>;
+
+		/// Time provider
+		type Time: Time<Moment = Self::Moment>;
+
+		/// The pallet ID required for creating sub-accounts used by Airdrops.
 		#[pallet::constant]
-		type ChainId: Get<u64>;
+		type PalletId: Get<PalletId>;
 
-		/// Merge free balance from source to dest.
-		type TransferAll: TransferAll<Self::AccountId>;
+		/// The prefix used in proofs
+		#[pallet::constant]
+		type Prefix: Get<&'static [u8]>;
 
-		/// Weight information for the extrinsics in this module.
+		/// The stake required to craete an Airdrop
+		#[pallet::constant]
+		type Stake: Get<BalanceOf<Self>>;
+
+		/// The implementation of extrinsic weights.
 		type WeightInfo: WeightInfo;
 	}
-
-	#[pallet::event]
-	#[pallet::generate_deposit(pub(crate) fn deposit_event)]
-	pub enum Event<T: Config> {
-		/// Mapping between Substrate accounts and EVM accounts
-		/// claim account.
-		ClaimAccount {
-			account_id: T::AccountId,
-			evm_address: EthKYLAddress,
-		},
-	}
-
-	/// Error for evm accounts module.
-	#[pallet::error]
-	pub enum Error<T> {
-		/// AccountId has mapped
-		AccountIdHasMapped,
-		/// Eth address has mapped
-		EthAddressHasMapped,
-		/// Bad signature
-		BadSignature,
-		/// Invalid signature
-		InvalidSignature,
-		/// Account ref count is not zero
-		NonZeroRefCount,
-	}
-
-	/// The Substrate Account for EthKYLAddresses
-	///
-	/// Accounts: map EthKYLAddress => Option<AccountId>
-	#[pallet::storage]
-	#[pallet::getter(fn accounts)]
-	pub type Accounts<T: Config> = StorageMap<_, Twox64Concat, EthKYLAddress, T::AccountId, OptionQuery>;
-
-	/// The EthKYLAddress for Substrate Accounts
-	///
-	/// EthKYLAddresses: map AccountId => Option<EthKYLAddress>
-	#[pallet::storage]
-	#[pallet::getter(fn evm_addresses)]
-	pub type EthKYLAddresses<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, EthKYLAddress, OptionQuery>;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 
-	#[pallet::hooks]
-	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
+	/// The counter used to identify Airdrops.
+	#[pallet::storage]
+	#[pallet::getter(fn airdrop_count)]
+	#[allow(clippy::disallowed_types)] // Allow `frame_support::pallet_prelude::ValueQuery` because default of 0 is correct
+	pub type AirdropCount<T: Config> =
+		StorageValue<_, T::AirdropId, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
+
+	/// Airdrops currently stored by the pallet.
+	#[pallet::storage]
+	#[pallet::getter(fn airdrops)]
+	pub type Airdrops<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AirdropId, AirdropOf<T>, OptionQuery>;
+
+	/// Associations of local accounts and an [`AirdropId`](Config::AirdropId) to a remote account.
+	#[pallet::storage]
+	#[pallet::getter(fn associations)]
+	pub type Associations<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		T::AirdropId,
+		Blake2_128Concat,
+		T::AccountId,
+		IdentityOf<T>,
+		OptionQuery,
+	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn total_airdrop_recipients)]
+	#[allow(clippy::disallowed_types)] // Allow `frame_support::pallet_prelude::ValueQuery` because default of 0 is correct
+	pub type TotalAirdropRecipients<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AirdropId, u32, ValueQuery>;
+
+	/// Recipient funds of Airdrops stored by the pallet.
+	#[pallet::storage]
+	#[pallet::getter(fn recipient_funds)]
+	pub type RecipientFunds<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		T::AirdropId,
+		Blake2_128Concat,
+		IdentityOf<T>,
+		RecipientFundOf<T>,
+		OptionQuery,
+	>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Claim account mapping between Substrate accounts and EVM accounts.
-		/// Ensure eth_address has not been mapped.
+		/// Create a new Airdrop. This requires that the user puts down a stake in PICA.
 		///
-		/// - `eth_address`: The address to bind to the caller's account
-		/// - `eth_signature`: A signature generated by the address to prove ownership
-		#[pallet::weight(T::WeightInfo::claim_account())]
+		/// If `start_at` is `Some(MomentOf<T>)` and the `MomentOf<T>` is greater than the current
+		/// block, the Airdrop will be scheduled to start automatically.
+		///
+		/// Can be called by any signed origin.
+		///
+		/// # Parameter Sources
+		/// * `start_at` - user provided, optional
+		/// * `vesting_schedule` - user provided
+		///
+		/// # Emits
+		/// * `AirdropCreated`
+		/// * `AirdropStarted`
+		///
+		/// # Errors
+		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
+		/// * `AirdropAlreadyStarted` - The Airdrop has already started or has been scheduled to
+		/// start
+		/// * `BackToTheFuture` - The provided `start` has already passed
+		#[pallet::weight(<T as Config>::WeightInfo::create_airdrop())]
 		#[transactional]
-		pub fn claim_account(
+		pub fn create_airdrop(
 			origin: OriginFor<T>,
-			eth_address: EthKYLAddress,
-			eth_signature: Eip712Signature,
+			start_at: Option<MomentOf<T>>,
+			vesting_schedule: MomentOf<T>,
 		) -> DispatchResult {
-			let who = ensure_signed(origin)?;
+			let creator = ensure_signed(origin)?;
 
-			// ensure account_id and eth_address has not been mapped
-			ensure!(!EthKYLAddresses::<T>::contains_key(&who), Error::<T>::AccountIdHasMapped);
-			ensure!(
-				!Accounts::<T>::contains_key(eth_address),
-				Error::<T>::EthAddressHasMapped
+			<Self as Airdropper>::create_airdrop(creator, start_at, vesting_schedule)
+		}
+
+		/// Add one or more recipients to the Airdrop, specifying the token amount that each
+		/// provided address will receive.
+		///
+		/// Only callable by the origin that created the Airdrop.
+		///
+		/// # Parameter Sources
+		/// * `airdrop_id` - user selected, provided by the system
+		/// * `recipients` - user provided
+		///
+		/// # Emits
+		/// * `RecipientsAdded`
+		///
+		/// # Errors
+		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
+		/// * `NotAirdropCreator` - Signer of the origin is not the creator of the Airdrop
+		#[pallet::weight(<T as Config>::WeightInfo::add_recipient(recipients.len() as u32))]
+		#[transactional]
+		pub fn add_recipient(
+			origin: OriginFor<T>,
+			airdrop_id: T::AirdropId,
+			recipients: Vec<(IdentityOf<T>, BalanceOf<T>, MomentOf<T>, bool)>,
+		) -> DispatchResult {
+			let origin_id = ensure_signed(origin)?;
+
+			<Self as Airdropper>::add_recipient(origin_id, airdrop_id, recipients)
+		}
+
+		/// Remove a recipient from an Airdrop.
+		///
+		/// Only callable by the origin that created the Airdrop.
+		///
+		/// # Parameter Sources
+		/// * `airdrop_id` - user selected, provided by the system
+		/// * `recipient` - user selected, provided by the system
+		///
+		/// # Emits
+		/// * `RecipientRemoved`
+		/// * `AirdropEnded`
+		///
+		/// # Errors
+		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
+		/// * `NotAirdropCreator` - Signer of the origin is not the creator of the Airdrop
+		/// * `RecipientAlreadyClaimed` - The recipient has already began claiming their funds.
+		/// * `RecipientNotFound` - No recipient associated with the `identity` could be found.
+		#[pallet::weight(<T as Config>::WeightInfo::remove_recipient())]
+		#[transactional]
+		pub fn remove_recipient(
+			origin: OriginFor<T>,
+			airdrop_id: T::AirdropId,
+			recipient: IdentityOf<T>,
+		) -> DispatchResult {
+			let origin_id = ensure_signed(origin)?;
+
+			<Self as Airdropper>::remove_recipient(origin_id, airdrop_id, recipient)
+		}
+
+		/// Start an Airdrop.
+		///
+		/// Only callable by the origin that created the Airdrop.
+		///
+		/// # Parameter Sources
+		/// * `airdrop_id` - user selected, provided by the system
+		///
+		/// # Emits
+		/// * `AirdropStarted`
+		///
+		/// # Errors
+		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
+		/// * `AirdropAlreadyStarted` - The Airdrop has already started or has been scheduled to
+		/// start
+		/// * `BackToTheFuture` - The provided `start` has already passed
+		/// * `NotAirdropCreator` - Signer of the origin is not the creator of the Airdrop
+		#[pallet::weight(<T as Config>::WeightInfo::enable_airdrop())]
+		#[transactional]
+		pub fn enable_airdrop(origin: OriginFor<T>, airdrop_id: T::AirdropId) -> DispatchResult {
+			let origin_id = ensure_signed(origin)?;
+
+			<Self as Airdropper>::enable_airdrop(origin_id, airdrop_id)
+		}
+
+		/// Stop an Airdrop.
+		///
+		/// Only callable by the origin that created the Airdrop.
+		///
+		/// # Parameter Sources
+		/// * `airdrop_id` - user selected, provided by the system
+		///
+		/// # Emits
+		/// * `AirdropEnded`
+		///
+		/// # Errors
+		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
+		/// * `NotAirdropCreator` - Signer of the origin is not the creator of the Airdrop
+		#[pallet::weight(<T as Config>::WeightInfo::disable_airdrop())]
+		#[transactional]
+		pub fn disable_airdrop(origin: OriginFor<T>, airdrop_id: T::AirdropId) -> DispatchResult {
+			let origin_id = ensure_signed(origin)?;
+
+			<Self as Airdropper>::disable_airdrop(origin_id, airdrop_id)?;
+			Ok(())
+		}
+
+		/// Claim recipient funds from an Airdrop.
+		///
+		/// If no more funds are left to claim, the Airdrop will be removed.
+		///
+		/// Callable by any unsigned origin.
+		///
+		/// # Parameter Sources
+		/// * `airdrop_id` - user selected, provided by the system
+		/// * `reward_account` - user provided
+		/// * `proof` - calculated by the system (requires applicable signing)
+		///
+		/// # Emits
+		/// * `AirdropEnded`
+		///
+		/// # Errors
+		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
+		/// * `AirdropIsNotEnabled` - The Airdrop has not been enabled
+		/// * `AssociatedWithAnohterAccount` - Associated with a different account
+		/// * `ArithmiticError` - Overflow while totaling claimed funds
+		/// * `InvalidProof`
+		/// * `RecipientNotFound` - No recipient associated with the `identity` could be found.
+		#[pallet::weight(<T as Config>::WeightInfo::claim(TotalAirdropRecipients::<T>::get(airdrop_id)))]
+		#[transactional]
+		pub fn claim(
+			origin: OriginFor<T>,
+			airdrop_id: T::AirdropId,
+			reward_account: T::AccountId,
+			proof: ProofOf<T>,
+		) -> DispatchResultWithPostInfo {
+			ensure_none(origin)?;
+			let identity = Self::get_identity(proof, &reward_account, T::Prefix::get())?;
+
+			match Associations::<T>::get(airdrop_id, reward_account.clone()) {
+				// Confirm association matches
+				Some(associated_account) => {
+					ensure!(
+						associated_account == identity,
+						Error::<T>::AssociatedWithAnohterAccount
+					);
+				},
+				// If no association exists, create a new one
+				None => {
+					Associations::<T>::insert(airdrop_id, reward_account.clone(), identity.clone());
+				},
+			}
+
+			<Self as Airdropper>::claim(airdrop_id, identity, reward_account)
+		}
+	}
+
+	#[pallet::extra_constants]
+	impl<T: Config> Pallet<T> {
+		/// The AccountId of this pallet.
+		pub fn account_id() -> T::AccountId {
+			T::PalletId::get().into_account_truncating()
+		}
+	}
+
+	impl<T: Config> Pallet<T> {
+		/// Gets the account ID to be used by the Airdrop.
+		pub(crate) fn get_airdrop_account_id(airdrop_id: T::AirdropId) -> AccountIdOf<T> {
+			T::PalletId::get().into_sub_account_truncating(airdrop_id)
+		}
+
+		/// Gets the [`Airdrop`](crate::models::Airdrop) associated with the `airdrop_id`
+		///
+		/// # Errors
+		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
+		pub(crate) fn get_airdrop(airdrop_id: &T::AirdropId) -> Result<AirdropOf<T>, Error<T>> {
+			Airdrops::<T>::try_get(airdrop_id).map_err(|_| Error::<T>::AirdropDoesNotExist)
+		}
+
+		/// Calculates the current [`AirdropState`](crate::models::AirdropState) of an Airdrop
+		///
+		/// # Errors
+		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
+		pub(crate) fn get_airdrop_state(
+			airdrop_id: T::AirdropId,
+		) -> Result<AirdropState, Error<T>> {
+			let airdrop = Self::get_airdrop(&airdrop_id)?;
+
+			if airdrop.disabled {
+				return Ok(AirdropState::Disabled)
+			}
+
+			airdrop.start.map_or(Ok(AirdropState::Created), |start| {
+				if start <= T::Time::now() {
+					Ok(AirdropState::Enabled)
+				} else {
+					Ok(AirdropState::Created)
+				}
+			})
+		}
+
+		/// Gets the [`RecipientFund`](crate::models::RecipientFund) of an Airdrop that is
+		/// associated with the `identity`.
+		///
+		/// # Errors
+		/// * `RecipientNotFound` - No recipient associated with the `identity` could be found.
+		pub(crate) fn get_recipient_fund(
+			airdrop_id: T::AirdropId,
+			identity: IdentityOf<T>,
+		) -> Result<RecipientFundOf<T>, Error<T>> {
+			RecipientFunds::<T>::try_get(airdrop_id, identity)
+				.map_err(|_| Error::<T>::RecipientNotFound)
+		}
+
+		/// Gets the remote account address from the `Proof`.
+		///
+		/// # Errors
+		/// * `InvalidProof` - If the proof is invalid, an error will be returned.
+		pub(crate) fn get_identity(
+			proof: ProofOf<T>,
+			reward_account: &<T as frame_system::Config>::AccountId,
+			prefix: &[u8],
+		) -> Result<IdentityOf<T>, DispatchErrorWithPostInfo<PostDispatchInfo>> {
+			let identity = match proof {
+				Proof::Ethereum(eth_proof) => {
+					let reward_account_encoded =
+						reward_account.using_encoded(signature_verification::get_encoded_vec);
+					let eth_address = signature_verification::ethereum_recover(
+						prefix,
+						&reward_account_encoded,
+						&eth_proof,
+					)
+					.map_err(|_| Error::<T>::InvalidProof)?;
+					Result::<_, DispatchError>::Ok(Identity::Ethereum(eth_address))
+				},
+				Proof::RelayChain(relay_account, relay_proof) => {
+					ensure!(
+						signature_verification::verify_relay(
+							prefix,
+							reward_account.clone(),
+							relay_account.clone().into(),
+							&relay_proof
+						),
+						Error::<T>::InvalidProof
+					);
+					Ok(Identity::RelayChain(relay_account))
+				},
+				Proof::Cosmos(cosmos_address, cosmos_proof) => {
+					let reward_account_encoded =
+						reward_account.using_encoded(signature_verification::get_encoded_vec);
+					let cosmos_address = signature_verification::cosmos_recover(
+						prefix,
+						&reward_account_encoded,
+						cosmos_address,
+						&cosmos_proof,
+					)
+					.map_err(|_| Error::<T>::InvalidProof)?;
+					Result::<_, DispatchError>::Ok(Identity::Cosmos(cosmos_address))
+				},
+			}?;
+			Ok(identity)
+		}
+
+		/// Start an Airdrop at a given moment.
+		///
+		/// # Errors
+		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
+		/// * `AirdropAlreadyStarted` - The Airdrop has already started or has been scheduled to
+		/// start
+		/// * `BackToTheFuture` - The provided `start` has already passed
+		pub(crate) fn start_airdrop_at(
+			airdrop_id: T::AirdropId,
+			start: T::Moment,
+		) -> DispatchResult {
+			// Start is valid
+			let now = T::Time::now();
+			ensure!(start >= now, Error::<T>::BackToTheFuture);
+			// Airdrop exist and hasn't started
+			let airdrop = Self::get_airdrop(&airdrop_id)?;
+			ensure!(airdrop.start.is_none(), Error::<T>::AirdropAlreadyStarted);
+
+			// Update Airdrop
+			Airdrops::<T>::try_mutate(airdrop_id, |airdrop| match airdrop.as_mut() {
+				Some(airdrop) => {
+					airdrop.start = Some(start);
+					Ok(())
+				},
+				None => Err(Error::<T>::AirdropDoesNotExist),
+			})?;
+
+			Self::deposit_event(Event::AirdropStarted { airdrop_id, at: start });
+
+			Ok(())
+		}
+
+		/// Calculates the amount of the total fund that a recipient should have claimed.
+		///
+		/// The amount that should have been claimed is proportional to the number of **full**
+		/// vesting steps passed.
+		///
+		/// # Errors
+		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
+		/// * `AirdropIsNotEnabled` - The Airdrop has not been enabled
+		pub(crate) fn claimable(
+			airdrop_id: T::AirdropId,
+			fund: &RecipientFundOf<T>,
+		) -> Result<T::Balance, Error<T>> {
+			let airdrop = Airdrops::<T>::get(airdrop_id).ok_or(Error::<T>::AirdropDoesNotExist)?;
+			let airdrop_state = Self::get_airdrop_state(airdrop_id)?;
+			match (airdrop_state, airdrop.start) {
+				(AirdropState::Enabled, Some(start)) => {
+					let now = T::Time::now();
+					let vesting_point = now.saturating_sub(start);
+
+					// If the vesting period is over, the recipient should receive the remainder of
+					// the fund
+					if vesting_point >= fund.vesting_period {
+						return Ok(fund.total)
+					}
+
+					// The current vesting window rounded to the previous window
+					let vesting_window =
+						vesting_point.saturating_sub(vesting_point % airdrop.schedule);
+
+					let claimable = fund.total.saturating_mul(T::Convert::convert(vesting_window)) /
+						T::Convert::convert(fund.vesting_period);
+
+					Ok(claimable)
+				},
+				_ => Err(Error::<T>::AirdropIsNotEnabled),
+			}
+		}
+
+		/// Removes an Airdrop and associated data from the pallet iff all funds have been recorded
+		/// as claimed.
+		///
+		/// # Errors
+		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
+		pub(crate) fn prune_airdrop(airdrop_id: T::AirdropId) -> Result<bool, DispatchError> {
+			let airdrop = Self::get_airdrop(&airdrop_id)?;
+			let airdrop_account = Self::get_airdrop_account_id(airdrop_id);
+
+			if airdrop.total_funds > airdrop.claimed_funds {
+				return Ok(false)
+			}
+
+			// Return remaining funds to the Airdrop creator
+			T::RecipientFundAsset::transfer(
+				&airdrop_account,
+				&airdrop.creator,
+				T::RecipientFundAsset::balance(&airdrop_account),
+				false,
+			)?;
+
+			// Remove Airdrop and associated data from storage
+
+			// NOTE(hussein-aitlahcen): this is deprecated, but the new API state in the doc that we
+			// can have an infinite limit. while the new `clear_prefix` signature doesn't match this
+			// definition (force u32 as limit). Missing feature or limit is forced? Who know.
+			#[allow(deprecated)]
+			RecipientFunds::<T>::remove_prefix(airdrop_id, None);
+			#[allow(deprecated)]
+			Associations::<T>::remove_prefix(airdrop_id, None);
+			Airdrops::<T>::remove(airdrop_id);
+
+			Ok(true)
+		}
+	}
+
+	impl<T: Config> Airdropper for Pallet<T> {
+		type AccountId = AccountIdOf<T>;
+		type AirdropId = AirdropIdOf<T>;
+		type AirdropStart = MomentOf<T>;
+		type Balance = BalanceOf<T>;
+		type Proof = ProofOf<T>;
+		type Recipient = IdentityOf<T>;
+		type RecipientCollection = Vec<(Self::Recipient, BalanceOf<T>, MomentOf<T>, bool)>;
+		type Identity = IdentityOf<T>;
+		type VestingSchedule = MomentOf<T>;
+
+		/// Create a new Airdrop.
+		///
+		/// Provide `None` for `start` if starting the Airdrop manually is desired.
+		///
+		/// # Errors
+		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
+		/// * `AirdropAlreadyStarted` - The Airdrop has already started or has been scheduled to
+		/// start
+		/// * `BackToTheFuture` - The provided `start` has already passed
+		fn create_airdrop(
+			creator_id: Self::AccountId,
+			start: Option<Self::AirdropStart>,
+			schedule: Self::VestingSchedule,
+		) -> DispatchResult {
+			let airdrop_id = AirdropCount::<T>::increment()?;
+			let airdrop_account = Self::get_airdrop_account_id(airdrop_id);
+
+			// Insert newly created airdrop into pallet's list.
+			Airdrops::<T>::insert(
+				airdrop_id,
+				Airdrop {
+					creator: creator_id.clone(),
+					total_funds: T::Balance::zero(),
+					total_recipients: 0,
+					claimed_funds: T::Balance::zero(),
+					start: None,
+					schedule,
+					disabled: false,
+				},
 			);
 
-			// recover evm address from signature
-			let address = Self::verify_eip712_signature(&who, &eth_signature).ok_or(Error::<T>::BadSignature)?;
-			ensure!(eth_address == address, Error::<T>::InvalidSignature);
+			// Transfer stake into airdrop specific account.
+			T::RecipientFundAsset::transfer(&creator_id, &airdrop_account, T::Stake::get(), false)?;
 
-			// check if the evm padded address already exists
-			let account_id = T::AddressMapping::get_account_id(&eth_address);
-			if frame_system::Pallet::<T>::account_exists(&account_id) {
-				// merge balance from `evm padded address` to `origin`
-				T::TransferAll::transfer_all(&account_id, &who)?;
+			Self::deposit_event(Event::AirdropCreated { airdrop_id, by: creator_id });
+
+			if let Some(moment) = start {
+				Self::start_airdrop_at(airdrop_id, moment)?;
 			}
 
-			Accounts::<T>::insert(eth_address, &who);
-			EthKYLAddresses::<T>::insert(&who, eth_address);
+			Ok(())
+		}
 
-			Self::deposit_event(Event::ClaimAccount {
-				account_id: who,
-				evm_address: eth_address,
+		/// Add one or more recipients to an Airdrop.
+		///
+		/// Airdrop creator is expected to be able to fund the Airdrop. If the Airdrops current
+		/// funds aren't enough to supply all claims, the creator will be charged the difference.
+		///
+		/// If a recipient is already a member of an Airdrop, their previous entry will be
+		/// replaced for that Airdrop.
+		///
+		/// # Errors
+		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
+		/// * `NotAirdropCreator` - Signer of the origin is not the creator of the Airdrop
+		fn add_recipient(
+			origin_id: Self::AccountId,
+			airdrop_id: Self::AirdropId,
+			recipients: Self::RecipientCollection,
+		) -> DispatchResult {
+			let airdrop = Self::get_airdrop(&airdrop_id)?;
+			ensure!(airdrop.creator == origin_id, Error::<T>::NotAirdropCreator);
+
+			// Calculate total funds and recipients local to this transaction
+			let (transaction_funds, transaction_recipients) = recipients.iter().try_fold(
+				(T::Balance::zero(), 0),
+				|(transaction_funds, transaction_recipients),
+				 (_, funds, _, _)|
+				 -> Result<(T::Balance, u32), DispatchError> {
+					Ok((transaction_funds.safe_add(funds)?, transaction_recipients.safe_add(&1)?))
+				},
+			)?;
+
+			// Funds currently owned by the Airdrop minus the creation stake
+			let current_funds =
+				T::RecipientFundAsset::balance(&Self::get_airdrop_account_id(airdrop_id))
+					.safe_sub(&T::Stake::get())?;
+			// Total amount of funds to be required by this Airdrop
+			let total_funds = airdrop.total_funds.safe_add(&transaction_funds)?;
+			let total_recipients = airdrop.total_recipients.safe_add(&transaction_recipients)?;
+
+			// If the airdrop can't support the total amount of claimable funds
+			if current_funds < total_funds {
+				// Fund Airdrop account from creators account
+				T::RecipientFundAsset::transfer(
+					&airdrop.creator,
+					&Self::get_airdrop_account_id(airdrop_id),
+					total_funds.safe_sub(&current_funds)?,
+					false,
+				)?;
+			}
+
+			// Populate `RecipientFunds`
+			recipients.iter().for_each(|(identity, funds, vesting_period, is_funded)| {
+				RecipientFunds::<T>::insert(
+					airdrop_id,
+					identity,
+					RecipientFundOf::<T> {
+						total: *funds,
+						claimed: T::Balance::zero(),
+						vesting_period: *vesting_period,
+						funded_claim: *is_funded,
+					},
+				);
+			});
+
+			TotalAirdropRecipients::<T>::mutate(airdrop_id, |total_airdrop_recipients| {
+				*total_airdrop_recipients = total_recipients;
+			});
+
+			// Update Airdrop statistics
+			let (total_funds, claimed_funds) =
+				Airdrops::<T>::try_mutate(airdrop_id, |airdrop| match airdrop.as_mut() {
+					Some(airdrop) => {
+						airdrop.total_funds = total_funds;
+						airdrop.total_recipients = total_recipients;
+						// Ok(airdrop.total_funds.safe_sub(&airdrop.claimed_funds)?)
+						Ok((airdrop.total_funds, airdrop.claimed_funds))
+					},
+					None => Err(Error::<T>::AirdropDoesNotExist),
+				})?;
+
+			Self::deposit_event(Event::RecipientsAdded {
+				airdrop_id,
+				number: transaction_recipients,
+				unclaimed_funds: total_funds.safe_sub(&claimed_funds)?,
 			});
 
 			Ok(())
 		}
 
-		/// Claim account mapping between Substrate accounts and a generated EVM
-		/// address based off of those accounts.
-		/// Ensure eth_address has not been mapped
-		#[pallet::weight(T::WeightInfo::claim_default_account())]
-		pub fn claim_default_account(origin: OriginFor<T>) -> DispatchResult {
-			let who = ensure_signed(origin)?;
-			let _ = Self::do_claim_default_evm_address(who)?;
+		/// Remove a recipient from an Airdrop.
+		///
+		/// Refunds the creator for the value of the recipient fund.
+		///
+		/// # Errors
+		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
+		/// * `NotAirdropCreator` - Signer of the origin is not the creator of the Airdrop
+		/// * `RecipientAlreadyClaimed` - The recipient has already began claiming their funds.
+		/// * `RecipientNotFound` - No recipient associated with the `identity` could be found.
+		fn remove_recipient(
+			origin_id: Self::AccountId,
+			airdrop_id: Self::AirdropId,
+			recipient: Self::Recipient,
+		) -> DispatchResult {
+			let airdrop = Self::get_airdrop(&airdrop_id)?;
+			ensure!(airdrop.creator == origin_id, Error::<T>::NotAirdropCreator);
+
+			let airdrop_account = Self::get_airdrop_account_id(airdrop_id);
+			let recipient_fund = Self::get_recipient_fund(airdrop_id, recipient.clone())?;
+
+			ensure!(
+				recipient_fund.claimed == T::Balance::zero(),
+				Error::<T>::RecipientAlreadyClaimed
+			);
+
+			// Update Airdrop details
+			let (creator, total_funds, claimed_funds) =
+				Airdrops::<T>::try_mutate(airdrop_id, |airdrop| match airdrop.as_mut() {
+					Some(airdrop) => {
+						airdrop.total_funds =
+							airdrop.total_funds.saturating_sub(recipient_fund.total);
+						Ok((airdrop.creator.clone(), airdrop.total_funds, airdrop.claimed_funds))
+					},
+					None => Err(Error::<T>::AirdropDoesNotExist),
+				})?;
+
+			TotalAirdropRecipients::<T>::mutate(airdrop_id, |total_airdrop_recipients| {
+				*total_airdrop_recipients -= 1;
+			});
+
+			// Refund Airdrop creator for the recipient fund's value
+			T::RecipientFundAsset::transfer(
+				&airdrop_account,
+				&creator,
+				recipient_fund.total,
+				false,
+			)?;
+
+			RecipientFunds::<T>::remove(airdrop_id, recipient.clone());
+
+			Self::deposit_event(Event::RecipientRemoved {
+				airdrop_id,
+				recipient_id: recipient,
+				unclaimed_funds: total_funds.safe_sub(&claimed_funds)?,
+			});
+
+			if Self::prune_airdrop(airdrop_id)? {
+				Self::deposit_event(Event::AirdropEnded { airdrop_id, at: T::Time::now() })
+			}
+
 			Ok(())
 		}
-	}
-}
 
-impl<T: Config> Pallet<T> {
-	#[cfg(any(feature = "runtime-benchmarks", feature = "std"))]
-	// Returns an Etherum public key derived from an Ethereum secret key.
-	pub fn eth_public(secret: &libsecp256k1::SecretKey) -> libsecp256k1::PublicKey {
-		libsecp256k1::PublicKey::from_secret_key(secret)
-	}
+		/// Start an Airdrop.
+		///
+		/// # Errors
+		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
+		/// * `AirdropAlreadyStarted` - The Airdrop has already started or has been scheduled to
+		/// start
+		/// * `BackToTheFuture` - The provided `start` has already passed
+		/// * `NotAirdropCreator` - Signer of the origin is not the creator of the Airdrop
+		fn enable_airdrop(
+			origin_id: Self::AccountId,
+			airdrop_id: Self::AirdropId,
+		) -> DispatchResult {
+			let airdrop = Self::get_airdrop(&airdrop_id)?;
+			ensure!(airdrop.creator == origin_id, Error::<T>::NotAirdropCreator);
 
-	#[cfg(any(feature = "runtime-benchmarks", feature = "std"))]
-	// Returns an Etherum address derived from an Ethereum secret key.
-	// Only for tests
-	pub fn eth_address(secret: &libsecp256k1::SecretKey) -> EthKYLAddress {
-		EthKYLAddress::from_slice(&keccak_256(&Self::eth_public(secret).serialize()[1..65])[12..])
-	}
+			Self::start_airdrop_at(airdrop_id, T::Time::now())?;
+			Ok(())
+		}
 
-	#[cfg(any(feature = "runtime-benchmarks", feature = "std"))]
-	// Constructs a message and signs it.
-	pub fn eth_sign(secret: &libsecp256k1::SecretKey, who: &T::AccountId) -> Eip712Signature {
-		let msg = keccak_256(&Self::eip712_signable_message(who));
-		let (sig, recovery_id) = libsecp256k1::sign(&libsecp256k1::Message::parse(&msg), secret);
-		let mut r = [0u8; 65];
-		r[0..64].copy_from_slice(&sig.serialize()[..]);
-		r[64] = recovery_id.serialize();
-		r
-	}
+		/// Stop an Airdrop.
+		///
+		/// Returns the amount of unclaimed funds from the airdrop upon success.
+		///
+		/// # Errors
+		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
+		/// * `NotAirdropCreator` - Signer of the origin is not the creator of the Airdrop
+		fn disable_airdrop(
+			origin_id: Self::AccountId,
+			airdrop_id: Self::AirdropId,
+		) -> Result<Self::Balance, DispatchError> {
+			let airdrop = Self::get_airdrop(&airdrop_id)?;
+			ensure!(airdrop.creator == origin_id, Error::<T>::NotAirdropCreator);
 
-	fn verify_eip712_signature(who: &T::AccountId, sig: &[u8; 65]) -> Option<H160> {
-		let msg = Self::eip712_signable_message(who);
-		let msg_hash = keccak_256(msg.as_slice());
+			let unclaimed_funds = Airdrops::<T>::try_mutate(airdrop_id, |airdrop| {
+				match airdrop.as_mut() {
+					Some(airdrop) => {
+						let at = T::Time::now();
+						let unclaimed_funds = airdrop.total_funds - airdrop.claimed_funds;
 
-		recover_signer(sig, &msg_hash)
-	}
+						// REVIEW: Checking each recipient fund to see if they have started
+						// claiming could prove to be expensive. Should we instead require that all
+						// funds be claimed for an airdrop to end?
+						// sets claimed funds equal to total funds so the airdrop can be pruned
+						airdrop.disabled = true;
+						airdrop.claimed_funds = airdrop.total_funds;
 
-	// Eip-712 message to be signed
-	fn eip712_signable_message(who: &T::AccountId) -> Vec<u8> {
-		let domain_separator = Self::evm_account_domain_separator();
-		let payload_hash = Self::evm_account_payload_hash(who);
+						Self::deposit_event(Event::AirdropEnded { airdrop_id, at });
 
-		let mut msg = b"\x19\x01".to_vec();
-		msg.extend_from_slice(&domain_separator);
-		msg.extend_from_slice(&payload_hash);
-		msg
-	}
+						Ok(unclaimed_funds)
+					},
+					None => Err(Error::<T>::AirdropDoesNotExist.into()),
+				}
+			});
 
-	fn evm_account_payload_hash(who: &T::AccountId) -> [u8; 32] {
-		let tx_type_hash = keccak256!("Transaction(bytes substrateAddress)");
-		let mut tx_msg = tx_type_hash.to_vec();
-		tx_msg.extend_from_slice(&keccak_256(&who.encode()));
-		keccak_256(tx_msg.as_slice())
-	}
+			Self::prune_airdrop(airdrop_id)?;
 
-	fn evm_account_domain_separator() -> [u8; 32] {
-		let domain_hash = keccak256!("EIP712Domain(string name,string version,uint256 chainId,bytes32 salt)");
-		let mut domain_seperator_msg = domain_hash.to_vec();
-		domain_seperator_msg.extend_from_slice(keccak256!("Kylin airdrop claim")); // name
-		domain_seperator_msg.extend_from_slice(keccak256!("1")); // version
-		domain_seperator_msg.extend_from_slice(&to_bytes(T::ChainId::get())); // chain id
-		domain_seperator_msg.extend_from_slice(frame_system::Pallet::<T>::block_hash(T::BlockNumber::zero()).as_ref()); // genesis block hash
-		keccak_256(domain_seperator_msg.as_slice())
-	}
+			unclaimed_funds
+		}
 
-	fn do_claim_default_evm_address(who: T::AccountId) -> Result<EthKYLAddress, DispatchError> {
-		// ensure account_id has not been mapped
-		ensure!(!EthKYLAddresses::<T>::contains_key(&who), Error::<T>::AccountIdHasMapped);
+		/// Claim a recipient reward from an Airdrop.
+		///
+		/// # Errors
+		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
+		/// * `AirdropIsNotEnabled` - The Airdrop has not been enabled
+		/// * `ArithmiticError` - Overflow while totaling claimed funds
+		/// * `RecipientNotFound` - No recipient associated with the `identity` could be found.
+		fn claim(
+			airdrop_id: Self::AirdropId,
+			identity: Self::Identity,
+			reward_account: Self::AccountId,
+		) -> DispatchResultWithPostInfo {
+			let airdrop_account = Self::get_airdrop_account_id(airdrop_id);
+			let (available_to_claim, recipient_fund) =
+				RecipientFunds::<T>::try_mutate(airdrop_id, identity, |fund| {
+					match fund.as_mut() {
+						Some(fund) => {
+							let claimable = Self::claimable(airdrop_id, fund)?;
+							let available_to_claim = claimable.saturating_sub(fund.claimed);
 
-		let eth_address = T::AddressMapping::get_or_create_evm_address(&who);
+							ensure!(
+								available_to_claim > T::Balance::zero(),
+								Error::<T>::NothingToClaim
+							);
 
-		Ok(eth_address)
-	}
-}
+							// Update Airdrop and fund status
+							fund.claimed = fund.claimed.saturating_add(available_to_claim);
 
-fn recover_signer(sig: &[u8; 65], msg_hash: &[u8; 32]) -> Option<H160> {
-	secp256k1_ecdsa_recover(sig, msg_hash)
-		.map(|pubkey| H160::from(H256::from_slice(&keccak_256(&pubkey))))
-		.ok()
-}
+							Ok((available_to_claim, *fund))
+						},
+						None => Err(Error::<T>::RecipientNotFound),
+					}
+				})?;
 
-// Creates a an EthKYLAddress from an AccountId by appending the bytes "evm:" to
-// the account_id and hashing it.
-fn account_to_default_evm_address(account_id: &impl Encode) -> EthKYLAddress {
-	let payload = (b"evm:", account_id);
-	EthKYLAddress::from_slice(&payload.using_encoded(blake2_256)[0..20])
-}
+			T::RecipientFundAsset::transfer(
+				&airdrop_account,
+				&reward_account,
+				available_to_claim,
+				false,
+			)?;
 
-pub struct EthKYLAddressMapping<T>(sp_std::marker::PhantomData<T>);
+			Airdrops::<T>::try_mutate(airdrop_id, |airdrop| match airdrop.as_mut() {
+				Some(airdrop) => {
+					airdrop.claimed_funds = airdrop
+						.claimed_funds
+						.safe_add(&available_to_claim)
+						.map_err(|_| Error::<T>::ArithmiticError)?;
+					Ok(())
+				},
+				None => Err(Error::<T>::AirdropDoesNotExist),
+			})?;
 
-impl<T: Config> AddressMapping<T::AccountId> for EthKYLAddressMapping<T>
-where
-	T::AccountId: IsType<AccountId32>,
-{
-	// Returns the AccountId used to generate the given EthKYLAddress.
-	fn get_account_id(address: &EthKYLAddress) -> T::AccountId {
-		if let Some(acc) = Accounts::<T>::get(address) {
-			acc
-		} else {
-			let mut data: [u8; 32] = [0u8; 32];
-			data[0..4].copy_from_slice(b"evm:");
-			data[4..24].copy_from_slice(&address[..]);
-			AccountId32::from(data).into()
+			if Self::prune_airdrop(airdrop_id)? {
+				Self::deposit_event(Event::AirdropEnded { airdrop_id, at: T::Time::now() })
+			}
+
+			if recipient_fund.funded_claim {
+				return Ok(Pays::No.into())
+			}
+
+			Ok(Pays::Yes.into())
 		}
 	}
 
-	// Returns the EthKYLAddress associated with a given AccountId or the
-	// underlying EthKYLAddress of the AccountId.
-	// Returns None if there is no EthKYLAddress associated with the AccountId
-	// and there is no underlying EthKYLAddress in the AccountId.
-	fn get_evm_address(account_id: &T::AccountId) -> Option<EthKYLAddress> {
-		// Return the EthKYLAddress if a mapping to account_id exists
-		EthKYLAddresses::<T>::get(account_id).or_else(|| {
-			let data: &[u8] = account_id.into_ref().as_ref();
-			// Return the underlying EVM address if it exists otherwise return None
-			if data.starts_with(b"evm:") {
-				Some(EthKYLAddress::from_slice(&data[4..24]))
+	/// Ensures the following:
+	/// * Only claim can be called via an unsigned transaction
+	/// * The Airdrop exists in the pallet's storage
+	/// * The Airdrop has been enabled / has started
+	/// * The provided proof is valid
+	/// * If an association has been created for the reward account, it matches the remote account
+	/// * The recipient has funds to claim
+	#[pallet::validate_unsigned]
+	impl<T: Config> ValidateUnsigned for Pallet<T> {
+		type Call = Call<T>;
+
+		fn validate_unsigned(_: TransactionSource, call: &Self::Call) -> TransactionValidity {
+			if let Call::claim { airdrop_id, reward_account, proof } = call {
+				// Validity Error if the airdrop does not exist
+				let airdrop_state = Self::get_airdrop_state(*airdrop_id).map_err(|_| {
+					Into::<TransactionValidityError>::into(InvalidTransaction::Custom(
+						ValidityError::NotAnAirdrop as u8,
+					))
+				})?;
+
+				// Validity Error if the airdrop has not started
+				if airdrop_state != AirdropState::Enabled {
+					return InvalidTransaction::Custom(ValidityError::NotClaimable as u8).into()
+				}
+
+				// Evaluate proof
+				let identity = Self::get_identity(proof.clone(), reward_account, T::Prefix::get())
+					.map_err(|_| {
+						Into::<TransactionValidityError>::into(InvalidTransaction::Custom(
+							ValidityError::InvalidProof as u8,
+						))
+					})?;
+
+				if let Some(associated_account) = Associations::<T>::get(airdrop_id, reward_account)
+				{
+					// Validity Error if the account is already associated to another
+					if associated_account != identity {
+						return InvalidTransaction::Custom(ValidityError::AlreadyAssociated as u8)
+							.into()
+					}
+				}
+
+				// Validity Error if there are no funds for this recipient
+				match RecipientFunds::<T>::get(airdrop_id, identity.clone()) {
+					None => InvalidTransaction::Custom(ValidityError::NoFunds as u8).into(),
+					Some(fund) if fund.total.is_zero() =>
+						InvalidTransaction::Custom(ValidityError::NoFunds as u8).into(),
+					Some(_) => ValidTransaction::with_tag_prefix("AirdropAssociationCheck")
+						.and_provides(identity)
+						.build(),
+				}
 			} else {
-				None
+				// Only allow unsigned transactions for `claim`
+				Err(InvalidTransaction::Call.into())
 			}
-		})
-	}
-
-	// Returns the ETH address associated with an account ID and generates an
-	// account mapping if no association exists.
-	fn get_or_create_evm_address(account_id: &T::AccountId) -> EthKYLAddress {
-		Self::get_evm_address(account_id).unwrap_or_else(|| {
-			let addr = account_to_default_evm_address(account_id);
-
-			// create reverse mapping
-			Accounts::<T>::insert(&addr, &account_id);
-			EthKYLAddresses::<T>::insert(&account_id, &addr);
-
-			Pallet::<T>::deposit_event(Event::ClaimAccount {
-				account_id: account_id.clone(),
-				evm_address: addr,
-			});
-
-			addr
-		})
-	}
-
-	// Returns the default EVM address associated with an account ID.
-	fn get_default_evm_address(account_id: &T::AccountId) -> EthKYLAddress {
-		account_to_default_evm_address(account_id)
-	}
-
-	// Returns true if a given AccountId is associated with a given EthKYLAddress
-	// and false if is not.
-	fn is_linked(account_id: &T::AccountId, evm: &EthKYLAddress) -> bool {
-		Self::get_evm_address(account_id).as_ref() == Some(evm)
-			|| &account_to_default_evm_address(account_id.into_ref()) == evm
-	}
-}
-
-pub struct CallKillAccount<T>(PhantomData<T>);
-impl<T: Config> OnKilledAccount<T::AccountId> for CallKillAccount<T> {
-	fn on_killed_account(who: &T::AccountId) {
-		// remove mapping created by `claim_account` or `get_or_create_evm_address`
-		if let Some(evm_addr) = Pallet::<T>::evm_addresses(who) {
-			Accounts::<T>::remove(evm_addr);
-			EthKYLAddresses::<T>::remove(who);
-		}
-	}
-}
-
-impl<T: Config> StaticLookup for Pallet<T> {
-	type Source = MultiAddress<T::AccountId, AccountIndex>;
-	type Target = T::AccountId;
-
-	fn lookup(a: Self::Source) -> Result<Self::Target, LookupError> {
-		match a {
-			MultiAddress::Address20(i) => Ok(T::AddressMapping::get_account_id(&EthKYLAddress::from_slice(&i))),
-			_ => Err(LookupError),
 		}
 	}
 
-	fn unlookup(a: Self::Target) -> Self::Source {
-		MultiAddress::Id(a)
-	}
-}
-
-impl<T: Config> EVMAccountsManager<T::AccountId> for Pallet<T> {
-	/// Returns the AccountId used to generate the given EthKYLAddress.
-	fn get_account_id(address: &EthKYLAddress) -> T::AccountId {
-		T::AddressMapping::get_account_id(address)
-	}
-
-	/// Returns the EthKYLAddress associated with a given AccountId or the underlying EthKYLAddress of the
-	/// AccountId.
-	fn get_evm_address(account_id: &T::AccountId) -> Option<EthKYLAddress> {
-		T::AddressMapping::get_evm_address(account_id)
-	}
-
-	/// Claim account mapping between AccountId and a generated EthKYLAddress based off of the
-	/// AccountId.
-	fn claim_default_evm_address(account_id: &T::AccountId) -> Result<EthKYLAddress, DispatchError> {
-		Self::do_claim_default_evm_address(account_id.clone())
+	pub enum ValidityError {
+		InvalidProof,
+		AlreadyAssociated,
+		NoFunds,
+		NotClaimable,
+		NotAnAirdrop,
 	}
 }
