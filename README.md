@@ -106,8 +106,8 @@ The `parachain-launch` utility allows you to launch your network seamlessly by p
     yarn global add @open-web3/parachain-launch
 
     parachain-launch --version
-```
-  
+    ```
+
 - #### Define the configuration file
 
   Once we have the `parachain-launch` utility installed, we need to define the configuration file.
@@ -128,12 +128,12 @@ The `parachain-launch` utility allows you to launch your network seamlessly by p
 
 - #### Launch the network
 
-```bash
-cd scripts/parachain-launch/
-parachain-launch generate --config=./config.yml -y
-cd output
-docker-compose up -d --build
-```
+    ```bash
+    cd scripts/parachain-launch/
+    parachain-launch generate --config=./config.yml -y
+    cd output
+    docker-compose up -d --build
+    ```
 
 ### 2b) Launch manually
 
