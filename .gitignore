@@ -29,3 +29,11 @@ localtest.txt
 cumulus_relay/
 kylin-collator-0.9.12*
 playground/
+para-2000-genesis
+para-2000-genesis-local
+para-2000-wasm
+para-wasm-local
+rococo-custom-2-raw.json
+rococo-local-parachain-2000-raw.json
+startnode.sh
+upgraded-chain.json
