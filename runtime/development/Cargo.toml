@@ -105,6 +105,7 @@ kylin-oracle = { package = 'kylin-oracle', path = '../../pallets/kylin-oracle', 
 runtime-common = { path = "../common", default-features = false }
 kylin-feed = { version = "4.0.0-dev", default-features = false, path = "../../pallets/kylin-feed" }
 kylin-market = { version = "4.0.0-dev", default-features = false, path = "../../pallets/kylin-market" }
+kylin-airdrop = { package = 'kylin-airdrop', path = '../../pallets/kylin-airdrop', default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.3.4"
@@ -203,6 +204,7 @@ std = [
 	'kylin-oracle/std',
 	'kylin-feed/std',
 	'kylin-market/std',
+	"kylin-airdrop/std",
 ]
 
 # A feature that should be enabled when the runtime should be build for on-chain

@@ -42,6 +42,8 @@ sp-io = { default-features = false, git = "https://github.com/paritytech/substra
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25" }
 
+kylin-support = { path = "../kylin-support", default-features = false }
+
 # SCALE
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",

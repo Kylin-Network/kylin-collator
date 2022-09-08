@@ -1,6 +1,6 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use kylin_support::types::{
-	CosmosEcdsaSignature, CosmosPublicKey, EcdsaSignature, EthereumAddress,
+	EcdsaSignature, EthereumAddress,
 };
 use scale_info::TypeInfo;
 use sp_runtime::{MultiSignature, RuntimeDebug};
@@ -51,13 +51,13 @@ pub enum AirdropState {
 /// Proof that a remote account owns a local recipient account.
 #[derive(Clone, RuntimeDebug, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub enum Proof<AccountId> {
-	ethereum_address(String),
-	ethereum_message(String),
+	RelayChain(AccountId, MultiSignature),
+	Ethereum(EcdsaSignature),
 }
 
 /// Remote account that is associated with a local account.
 #[derive(Hash, Clone, PartialEq, Eq, RuntimeDebug, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub enum Identity<AccountId> {
-	ethereum_address(String),
-	ethereum_message(String),
+	RelayChain(AccountId),
+	Ethereum(EthereumAddress),
 }

@@ -557,18 +557,6 @@ pub trait Airdropper {
 					);
 					Ok(Identity::RelayChain(relay_account))
 				},
-				Proof::Cosmos(cosmos_address, cosmos_proof) => {
-					let reward_account_encoded =
-						reward_account.using_encoded(signature_verification::get_encoded_vec);
-					let cosmos_address = signature_verification::cosmos_recover(
-						prefix,
-						&reward_account_encoded,
-						cosmos_address,
-						&cosmos_proof,
-					)
-					.map_err(|_| Error::<T>::InvalidProof)?;
-					Result::<_, DispatchError>::Ok(Identity::Cosmos(cosmos_address))
-				},
 			}?;
 			Ok(identity)
 		}
