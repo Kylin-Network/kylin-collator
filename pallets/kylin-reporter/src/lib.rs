@@ -209,6 +209,58 @@ pub mod pallet {
         }
 
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+        pub fn feed_para_evt(
+            origin: OriginFor<T>,
+            para_id: ParaId,
+        ) -> DispatchResult {
+            let remark = pichiu::Call::KylinOraclePallet(kylin_oracle::Call::<pichiu::Runtime>::xcm_evt {});
+            match T::XcmSender::send_xcm(
+                (Parent, Junction::Parachain(para_id.into())),
+                Xcm(vec![Transact {
+                    origin_type: OriginKind::Native,
+                    require_weight_at_most: 1_000_000_000_000_000,
+                    call: remark.encode().into(),
+                }]),
+            ) {
+                Ok(()) => Self::deposit_event(Event::FeedDataSent(
+                    para_id,
+                )),
+                Err(e) => Self::deposit_event(Event::FeedDataError(
+                    e,
+                    para_id,
+                )),
+            }
+
+            Ok(())
+        }
+
+        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+        pub fn feed_para_evt1(
+            origin: OriginFor<T>,
+            para_id: ParaId,
+        ) -> DispatchResult {
+            let remark = pichiu::Call::KylinOraclePallet(kylin_oracle::Call::<pichiu::Runtime>::xcm_evt {});
+            match T::XcmSender::send_xcm(
+                (Parent, Junction::Parachain(para_id.into())),
+                Xcm(vec![Transact {
+                    origin_type: OriginKind::SovereignAccount,
+                    require_weight_at_most: 1_000_000_000_000_000,
+                    call: remark.encode().into(),
+                }]),
+            ) {
+                Ok(()) => Self::deposit_event(Event::FeedDataSent(
+                    para_id,
+                )),
+                Err(e) => Self::deposit_event(Event::FeedDataError(
+                    e,
+                    para_id,
+                )),
+            }
+
+            Ok(())
+        }
+
+        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
         pub fn submit_data(
             origin: OriginFor<T>,
             para_id: ParaId,
@@ -454,29 +506,26 @@ where T::AccountId: AsRef<[u8]>
     }
 
     fn feed_data_to_parachain(para_id: ParaId, values: Vec<(T::OracleKey, T::OracleValue)>) -> DispatchResult {
-            match T::XcmSender::send_xcm(
-                (
-                    1,
-                    Junction::Parachain(para_id.into()),
-                ),
-                Xcm(vec![Transact {
-                    origin_type: OriginKind::Native,
-                    require_weight_at_most: 1_000,
-                    call: <T as Config>::Call::from(Call::<T>::xcm_feed_data {
-                        values: values.clone(),
-                    })
-                    .encode()
-                    .into(),
-                }]),
-            ) {
-                Ok(()) => Self::deposit_event(Event::FeedDataSent(
-                    para_id,
-                )),
-                Err(e) => Self::deposit_event(Event::FeedDataError(
-                    e,
-                    para_id,
-                )),
-            }
+        let remark = pichiu::Call::KylinOraclePallet(kylin_oracle::Call::<pichiu::Runtime>::xcm_evt {});
+        match T::XcmSender::send_xcm(
+            (
+                1,
+                Junction::Parachain(para_id.into()),
+            ),
+            Xcm(vec![Transact {
+                origin_type: OriginKind::Native,
+                require_weight_at_most: 1_000,
+                call: remark.encode().into(),
+            }]),
+        ) {
+            Ok(()) => Self::deposit_event(Event::FeedDataSent(
+                para_id,
+            )),
+            Err(e) => Self::deposit_event(Event::FeedDataError(
+                e,
+                para_id,
+            )),
+        }
 
         Ok(())
     }
