@@ -85,7 +85,7 @@ use xcm_builder::{
 	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, AllowUnpaidExecutionFrom
 };
 
-use kylin_oracle::DefaultCombineData;
+//use kylin_oracle::DefaultCombineData;
 
 /// common types for the runtime.
 pub use runtime_common::*;
@@ -506,13 +506,14 @@ match_types! {
 	};
 }
 
-pub type Barrier = (
-	TakeWeightCredit,
-	AllowAnyPaidExecutionFrom<Everything>,
-	AllowUnpaidExecutionFrom<ParentOrParentsExecutivePlurality>,
-    // ^^^ Parent and its exec plurality get free execution
-    AllowUnpaidExecutionFrom<SpecParachain>,
-);
+// pub type Barrier = (
+// 	TakeWeightCredit,
+// 	AllowAnyPaidExecutionFrom<Everything>,
+// 	AllowUnpaidExecutionFrom<ParentOrParentsExecutivePlurality>,
+//     // ^^^ Parent and its exec plurality get free execution
+//     AllowUnpaidExecutionFrom<SpecParachain>,
+// );
+pub type Barrier = AllowUnpaidExecutionFrom<Everything>;
 
 pub struct AllowAnyPaidExecutionFrom<T>(PhantomData<T>);
 impl<T: Contains<MultiLocation>> ShouldExecute for AllowAnyPaidExecutionFrom<T> {
@@ -613,10 +614,10 @@ impl pallet_xcm::Config for Runtime {
 	type SendXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
-	type XcmExecuteFilter = Everything;
+	type XcmExecuteFilter = Nothing;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type XcmTeleportFilter = Everything;
-	type XcmReserveTransferFilter = frame_support::traits::Nothing;
+	type XcmTeleportFilter = Nothing;
+	type XcmReserveTransferFilter = Nothing;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Origin = Origin;
@@ -647,23 +648,15 @@ impl cumulus_pallet_dmp_queue::Config for Runtime {
 	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
 }
 
-impl kylin_oracle::Config for Runtime {
+impl kylin_reporter::Config for Runtime {
 	type Event = Event;
-	type AuthorityId = kylin_oracle::crypto::TestAuthId;
+	type AuthorityId = kylin_reporter::crypto::TestAuthId;
 	type Call = Call;
 	type Origin = Origin;
 	type XcmSender = XcmRouter;
-	type UnsignedPriority = UnsignedPriority;
-	type UnixTime = Timestamp;
-	type WeightInfo = kylin_oracle::weights::SubstrateWeight<Runtime>;
-	type EstimateCallFee = TransactionPayment;
+	type WeightInfo = kylin_reporter::weights::SubstrateWeight<Runtime>;
 	type Currency = Balances;
-
-	type CombineData = DefaultCombineData<Self, ConstU32<1>, ConstU128<600>>;
-	type OracleKey = Vec<u8>;
-	type OracleValue = i64;
 	type Members = OracleProvider;
-	type MaxHasDispatchedSize = ConstU32<100>;
 }
 
 parameter_types! {
@@ -1237,7 +1230,7 @@ construct_runtime! {
 
 		// Kylin Pallets
 		OracleProvider: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>} = 54,
-		KylinOraclePallet: kylin_oracle::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 55,
+		KylinReporterPallet: kylin_reporter::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 55,
 
 		// orml
 		OrmlXcm: orml_xcm::{Pallet, Call, Event<T>} = 70,

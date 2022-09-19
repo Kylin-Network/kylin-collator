@@ -94,7 +94,7 @@ orml-xcm-support = { path = "../../pallets/orml/xcm-support", default-features =
 orml-unknown-tokens = { path = "../../pallets/orml/unknown-tokens", default-features = false }
 
 # Local Dependencies
-kylin-oracle = { package = 'kylin-oracle', path = '../../pallets/kylin-oracle', default-features = false }
+kylin-reporter = { package = 'kylin-reporter', path = '../../pallets/kylin-reporter', default-features = false }
 runtime-common = { path = "../common", default-features = false }
 
 kylin-democracy = { package = 'kylin-democracy', path = '../../pallets/kylin-democracy', default-features = false }
@@ -124,7 +124,7 @@ runtime-benchmarks = [
 	'pallet-membership/runtime-benchmarks',
 	'pallet-timestamp/runtime-benchmarks',
 	'pallet-xcm/runtime-benchmarks',
-	'kylin-oracle/runtime-benchmarks',
+	'kylin-reporter/runtime-benchmarks',
 	'xcm-builder/runtime-benchmarks',
 	'xcm/runtime-benchmarks',
 ]
@@ -197,7 +197,7 @@ std = [
 	'orml-xcm-support/std',
 	'orml-unknown-tokens/std',
 
-	'kylin-oracle/std',
+	'kylin-reporter/std',
 	'kylin-feed/std',
 	'kylin-market/std',
 ]
