@@ -8,7 +8,7 @@ use codec::{Decode, Encode};
 use cumulus_pallet_xcm::{ensure_sibling_para, Origin as CumulusOrigin};
 use cumulus_primitives_core::ParaId;
 use frame_support::{
-    dispatch::DispatchResultWithPostInfo,
+    dispatch::{GetDispatchInfo, DispatchResultWithPostInfo},
     log,
     pallet_prelude::*,
     traits::{Currency, EstimateCallFee, UnixTime, ChangeMembers, Get, SortedMembers},
@@ -102,16 +102,6 @@ pub mod crypto {
 pub mod pallet {
     use super::*;
 
-    //pub(crate) type MomentOf<T> = <<T as Config>::Time as Time>::Moment;
-	pub(crate) type TimestampedValueOf<T> = TimestampedValue<<T as Config>::OracleValue, u128>;
-
-	#[derive(Encode, Decode, RuntimeDebug, Eq, PartialEq, Clone, Copy, Ord, PartialOrd, TypeInfo, MaxEncodedLen)]
-	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-	pub struct TimestampedValue<Value, Moment> {
-		pub value: Value,
-		pub timestamp: Moment,
-	}
-
     #[pallet::config]
     pub trait Config: CreateSignedTransaction<Call<Self>> + frame_system::Config + pallet_balances::Config
     where <Self as frame_system::Config>::AccountId: AsRef<[u8]> + ToHex
@@ -134,12 +124,6 @@ pub mod pallet {
         type WeightInfo: WeightInfo;
 
         type Currency: frame_support::traits::Currency<Self::AccountId>;
-
-        /// The data key type
-		type OracleKey: Parameter + Member + Eq + Into<Vec<u8>>;
-
-		/// The data value type
-		type OracleValue: Parameter + Member + Ord + From<i64>;
 
         /// Oracle operators.
 		type Members: SortedMembers<Self::AccountId>;
@@ -214,21 +198,21 @@ pub mod pallet {
             para_id: ParaId,
         ) -> DispatchResult {
             let remark = pichiu::Call::KylinOraclePallet(kylin_oracle::Call::<pichiu::Runtime>::xcm_evt {});
+            let require_weight = remark.get_dispatch_info().weight + 1_000;
             match T::XcmSender::send_xcm(
                 (Parent, Junction::Parachain(para_id.into())),
                 Xcm(vec![Transact {
                     origin_type: OriginKind::Native,
-                    require_weight_at_most: 1_000_000_000_000_000,
+                    require_weight_at_most: require_weight,
                     call: remark.encode().into(),
                 }]),
             ) {
                 Ok(()) => Self::deposit_event(Event::FeedDataSent(
                     para_id,
                 )),
-                Err(e) => Self::deposit_event(Event::FeedDataError(
-                    e,
-                    para_id,
-                )),
+                Err(e) => {
+                    Self::deposit_event(Event::FeedDataError(e, para_id,))
+                },
             }
 
             Ok(())
@@ -239,22 +223,21 @@ pub mod pallet {
             origin: OriginFor<T>,
             para_id: ParaId,
         ) -> DispatchResult {
+            //let max_block_weight = T::BlockWeights::get().max_block;
             let remark = pichiu::Call::KylinOraclePallet(kylin_oracle::Call::<pichiu::Runtime>::xcm_evt {});
+            let require_weight = remark.get_dispatch_info().weight + 1_000;
             match T::XcmSender::send_xcm(
                 (Parent, Junction::Parachain(para_id.into())),
                 Xcm(vec![Transact {
                     origin_type: OriginKind::SovereignAccount,
-                    require_weight_at_most: 1_000_000_000_000_000,
+                    require_weight_at_most: require_weight,
                     call: remark.encode().into(),
                 }]),
             ) {
-                Ok(()) => Self::deposit_event(Event::FeedDataSent(
-                    para_id,
-                )),
-                Err(e) => Self::deposit_event(Event::FeedDataError(
-                    e,
-                    para_id,
-                )),
+                Ok(()) => Self::deposit_event(Event::FeedDataSent(para_id,)),
+                Err(e) => {
+                    Self::deposit_event(Event::FeedDataError(e, para_id,))
+                },
             }
 
             Ok(())
@@ -264,7 +247,7 @@ pub mod pallet {
         pub fn submit_data(
             origin: OriginFor<T>,
             para_id: ParaId,
-            values: Vec<(T::OracleKey, T::OracleValue)>,
+            values: Vec<(Vec<u8>, i64)>,
         ) -> DispatchResult {
             Self::feed_data_to_parachain(para_id, values)
         }
@@ -272,12 +255,12 @@ pub mod pallet {
         #[pallet::weight(<T as Config>::WeightInfo::submit_api())]
         pub fn submit_api(
             origin: OriginFor<T>,
-            key: T::OracleKey,
+            key: Vec<u8>,
             url: Vec<u8>,
         ) -> DispatchResultWithPostInfo {
             let submitter = ensure_signed(origin.clone())?;
             // ensure submitter is authorized
-            ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
+            //ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
 
             let block_number = <system::Pallet<T>>::block_number();
             let feed = ApiFeed {
@@ -293,11 +276,11 @@ pub mod pallet {
         #[pallet::weight(<T as Config>::WeightInfo::clear_api())]
         pub fn clear_api(
             origin: OriginFor<T>,
-            key: T::OracleKey,
+            key: Vec<u8>,
         ) -> DispatchResult {
             let submitter = ensure_signed(origin.clone())?;
             // ensure submitter is authorized
-            ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
+            //ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
 
             let feed_exists = ApiFeeds::<T>::contains_key(&submitter, &key);
             if feed_exists {
@@ -330,13 +313,13 @@ pub mod pallet {
         /// New feed is submitted.
 		NewFeed {
 			sender: T::AccountId,
-            key: T::OracleKey,
+            key: Vec<u8>,
             feed: ApiFeed<T::BlockNumber>,
 		},
         /// Feed is removed.
 		FeedRemoved {
 			sender: T::AccountId,
-            key: T::OracleKey,
+            key: Vec<u8>,
             feed: ApiFeed<T::BlockNumber>,
 		},
     }
@@ -366,7 +349,7 @@ pub mod pallet {
     #[pallet::storage]
 	#[pallet::getter(fn api_feeds)]
 	pub type ApiFeeds<T: Config> =
-		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, T::OracleKey, ApiFeed<T::BlockNumber>>;
+		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, Vec<u8>, ApiFeed<T::BlockNumber>>;
 
 }
 
@@ -404,30 +387,27 @@ where T::AccountId: AsRef<[u8]>
             )?;
         }
 
-        let mut values = Vec::<(T::OracleKey, T::OracleValue)>::new();
+        let mut values = Vec::<(Vec<u8>, i64)>::new();
         for (acc, key, val) in <ApiFeeds<T> as IterableStorageDoubleMap<_, _, _>>::iter() {
             // let mut response :Vec<u8>;
             if val.url.is_some() {
                 let response = Self::fetch_http_get_result(val.url.clone().unwrap())
                     .unwrap_or("Failed fetch data".as_bytes().to_vec());
 
-                let oval :T::OracleValue;
-                match str::from_utf8(&key.clone().into()) {
+                match str::from_utf8(&key) {
                     Ok("CCApi") => {
                         let price: CryptoComparePrice = serde_json::from_slice(&response)
                             .expect("Response JSON was not well-formatted");
                         // We only store int, so every float will be convert to int with 6 decimals pad
-                        let pval = (price.usdt * 1000000.0) as i64;
-                        oval = pval.into();
-                        values.push((key.clone(), oval));
+                        let pval :i64 = (price.usdt * 1000000.0) as i64;
+                        values.push((key.clone(), pval));
                     },
                     Ok("CWApi") => {
                         let price: CryptoComparePrice = serde_json::from_slice(&response)
                             .expect("Response JSON was not well-formatted");
                         // We only store int, so every float will be convert to int with 6 decimals pad
-                        let pval = (price.usdt * 1000000.0) as i64;
-                        oval = pval.into();
-                        values.push((key.clone(), oval));
+                        let pval :i64 = (price.usdt * 1000000.0) as i64;
+                        values.push((key.clone(), pval));
                     },
                     _ => (),
                 }
@@ -505,8 +485,13 @@ where T::AccountId: AsRef<[u8]>
         Ok(body_str.clone().as_bytes().to_vec())
     }
 
-    fn feed_data_to_parachain(para_id: ParaId, values: Vec<(T::OracleKey, T::OracleValue)>) -> DispatchResult {
-        let remark = pichiu::Call::KylinOraclePallet(kylin_oracle::Call::<pichiu::Runtime>::xcm_evt {});
+    fn feed_data_to_parachain(para_id: ParaId, values: Vec<(Vec<u8>, i64)>) -> DispatchResult {
+        let remark = pichiu::Call::KylinOraclePallet(
+            kylin_oracle::Call::<pichiu::Runtime>::xcm_feed_data {
+                values,
+            }
+        );
+        let require_weight = remark.get_dispatch_info().weight + 1_000;
         match T::XcmSender::send_xcm(
             (
                 1,
@@ -514,7 +499,7 @@ where T::AccountId: AsRef<[u8]>
             ),
             Xcm(vec![Transact {
                 origin_type: OriginKind::Native,
-                require_weight_at_most: 1_000,
+                require_weight_at_most: require_weight,
                 call: remark.encode().into(),
             }]),
         ) {
