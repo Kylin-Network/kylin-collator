@@ -242,15 +242,6 @@ pub mod pallet {
     where
         T::AccountId: AsRef<[u8]> + ToHex + Decode
     {
-        #[pallet::weight(<T as Config>::WeightInfo::feed_data(values.len() as u32))]
-        pub fn feed_data_via_xcm(
-            origin: OriginFor<T>,
-            para_id: ParaId,
-            values: Vec<(T::OracleKey, T::OracleValue)>,
-        ) -> DispatchResult {
-            Self::feed_data_to_parachain(para_id, values)
-        }
-
         /// Feed the external value.
 		///
 		/// Require authorized operator.
@@ -293,15 +284,14 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
             let para_id =
                 ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
-			let feeder = ensure_signed(origin.clone())?;
 
-            // ensure feeder is authorized
-            ensure!(T::Members::contains(&feeder), Error::<T>::NoPermission);
-            // ensure account hasn't dispatched an updated yet
-            ensure!(
-                HasDispatched::<T>::mutate(|set| set.insert(feeder.clone())),
-                Error::<T>::AlreadyFeeded
-            );
+            // // ensure feeder is authorized
+            // ensure!(T::Members::contains(&feeder), Error::<T>::NoPermission);
+            // // ensure account hasn't dispatched an updated yet
+            // ensure!(
+            //     HasDispatched::<T>::mutate(|set| set.insert(feeder.clone())),
+            //     Error::<T>::AlreadyFeeded
+            // );
 
             let now = T::UnixTime::now().as_millis();
             for (key, value) in &values {
@@ -317,7 +307,30 @@ pub mod pallet {
                 }
             }
 
-            Self::deposit_event(Event::NewParaFeedData {para_id, sender: feeder, values });
+            Self::deposit_event(Event::NewParaFeedData {para_id, values });
+			Ok(Pays::No.into())
+		}
+
+        //#[pallet::weight(T::BlockWeights::get().max_block)]
+        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+		pub fn xcm_evt(
+			origin: OriginFor<T>,
+		) -> DispatchResultWithPostInfo {
+            let para_id =
+                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
+
+            Self::deposit_event(Event::NewParaEvt {para_id });
+			Ok(Pays::No.into())
+		}
+
+        //#[pallet::weight(T::BlockWeights::get().max_block)]
+        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+		pub fn xcm_evt1(
+			origin: OriginFor<T>,
+		) -> DispatchResultWithPostInfo {
+            let feeder = ensure_signed(origin.clone())?;
+
+            Self::deposit_event(Event::NewParaEvt1 {sender: feeder });
 			Ok(Pays::No.into())
 		}
 
@@ -361,26 +374,6 @@ pub mod pallet {
                 Err(DispatchError::CannotLookup)
             }
         }
-
-        /// Set the Oracle mode.
-		///
-		/// 0: Oracle mode; 1: Reporter mode, need para_id in Reporter mode
-        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-        pub fn set_mode(
-            origin: OriginFor<T>,
-            mode: u8,
-            para_id: Option<ParaId>,
-        ) -> DispatchResult {
-            if mode != 0u8 {
-                let para_id = para_id.ok_or(
-                    DispatchError::Other("In Reporter mode must have Parachain ID for kylin oracle!")
-                )?;
-                <KylinParaId<T>>::put(para_id);
-            }
-            
-            <OracleMode<T>>::put(mode);
-            Ok(())
-        }
         
     }
 
@@ -407,8 +400,13 @@ pub mod pallet {
         /// New feed data is submitted.
 		NewParaFeedData {
             para_id: ParaId,
-			sender: T::AccountId,
 			values: Vec<(T::OracleKey, T::OracleValue)>,
+		},
+        NewParaEvt {
+            para_id: ParaId,
+		},
+        NewParaEvt1 {
+            sender: T::AccountId,
 		},
         /// New feed is submitted.
 		NewApiFeed {
@@ -450,19 +448,6 @@ pub mod pallet {
 	#[pallet::getter(fn api_feeds)]
 	pub type ApiFeeds<T: Config> =
 		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, T::OracleKey, ApiFeed<T::BlockNumber>>;
-
-    #[pallet::storage]
-    #[pallet::getter(fn get_kylin_id)]
-    pub(super) type KylinParaId<T: Config> = StorageValue<_, ParaId, OptionQuery>;
-
-    #[pallet::type_value]
-    pub(super) fn DefaultOracleMode() -> u8 {
-        0.into() // 0: Oracle mode; 1: Reporter mode
-    }
-
-    #[pallet::storage]
-    #[pallet::getter(fn get_oracle_mode)]
-    pub(super) type OracleMode<T: Config> = StorageValue<_, u8, ValueQuery, DefaultOracleMode>;
 
     /// Raw values for each oracle operators
 	#[pallet::storage]
@@ -622,61 +607,16 @@ where T::AccountId: AsRef<[u8]>
         }
 
         if values.iter().count() > 0 {
-            // feed data on chain
-            // 0: Oracle mode; 1: Reporter mode
-            if <OracleMode<T>>::get() == 0 {
-                let results = signer.send_signed_transaction(|_account| Call::feed_data {
-                    values: values.clone(),
-                });
-                for (acc, res) in &results {
-                    match res {
-                        Ok(()) => log::info!("[{:?}] Submitted data", acc.id),
-                        Err(e) => log::error!("[{:?}] Failed to submit transaction: {:?}", acc.id, e),
-                    }
-                }
-            } else {
-                if let Some(para_id) = <KylinParaId<T>>::get() {
-                    let results = signer.send_signed_transaction(|_account| Call::feed_data_via_xcm {
-                        para_id: para_id,
-                        values: values.clone(),
-                    });
-                    for (acc, res) in &results {
-                        match res {
-                            Ok(()) => log::info!("[{:?}] Submitted data", acc.id),
-                            Err(e) => log::error!("[{:?}] Failed to submit transaction: {:?}", acc.id, e),
-                        }
-                    }
+            let results = signer.send_signed_transaction(|_account| Call::feed_data {
+                values: values.clone(),
+            });
+            for (acc, res) in &results {
+                match res {
+                    Ok(()) => log::info!("[{:?}] Submitted data", acc.id),
+                    Err(e) => log::error!("[{:?}] Failed to submit transaction: {:?}", acc.id, e),
                 }
             }
         }
-
-        Ok(())
-    }
-
-    fn feed_data_to_parachain(para_id: ParaId, values: Vec<(T::OracleKey, T::OracleValue)>) -> DispatchResult {
-            match T::XcmSender::send_xcm(
-                (
-                    1,
-                    Junction::Parachain(para_id.into()),
-                ),
-                Xcm(vec![Transact {
-                    origin_type: OriginKind::Native,
-                    require_weight_at_most: 1_000,
-                    call: <T as Config>::Call::from(Call::<T>::xcm_feed_data {
-                        values: values.clone(),
-                    })
-                    .encode()
-                    .into(),
-                }]),
-            ) {
-                Ok(()) => Self::deposit_event(Event::FeedDataSent(
-                    para_id,
-                )),
-                Err(e) => Self::deposit_event(Event::FeedDataError(
-                    e,
-                    para_id,
-                )),
-            }
 
         Ok(())
     }

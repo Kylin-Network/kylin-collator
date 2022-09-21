@@ -73,7 +73,8 @@ use parachains_common::{
 	AssetId,
 };
 
-use xcm_builder::{AsPrefixedGeneralIndex, ConvertedConcreteAssetId, FungiblesAdapter};
+use xcm_builder::{AsPrefixedGeneralIndex, ConvertedConcreteAssetId, FungiblesAdapter,
+				AllowUnpaidExecutionFrom, };
 use xcm_executor::{
 	traits::{JustTry, ShouldExecute},
 	XcmExecutor,
@@ -542,11 +543,12 @@ match_types! {
 	};
 }
 
-pub type Barrier = (
-	TakeWeightCredit,
-	AllowAnyPaidExecutionFrom<Everything>,
-	// AllowUnpaidExecutionFrom<IsInVec<AllowUnpaidFrom>>,	// <- Parent gets free execution
-);
+// pub type Barrier = (
+// 	TakeWeightCredit,
+// 	AllowAnyPaidExecutionFrom<Everything>,
+// 	// AllowUnpaidExecutionFrom<IsInVec<AllowUnpaidFrom>>,	// <- Parent gets free execution
+// );
+pub type Barrier = AllowUnpaidExecutionFrom<Everything>;
 
 pub struct AllowAnyPaidExecutionFrom<T>(PhantomData<T>);
 impl<T: Contains<MultiLocation>> ShouldExecute for AllowAnyPaidExecutionFrom<T> {

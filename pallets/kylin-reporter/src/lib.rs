@@ -224,7 +224,7 @@ pub mod pallet {
             para_id: ParaId,
         ) -> DispatchResult {
             //let max_block_weight = T::BlockWeights::get().max_block;
-            let remark = pichiu::Call::KylinOraclePallet(kylin_oracle::Call::<pichiu::Runtime>::xcm_evt {});
+            let remark = pichiu::Call::KylinOraclePallet(kylin_oracle::Call::<pichiu::Runtime>::xcm_evt1 {});
             let require_weight = remark.get_dispatch_info().weight + 1_000;
             match T::XcmSender::send_xcm(
                 (Parent, Junction::Parachain(para_id.into())),
