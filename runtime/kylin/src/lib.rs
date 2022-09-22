@@ -389,6 +389,7 @@ parameter_types! {
 }
 
 impl pallet_transaction_payment::Config for Runtime {
+	type Event = Event;
 	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
 	type WeightToFee = IdentityFee<Balance>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
@@ -536,7 +537,7 @@ parameter_types! {
 	pub AcaPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(2000), GeneralKey([0, 128].to_vec())),
+			X2(Parachain(2000), GeneralKey([0, 128].to_vec().try_into().unwrap())),
 		).into(),
 		// ACA:KYL = 1:1_000_000  // ~80_000_000_000 amount
 		native_token_per_second() / 1_000_000
@@ -544,7 +545,7 @@ parameter_types! {
 	pub AusdPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(2000), GeneralKey([0, 129].to_vec())),
+			X2(Parachain(2000), GeneralKey([0, 129].to_vec().try_into().unwrap())),
 		).into(),
 		// AUSD:KYL = 1:1_000_000
 		native_token_per_second() / 1_000_000
@@ -552,13 +553,13 @@ parameter_types! {
 	pub LdotPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(2000), GeneralKey([0, 131].to_vec())),
+			X2(Parachain(2000), GeneralKey([0, 131].to_vec().try_into().unwrap())),
 		).into(),
 		// LDOT:KYL = 1:1_000_000
 		native_token_per_second() / 1_000_000
 	);
 	pub NativeTokenPerSecond: (AssetId, u128) = (
-		MultiLocation::new(0, X1(GeneralKey("KYL".into()))).into(),
+		MultiLocation::new(0, X1(GeneralKey(b"KYL".to_vec().try_into().unwrap()))).into(),
 		native_token_per_second()
 	);
 }
@@ -960,7 +961,7 @@ impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 				1,
 				X2(
 					Parachain(ParachainInfo::parachain_id().into()),
-					GeneralKey("KYL".into()),
+					GeneralKey(b"KYL".to_vec().try_into().unwrap()),
 				),
 			)),
 			// Kusama statemine paraid 1000
@@ -968,31 +969,31 @@ impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 			// acala paraid 2000
 			CurrencyId::ACA => Some(MultiLocation::new(
 				1,
-				X2(Parachain(2000), GeneralKey([0, 0].to_vec())),
+				X2(Parachain(2000), GeneralKey([0, 0].to_vec().try_into().unwrap())),
 			)),
 			CurrencyId::AUSD => Some(MultiLocation::new(
 				1,
-				X2(Parachain(2000), GeneralKey([0, 1].to_vec())),
+				X2(Parachain(2000), GeneralKey([0, 1].to_vec().try_into().unwrap())),
 			)),
 			CurrencyId::LDOT => Some(MultiLocation::new(
 				1,
-				X2(Parachain(2000), GeneralKey([0, 3].to_vec())),
+				X2(Parachain(2000), GeneralKey([0, 3].to_vec().try_into().unwrap())),
 			)),
 			CurrencyId::MOVR => Some(MultiLocation::new(
 				1,
-				X2(Parachain(2024), GeneralKey([0, 132].to_vec())),
+				X2(Parachain(2024), GeneralKey([0, 132].to_vec().try_into().unwrap())),
 			)),
 			CurrencyId::BNC => Some(MultiLocation::new(
 				1,
-				X2(Parachain(2030), GeneralKey("BNC".into())),
+				X2(Parachain(2030), GeneralKey(b"BNC".to_vec().try_into().unwrap())),
 			)),
 			CurrencyId::RING => Some(MultiLocation::new(
 				1,
-				X2(Parachain(2046), GeneralKey("RING".into())),
+				X2(Parachain(2046), GeneralKey(b"RING".to_vec().try_into().unwrap())),
 			)),
 			CurrencyId::KTON => Some(MultiLocation::new(
 				1,
-				X2(Parachain(2046), GeneralKey("KTON".into())),
+				X2(Parachain(2046), GeneralKey(b"KTON".to_vec().try_into().unwrap())),
 			)),
 		}
 	}
@@ -1210,7 +1211,7 @@ construct_runtime! {
 
 		// Monetary stuff.
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 10,
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 11,
+		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>} = 11,
 		Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 12,
 		Vesting: pallet_vesting::{Pallet, Call, Storage, Event<T>, Config<T>} = 13,
 
