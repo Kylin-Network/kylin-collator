@@ -299,7 +299,7 @@ pub mod pallet {
                     value: value.clone(),
                     timestamp: now,
                 };
-                RawValues::<T>::insert(&feeder, &key, timestamped);
+                PRawValues::<T>::insert(&para_id, &key, timestamped);
 
                 // Update `Values` storage if `combined` yielded result.
                 if let Some(combined) = Self::combined(key) {
@@ -454,6 +454,12 @@ pub mod pallet {
 	#[pallet::getter(fn raw_values)]
 	pub type RawValues<T: Config> =
 		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, T::OracleKey, TimestampedValueOf<T>>;
+
+    #[pallet::storage]
+	#[pallet::getter(fn p_raw_values)]
+	pub type PRawValues<T: Config> =
+		StorageDoubleMap<_, Twox64Concat, ParaId, Twox64Concat, T::OracleKey, TimestampedValueOf<T>>;
+
 
 	/// Up to date combined value from Raw Values
 	#[pallet::storage]
@@ -692,10 +698,18 @@ where T::AccountId: AsRef<[u8]>
     }
 
     pub fn read_raw_values(key: &T::OracleKey) -> Vec<TimestampedValueOf<T>> {
-		T::Members::sorted_members()
+		let mut v0 :Vec<TimestampedValueOf<T>> = T::Members::sorted_members()
 			.iter()
 			.filter_map(|x| Self::raw_values(x, key))
-			.collect()
+			.collect();
+        
+        let mut v1 :Vec<TimestampedValueOf<T>> = 
+            <PRawValues<T> as IterableStorageDoubleMap<_, _, _>>::iter()
+            .filter_map(|(_, k, val)| if *key == k { Some(val) } else { None })
+            .collect();
+        
+        v0.append(&mut v1);
+        v0
 	}
 
 	/// Fetch current combined value.
