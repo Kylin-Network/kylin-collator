@@ -85,7 +85,7 @@ use xcm_builder::{
 	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, AllowUnpaidExecutionFrom
 };
 
-use kylin_oracle::DefaultCombineData;
+//use kylin_oracle::DefaultCombineData;
 
 /// common types for the runtime.
 pub use runtime_common::*;
@@ -409,6 +409,7 @@ parameter_types! {
 }
 
 impl pallet_transaction_payment::Config for Runtime {
+	type Event = Event;
 	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
 	type WeightToFee = IdentityFee<Balance>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
@@ -526,13 +527,14 @@ match_types! {
 	};
 }
 
-pub type Barrier = (
-	TakeWeightCredit,
-	AllowAnyPaidExecutionFrom<Everything>,
-	AllowUnpaidExecutionFrom<ParentOrParentsExecutivePlurality>,
-    // ^^^ Parent and its exec plurality get free execution
-    AllowUnpaidExecutionFrom<SpecParachain>,
-);
+// pub type Barrier = (
+// 	TakeWeightCredit,
+// 	AllowAnyPaidExecutionFrom<Everything>,
+// 	AllowUnpaidExecutionFrom<ParentOrParentsExecutivePlurality>,
+//     // ^^^ Parent and its exec plurality get free execution
+//     AllowUnpaidExecutionFrom<SpecParachain>,
+// );
+pub type Barrier = AllowUnpaidExecutionFrom<Everything>;
 
 pub struct AllowAnyPaidExecutionFrom<T>(PhantomData<T>);
 impl<T: Contains<MultiLocation>> ShouldExecute for AllowAnyPaidExecutionFrom<T> {
@@ -555,7 +557,7 @@ parameter_types! {
 	pub AcaPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(2000), GeneralKey([0, 128].to_vec())),
+			X2(Parachain(2000), GeneralKey([0, 128].to_vec().try_into().unwrap())),
 		).into(),
 		// ACA:KYL = 1:1_000_000  // ~80_000_000_000 amount
 		native_token_per_second() / 1_000_000
@@ -563,7 +565,7 @@ parameter_types! {
 	pub AusdPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(2000), GeneralKey([0, 129].to_vec())),
+			X2(Parachain(2000), GeneralKey([0, 129].to_vec().try_into().unwrap())),
 		).into(),
 		// AUSD:KYL = 1:1_000_000
 		native_token_per_second() / 1_000_000
@@ -571,13 +573,13 @@ parameter_types! {
 	pub LdotPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(2000), GeneralKey([0, 131].to_vec())),
+			X2(Parachain(2000), GeneralKey([0, 131].to_vec().try_into().unwrap())),
 		).into(),
 		// LDOT:KYL = 1:1_000_000
 		native_token_per_second() / 1_000_000
 	);
 	pub NativeTokenPerSecond: (AssetId, u128) = (
-		MultiLocation::new(0, X1(GeneralKey("KYL".into()))).into(),
+		MultiLocation::new(0, X1(GeneralKey(b"KYL".to_vec().try_into().unwrap()))).into(),
 		native_token_per_second()
 	);
 }
@@ -633,10 +635,10 @@ impl pallet_xcm::Config for Runtime {
 	type SendXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
-	type XcmExecuteFilter = Everything;
+	type XcmExecuteFilter = Nothing;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type XcmTeleportFilter = Everything;
-	type XcmReserveTransferFilter = frame_support::traits::Nothing;
+	type XcmTeleportFilter = Nothing;
+	type XcmReserveTransferFilter = Nothing;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Origin = Origin;
@@ -667,23 +669,15 @@ impl cumulus_pallet_dmp_queue::Config for Runtime {
 	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
 }
 
-impl kylin_oracle::Config for Runtime {
+impl kylin_reporter::Config for Runtime {
 	type Event = Event;
-	type AuthorityId = kylin_oracle::crypto::TestAuthId;
+	type AuthorityId = kylin_reporter::crypto::TestAuthId;
 	type Call = Call;
 	type Origin = Origin;
 	type XcmSender = XcmRouter;
-	type UnsignedPriority = UnsignedPriority;
-	type UnixTime = Timestamp;
-	type WeightInfo = kylin_oracle::weights::SubstrateWeight<Runtime>;
-	type EstimateCallFee = TransactionPayment;
+	type WeightInfo = kylin_reporter::weights::SubstrateWeight<Runtime>;
 	type Currency = Balances;
-
-	type CombineData = DefaultCombineData<Self, ConstU32<1>, ConstU128<600>>;
-	type OracleKey = Vec<u8>;
-	type OracleValue = i64;
 	type Members = OracleProvider;
-	type MaxHasDispatchedSize = ConstU32<100>;
 }
 
 parameter_types! {
@@ -987,7 +981,7 @@ impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 				1,
 				X2(
 					Parachain(ParachainInfo::parachain_id().into()),
-					GeneralKey("KYL".into()),
+					GeneralKey(b"KYL".to_vec().try_into().unwrap()),
 				),
 			)),
 			// Kusama statemine paraid 1000
@@ -995,31 +989,31 @@ impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 			// acala paraid 2000
 			CurrencyId::ACA => Some(MultiLocation::new(
 				1,
-				X2(Parachain(2000), GeneralKey([0, 0].to_vec())),
+				X2(Parachain(2000), GeneralKey([0, 0].to_vec().try_into().unwrap())),
 			)),
 			CurrencyId::AUSD => Some(MultiLocation::new(
 				1,
-				X2(Parachain(2000), GeneralKey([0, 1].to_vec())),
+				X2(Parachain(2000), GeneralKey([0, 1].to_vec().try_into().unwrap())),
 			)),
 			CurrencyId::LDOT => Some(MultiLocation::new(
 				1,
-				X2(Parachain(2000), GeneralKey([0, 3].to_vec())),
+				X2(Parachain(2000), GeneralKey([0, 3].to_vec().try_into().unwrap())),
 			)),
 			CurrencyId::MOVR => Some(MultiLocation::new(
 				1,
-				X2(Parachain(2024), GeneralKey([0, 132].to_vec())),
+				X2(Parachain(2024), GeneralKey([0, 132].to_vec().try_into().unwrap())),
 			)),
 			CurrencyId::BNC => Some(MultiLocation::new(
 				1,
-				X2(Parachain(2030), GeneralKey("BNC".into())),
+				X2(Parachain(2030), GeneralKey(b"BNC".to_vec().try_into().unwrap())),
 			)),
 			CurrencyId::RING => Some(MultiLocation::new(
 				1,
-				X2(Parachain(2046), GeneralKey("RING".into())),
+				X2(Parachain(2046), GeneralKey(b"RING".to_vec().try_into().unwrap())),
 			)),
 			CurrencyId::KTON => Some(MultiLocation::new(
 				1,
-				X2(Parachain(2046), GeneralKey("KTON".into())),
+				X2(Parachain(2046), GeneralKey(b"KTON".to_vec().try_into().unwrap())),
 			)),
 		}
 	}
@@ -1237,7 +1231,7 @@ construct_runtime! {
 
 		// Monetary stuff.
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 10,
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 11,
+		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>} = 11,
 		Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 12,
 		Vesting: pallet_vesting::{Pallet, Call, Storage, Event<T>, Config<T>} = 13,
 
@@ -1257,7 +1251,7 @@ construct_runtime! {
 
 		// Kylin Pallets
 		OracleProvider: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>} = 54,
-		KylinOraclePallet: kylin_oracle::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 55,
+		KylinReporterPallet: kylin_reporter::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 55,
 
 		// orml
 		OrmlXcm: orml_xcm::{Pallet, Call, Event<T>} = 70,

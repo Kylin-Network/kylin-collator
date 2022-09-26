@@ -74,7 +74,8 @@ use parachains_common::{
 	AssetId,
 };
 
-use xcm_builder::{AsPrefixedGeneralIndex, ConvertedConcreteAssetId, FungiblesAdapter};
+use xcm_builder::{AsPrefixedGeneralIndex, ConvertedConcreteAssetId, FungiblesAdapter,
+				AllowUnpaidExecutionFrom, };
 use xcm_executor::{
 	traits::{JustTry, ShouldExecute},
 	XcmExecutor,
@@ -417,6 +418,7 @@ parameter_types! {
 }
 
 impl pallet_transaction_payment::Config for Runtime {
+	type Event = Event;
 	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
 	type WeightToFee = IdentityFee<Balance>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
@@ -564,11 +566,12 @@ match_types! {
 	};
 }
 
-pub type Barrier = (
-	TakeWeightCredit,
-	AllowAnyPaidExecutionFrom<Everything>,
-	// AllowUnpaidExecutionFrom<IsInVec<AllowUnpaidFrom>>,	// <- Parent gets free execution
-);
+// pub type Barrier = (
+// 	TakeWeightCredit,
+// 	AllowAnyPaidExecutionFrom<Everything>,
+// 	// AllowUnpaidExecutionFrom<IsInVec<AllowUnpaidFrom>>,	// <- Parent gets free execution
+// );
+pub type Barrier = AllowUnpaidExecutionFrom<Everything>;
 
 pub struct AllowAnyPaidExecutionFrom<T>(PhantomData<T>);
 impl<T: Contains<MultiLocation>> ShouldExecute for AllowAnyPaidExecutionFrom<T> {
@@ -985,7 +988,7 @@ impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 				1,
 				X2(
 					Parachain(ParachainInfo::parachain_id().into()),
-					GeneralKey("PCHU".into()),
+					GeneralKey(b"PCHU".to_vec().try_into().unwrap()),
 				),
 			)),
 			// Rococo statemint paraid 1000
@@ -993,23 +996,23 @@ impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 			// Karura paraid 2000
 			CurrencyId::KAR => Some(MultiLocation::new(
 				1,
-				X2(Parachain(2000), GeneralKey("KAR".into())),
+				X2(Parachain(2000), GeneralKey(b"KAR".to_vec().try_into().unwrap())),
 			)),
 			CurrencyId::MOVR => Some(MultiLocation::new(
 				1,
-				X2(Parachain(2023), GeneralKey("MOVR".into())),
+				X2(Parachain(2023), GeneralKey(b"MOVR".to_vec().try_into().unwrap())),
 			)),
 			CurrencyId::BNC => Some(MultiLocation::new(
 				1,
-				X2(Parachain(2001), GeneralKey("BNC".into())),
+				X2(Parachain(2001), GeneralKey(b"BNC".to_vec().try_into().unwrap())),
 			)),
 			CurrencyId::RING => Some(MultiLocation::new(
 				1,
-				X2(Parachain(1205), GeneralKey("RING".into())),
+				X2(Parachain(1205), GeneralKey(b"RING".to_vec().try_into().unwrap())),
 			)),
 			CurrencyId::KTON => Some(MultiLocation::new(
 				1,
-				X2(Parachain(1205), GeneralKey("KTON".into())),
+				X2(Parachain(1205), GeneralKey(b"KTON".to_vec().try_into().unwrap())),
 			)),
 
 
@@ -1224,7 +1227,7 @@ construct_runtime! {
 
 		// Monetary stuff.
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 10,
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 11,
+		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>} = 11,
 		Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 12,
 		Vesting: pallet_vesting::{Pallet, Call, Storage, Event<T>, Config<T>} = 13,
 

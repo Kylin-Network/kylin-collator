@@ -425,6 +425,7 @@ parameter_types! {
 }
 
 impl pallet_transaction_payment::Config for Runtime {
+	type Event = Event;
 	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
 	type WeightToFee = IdentityFee<Balance>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
@@ -460,7 +461,7 @@ impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
 	pub const KsmLocation: MultiLocation = MultiLocation::parent();
-	pub const RelayNetwork: NetworkId = NetworkId::Kusama;
+	pub const RelayNetwork: NetworkId = NetworkId::Polkadot;
 	pub RelayChainOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 	pub CheckingAccount: AccountId = PolkadotXcm::check_account();
@@ -542,13 +543,14 @@ match_types! {
 	};
 }
 
-pub type Barrier = (
-	TakeWeightCredit,
-	AllowAnyPaidExecutionFrom<Everything>,
-	AllowUnpaidExecutionFrom<ParentOrParentsExecutivePlurality>,
-    // ^^^ Parent and its exec plurality get free execution
-    AllowUnpaidExecutionFrom<SpecParachain>,
-);
+// pub type Barrier = (
+// 	TakeWeightCredit,
+// 	AllowAnyPaidExecutionFrom<Everything>,
+// 	AllowUnpaidExecutionFrom<ParentOrParentsExecutivePlurality>,
+//     // ^^^ Parent and its exec plurality get free execution
+//     AllowUnpaidExecutionFrom<SpecParachain>,
+// );
+pub type Barrier = AllowUnpaidExecutionFrom<Everything>;
 
 pub struct AllowAnyPaidExecutionFrom<T>(PhantomData<T>);
 impl<T: Contains<MultiLocation>> ShouldExecute for AllowAnyPaidExecutionFrom<T> {
@@ -571,7 +573,7 @@ parameter_types! {
 	pub KarPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(2000), GeneralKey([0, 128].to_vec())),
+			X2(Parachain(2000), GeneralKey([0, 128].to_vec().try_into().unwrap())),
 		).into(),
 		// KAR:PCHU = 1:1_000_000  // ~80_000_000_000 amount
 		native_token_per_second() / 1_000_000
@@ -579,7 +581,7 @@ parameter_types! {
 	pub AusdPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(2000), GeneralKey([0, 129].to_vec())),
+			X2(Parachain(2000), GeneralKey([0, 129].to_vec().try_into().unwrap())),
 		).into(),
 		// AUSD:PCHU = 1:1_000_000
 		native_token_per_second() / 1_000_000
@@ -587,13 +589,13 @@ parameter_types! {
 	pub LksmPerSecond: (AssetId, u128) = (
 		MultiLocation::new(
 			1,
-			X2(Parachain(2000), GeneralKey([0, 131].to_vec())),
+			X2(Parachain(2000), GeneralKey([0, 131].to_vec().try_into().unwrap())),
 		).into(),
 		// LKSM:PCHU = 1:1_000_000
 		native_token_per_second() / 1_000_000
 	);
 	pub NativeTokenPerSecond: (AssetId, u128) = (
-		MultiLocation::new(0, X1(GeneralKey("PCHU".into()))).into(),
+		MultiLocation::new(0, X1(GeneralKey(b"PCHU".to_vec().try_into().unwrap()))).into(),
 		native_token_per_second()
 	);
 }
@@ -649,10 +651,10 @@ impl pallet_xcm::Config for Runtime {
 	type SendXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
-	type XcmExecuteFilter = Everything;
+	type XcmExecuteFilter = Nothing;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type XcmTeleportFilter = Everything;
-	type XcmReserveTransferFilter = frame_support::traits::Nothing;
+	type XcmTeleportFilter = Nothing;
+	type XcmReserveTransferFilter = Nothing;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Origin = Origin;
@@ -1004,7 +1006,7 @@ impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 				1,
 				X2(
 					Parachain(ParachainInfo::parachain_id().into()),
-					GeneralKey("PCHU".into()),
+					GeneralKey(b"PCHU".to_vec().try_into().unwrap()),
 				),
 			)),
 			// Kusama statemine paraid 1000
@@ -1012,31 +1014,31 @@ impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 			// Karura paraid 2000
 			CurrencyId::KAR => Some(MultiLocation::new(
 				1,
-				X2(Parachain(2000), GeneralKey([0, 128].to_vec())),
+				X2(Parachain(2000), GeneralKey([0, 128].to_vec().try_into().unwrap())),
 			)),
 			CurrencyId::AUSD => Some(MultiLocation::new(
 				1,
-				X2(Parachain(2000), GeneralKey([0, 129].to_vec())),
+				X2(Parachain(2000), GeneralKey([0, 129].to_vec().try_into().unwrap())),
 			)),
 			CurrencyId::LKSM => Some(MultiLocation::new(
 				1,
-				X2(Parachain(2000), GeneralKey([0, 131].to_vec())),
+				X2(Parachain(2000), GeneralKey([0, 131].to_vec().try_into().unwrap())),
 			)),
 			CurrencyId::MOVR => Some(MultiLocation::new(
 				1,
-				X2(Parachain(2023), GeneralKey([0, 132].to_vec())),
+				X2(Parachain(2023), GeneralKey([0, 132].to_vec().try_into().unwrap())),
 			)),
 			CurrencyId::BNC => Some(MultiLocation::new(
 				1,
-				X2(Parachain(2001), GeneralKey("BNC".into())),
+				X2(Parachain(2001), GeneralKey(b"BNC".to_vec().try_into().unwrap())),
 			)),
 			CurrencyId::RING => Some(MultiLocation::new(
 				1,
-				X2(Parachain(1205), GeneralKey("RING".into())),
+				X2(Parachain(1205), GeneralKey(b"RING".to_vec().try_into().unwrap())),
 			)),
 			CurrencyId::KTON => Some(MultiLocation::new(
 				1,
-				X2(Parachain(1205), GeneralKey("KTON".into())),
+				X2(Parachain(1205), GeneralKey(b"KTON".to_vec().try_into().unwrap())),
 			)),
 
 		}
@@ -1266,7 +1268,7 @@ construct_runtime! {
 
 		// Monetary stuff.
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 10,
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 11,
+		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>} = 11,
 		Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 12,
 		Vesting: pallet_vesting::{Pallet, Call, Storage, Event<T>, Config<T>} = 13,
 
