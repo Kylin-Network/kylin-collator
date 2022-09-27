@@ -74,9 +74,6 @@ pub mod types {
 
 	// A cryptographic salt to be combined with a value before hashing.
 	pub type Salt = FixedArray<u8, 32>;
-
-	/// ID for airdrops managed by the Kylin-airdrop Pallet
-	pub type AirdropId = u128;
 }
 
 /// Money matters.

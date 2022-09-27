@@ -291,26 +291,6 @@ impl kylin_democracy::Config for Runtime {
 	type MaxProposals = MaxProposals;
 }
 
-parameter_types! {
-	pub const AirdropPalletId: PalletId = PalletId(*b"pairdrop");
-	pub AirdropStake: Balance = 10 * Balance::from(10_u64.pow(18));
-	pub const AirdropPrefix: &'static [u8] = b"kylin-";
-}
-
-impl kylin_airdrop::Config for Runtime {
-	type Event = Event;
-	type AirdropId = AirdropId;
-	type Balance = Balance;
-	type Convert = sp_runtime::traits::ConvertInto;
-	type Moment = Moment;
-	type RelayChainAccountId = sp_runtime::AccountId32;
-	type RecipientFundAsset = Balances;
-	type Time = Timestamp;
-	type PalletId = AirdropPalletId;
-	type Prefix = AirdropPrefix;
-	type Stake = AirdropStake;
-	type WeightInfo = ();
-}
 
 parameter_types! {
 	pub const CouncilMotionDuration: BlockNumber = 5 * DAYS;
@@ -1267,7 +1247,6 @@ construct_runtime! {
 		Uniques: pallet_uniques::{Pallet, Call, Storage, Event<T>} = 94,
 		KylinFeed: kylin_feed::{Pallet, Call, Event<T>, Storage} = 95,
 		KylinMarket: kylin_market::{Pallet, Call, Storage, Event<T>} = 96,
-		Airdrop: kylin_airdrop::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 97,
 		
 	}
 }
