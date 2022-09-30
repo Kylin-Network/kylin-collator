@@ -37,3 +37,4 @@ rococo-custom-2-raw.json
 rococo-local-parachain-2000-raw.json
 startnode.sh
 upgraded-chain.json
+chaindata*
