@@ -8,7 +8,7 @@ use codec::{Decode, Encode};
 use cumulus_pallet_xcm::{ensure_sibling_para, Origin as CumulusOrigin};
 use cumulus_primitives_core::ParaId;
 use frame_support::{
-    dispatch::DispatchResultWithPostInfo,
+    dispatch::{GetDispatchInfo, DispatchResultWithPostInfo},
     log,
     pallet_prelude::*,
     traits::{Currency, EstimateCallFee, UnixTime, ChangeMembers, Get, SortedMembers},
@@ -309,6 +309,22 @@ pub mod pallet {
 
             Self::deposit_event(Event::NewParaFeedData {para_id, values });
 			Ok(Pays::No.into())
+		}
+        
+        #[pallet::weight(<T as Config>::WeightInfo::query_data())]
+		pub fn xcm_query_data(
+			origin: OriginFor<T>,
+			key: T::OracleKey,
+		) -> DispatchResult {
+			let para_id =
+                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
+
+            if let Some(val) = Self::get(&key) {
+                Self::send_qret_to_parachain(para_id, key, val.value)
+            } else {
+                Err(DispatchError::CannotLookup)
+            }
+            
 		}
 
         //#[pallet::weight(T::BlockWeights::get().max_block)]
@@ -678,6 +694,35 @@ where T::AccountId: AsRef<[u8]>
         Ok(body_str.clone().as_bytes().to_vec())
     }
 
+    fn send_qret_to_parachain(para_id: ParaId, key: T::OracleKey, value: T::OracleValue) -> DispatchResult {
+        let remark = <T as Config>::Call::from(Call::<T>::xcm_evt {
+                // :FIXME: need to add Feedback API later
+                //key, value,  
+            }
+        );
+        //let require_weight = remark.get_dispatch_info().weight + 1_000;
+        match T::XcmSender::send_xcm(
+            (
+                1,
+                Junction::Parachain(para_id.into()),
+            ),
+            Xcm(vec![Transact {
+                origin_type: OriginKind::Native,
+                require_weight_at_most: 1_000_000,
+                call: remark.encode().into(),
+            }]),
+        ) {
+            Ok(()) => Self::deposit_event(Event::FeedDataSent(
+                para_id,
+            )),
+            Err(e) => Self::deposit_event(Event::FeedDataError(
+                e,
+                para_id,
+            )),
+        }
+
+        Ok(())
+    }
 
     fn validate_transaction(block_number: &T::BlockNumber) -> TransactionValidity {
         // Now let's check if the transaction has any chance to succeed.
