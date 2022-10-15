@@ -1,11 +1,12 @@
 # This is the build stage for kylin-collator. Here we create the binary in a temporary image.
 #FROM docker.io/paritytech/ci-linux:production as builder
-FROM rust:1.61-slim as builder
+FROM rust:1.61 as builder
 
 WORKDIR /kylin-collator
 COPY . /kylin-collator
 RUN apt-get update && apt-get install -y git cmake pkg-config libssl-dev git clang libclang-dev
 RUN rustup default nightly && rustup target add wasm32-unknown-unknown
+RUN git submodule update --init
 RUN cargo build --release
 
 # This is the 2nd stage: a very small image where we copy the kylin-collator binary."
