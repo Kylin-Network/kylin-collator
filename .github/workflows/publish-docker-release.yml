@@ -29,7 +29,13 @@ jobs:
         run: |
           echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
           echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
-          
+ 
+      - name: Init submodules
+        run: git submodule init
+        
+      - name: Update submodules
+        run: git submodule update
+
       - name: Build and push
         id:   docker_build
         uses: docker/build-push-action@v2

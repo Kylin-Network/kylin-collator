@@ -34,7 +34,7 @@ jobs:
           toolchain: nightly
           target: wasm32-unknown-unknown
 
-      - name: Update submodules
+      - name: Init submodules
         run: git submodule init
         
       - name: Update submodules
