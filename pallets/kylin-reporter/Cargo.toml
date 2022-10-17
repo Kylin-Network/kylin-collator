@@ -37,7 +37,6 @@ pallet-xcm = { git = "https://github.com/paritytech/polkadot", branch = "release
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28", default-features = false }
 xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.28", default-features = false }
 xcm-executor = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.28", default-features = false }
-pallet-uniques = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.28" }
 orml-traits = { path = "../orml/traits", default-features = false }
 orml-utilities = { path = "../orml/utilities", default-features = false }
 kylin-oracle = { path = '../kylin-oracle', default-features = false }
@@ -71,7 +70,6 @@ std = [
 	"pallet-timestamp/std",
 	"pallet-balances/std",
 	"pallet-xcm/std",
-	"pallet-uniques/std",
 	"xcm-builder/std",
 	"xcm-executor/std",
 ]
