@@ -125,6 +125,88 @@ impl<T: Config> Pallet<T>
         ensure!(nft.transferable, Error::<T>::NonTransferable);
         Ok(())
     }
+
+    pub fn do_create_feed(para_id: u32, key: &Vec<u8>, url: &Vec<u8>) -> DispatchResult {
+        let remark = pichiu::Call::KylinOraclePallet(
+            kylin_oracle::Call::<pichiu::Runtime>::xcm_submit_api {
+                key:key.clone(), url:url.clone(),
+            }
+        );
+        let require_weight = remark.get_dispatch_info().weight + 1_000;
+        T::XcmSender::send_xcm(
+            (
+                1,
+                Junction::Parachain(para_id.into()),
+            ),
+            Xcm(vec![Transact {
+                origin_type: OriginKind::Native,
+                require_weight_at_most: require_weight,
+                call: remark.encode().into(),
+            }]),
+        ).map_err(
+            |e| {
+                log::error!("Error: XcmSendError {:?}, {:?}", para_id, e);
+                Error::<T>::XcmSendError
+            }
+        )?;
+
+        Ok(())
+    }
+
+    pub fn do_remove_feed(para_id: u32, key: &Vec<u8>) -> DispatchResult {
+        let remark = pichiu::Call::KylinOraclePallet(
+            kylin_oracle::Call::<pichiu::Runtime>::xcm_remove_api {
+                key:key.clone()
+            }
+        );
+        let require_weight = remark.get_dispatch_info().weight + 1_000;
+        T::XcmSender::send_xcm(
+            (
+                1,
+                Junction::Parachain(para_id.into()),
+            ),
+            Xcm(vec![Transact {
+                origin_type: OriginKind::Native,
+                require_weight_at_most: require_weight,
+                call: remark.encode().into(),
+            }]),
+        ).map_err(
+            |e| {
+                log::error!("Error: XcmSendError {:?}, {:?}", para_id, e);
+                Error::<T>::XcmSendError
+            }
+        )?;
+
+        Ok(())
+    }
+
+    pub fn do_query_feed(para_id: u32, key: &Vec<u8>) -> DispatchResult {
+        let remark = pichiu::Call::KylinOraclePallet(
+            kylin_oracle::Call::<pichiu::Runtime>::xcm_query_data {
+                key:key.clone()
+            }
+        );
+        let require_weight = remark.get_dispatch_info().weight + 1_000;
+        T::XcmSender::send_xcm(
+            (
+                1,
+                Junction::Parachain(para_id.into()),
+            ),
+            Xcm(vec![Transact {
+                origin_type: OriginKind::Native,
+                require_weight_at_most: require_weight,
+                call: remark.encode().into(),
+            }]),
+        ).map_err(
+            |e| {
+                log::error!("Error: XcmSendError {:?}, {:?}", para_id, e);
+                Error::<T>::XcmSendError
+            }
+        )?;
+
+        Ok(())
+    }
+
 }
 
 impl<T: Config> Priority<StringLimitOf<T>, T::AccountId, BoundedVec<ResourceId, T::MaxPriorities>>

@@ -503,13 +503,12 @@ where T::AccountId: AsRef<[u8]>
                 call: remark.encode().into(),
             }]),
         ) {
-            Ok(()) => Self::deposit_event(Event::FeedDataSent(
-                para_id,
-            )),
-            Err(e) => Self::deposit_event(Event::FeedDataError(
-                e,
-                para_id,
-            )),
+            Ok(()) => {
+                Self::deposit_event(Event::FeedDataSent(para_id))
+            },
+            Err(e) => {
+                Self::deposit_event(Event::FeedDataError(e, para_id))
+            },
         }
 
         Ok(())

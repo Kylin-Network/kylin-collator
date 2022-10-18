@@ -94,8 +94,41 @@ pub mod crypto {
     }
 }
 
-/// An index to a block.
-///
+#[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, Ord, PartialOrd, TypeInfo, MaxEncodedLen)]
+pub enum CreatorId<AccountId> {
+	AccountId(AccountId),
+	ParaId(ParaId),
+}
+
+
+#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Debug))]
+pub struct ApiFeed<BlockNumber> {
+    requested_block_number: BlockNumber,
+    url: Option<Vec<u8>>,
+}
+
+#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Debug))]
+pub struct ParaFeed<BlockNumber> {
+    requested_block_number: BlockNumber,
+    para_id: Option<ParaId>,
+}
+
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
+pub struct CryptoComparePrice {
+    pub usdt: f64,
+}
+
+enum TransactionType {
+    Signed,
+    UnsignedForAny,
+    UnsignedForAll,
+    Raw,
+    None,
+}
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -173,6 +206,31 @@ pub mod pallet {
     #[pallet::getter( fn running_status)]
     type SystemRunnig<T> = StorageValue<_, bool, ValueQuery>;
 
+    #[pallet::storage]
+    #[pallet::getter(fn next_unsigned_at)]
+    pub(super) type NextUnsignedAt<T: Config> = StorageValue<_, T::BlockNumber, ValueQuery>;
+
+    #[pallet::storage]
+	#[pallet::getter(fn api_feeds)]
+	pub type ApiFeeds<T: Config> =
+		StorageDoubleMap<_, Twox64Concat, CreatorId<T::AccountId>, Twox64Concat, T::OracleKey, ApiFeed<T::BlockNumber>>;
+
+    /// Raw values for each oracle operators
+	#[pallet::storage]
+	#[pallet::getter(fn raw_values)]
+	pub type RawValues<T: Config> =
+		StorageDoubleMap<_, Twox64Concat, CreatorId<T::AccountId>, Twox64Concat, T::OracleKey, TimestampedValueOf<T>>;
+
+	/// Up to date combined value from Raw Values
+	#[pallet::storage]
+	#[pallet::getter(fn values)]
+	pub type Values<T: Config> =
+		StorageMap<_, Twox64Concat, <T as Config>::OracleKey, TimestampedValueOf<T>>;
+
+	/// If an oracle operator has fed a value in this block
+	#[pallet::storage]
+	pub(crate) type HasDispatched<T: Config> =
+		StorageValue<_, OrderedSet<CreatorId<T::AccountId>, T::MaxHasDispatchedSize>, ValueQuery>;
 
 	#[pallet::error]
     pub enum Error<T> {
@@ -182,6 +240,8 @@ pub mod pallet {
 		NoPermission,
 		/// Feeder has already feeded at this block
 		AlreadyFeeded,
+        /// XCM Send error
+        XcmSendError,
     }
 
     #[pallet::hooks]
@@ -251,11 +311,14 @@ pub mod pallet {
 			values: Vec<(T::OracleKey, T::OracleValue)>,
 		) -> DispatchResultWithPostInfo {
 			let feeder = ensure_signed(origin.clone())?;
+            let cid = CreatorId::AccountId(feeder);
+
             // ensure feeder is authorized
-            ensure!(T::Members::contains(&feeder), Error::<T>::NoPermission);
+            //ensure!(T::Members::contains(&feeder), Error::<T>::NoPermission);
+
             // ensure account hasn't dispatched an updated yet
             ensure!(
-                HasDispatched::<T>::mutate(|set| set.insert(feeder.clone())),
+                HasDispatched::<T>::mutate(|set| set.insert(cid.clone())),
                 Error::<T>::AlreadyFeeded
             );
 
@@ -265,7 +328,7 @@ pub mod pallet {
                     value: value.clone(),
                     timestamp: now,
                 };
-                RawValues::<T>::insert(&feeder, &key, timestamped);
+                RawValues::<T>::insert(&cid, &key, timestamped);
 
                 // Update `Values` storage if `combined` yielded result.
                 if let Some(combined) = Self::combined(key) {
@@ -273,7 +336,7 @@ pub mod pallet {
                 }
             }
 
-            Self::deposit_event(Event::NewFeedData { sender: feeder, values });
+            Self::deposit_event(Event::NewFeedData { sender: cid, values });
 			Ok(Pays::No.into())
 		}
 
@@ -284,14 +347,16 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
             let para_id =
                 ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
+            let cid = CreatorId::ParaId(para_id);
 
             // // ensure feeder is authorized
             // ensure!(T::Members::contains(&feeder), Error::<T>::NoPermission);
-            // // ensure account hasn't dispatched an updated yet
-            // ensure!(
-            //     HasDispatched::<T>::mutate(|set| set.insert(feeder.clone())),
-            //     Error::<T>::AlreadyFeeded
-            // );
+
+            // ensure account hasn't dispatched an updated yet
+            ensure!(
+                HasDispatched::<T>::mutate(|set| set.insert(cid.clone())),
+                Error::<T>::AlreadyFeeded
+            );
 
             let now = T::UnixTime::now().as_millis();
             for (key, value) in &values {
@@ -299,7 +364,7 @@ pub mod pallet {
                     value: value.clone(),
                     timestamp: now,
                 };
-                PRawValues::<T>::insert(&para_id, &key, timestamped);
+                RawValues::<T>::insert(&cid, &key, timestamped);
 
                 // Update `Values` storage if `combined` yielded result.
                 if let Some(combined) = Self::combined(key) {
@@ -307,7 +372,7 @@ pub mod pallet {
                 }
             }
 
-            Self::deposit_event(Event::NewParaFeedData {para_id, values });
+            Self::deposit_event(Event::NewFeedData { sender: cid, values });
 			Ok(Pays::No.into())
 		}
         
@@ -320,7 +385,7 @@ pub mod pallet {
                 ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
 
             if let Some(val) = Self::get(&key) {
-                Self::send_qret_to_parachain(para_id, key, val.value)
+                Self::send_qret_to_parachain(para_id, &key, &val.value)
             } else {
                 Err(DispatchError::CannotLookup)
             }
@@ -357,34 +422,85 @@ pub mod pallet {
             url: Vec<u8>,
         ) -> DispatchResultWithPostInfo {
             let submitter = ensure_signed(origin.clone())?;
-            // ensure submitter is authorized
-            ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
+            let cid = CreatorId::AccountId(submitter);
 
+            // ensure submitter is authorized
+            //ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
+            
             let block_number = <system::Pallet<T>>::block_number();
             let feed = ApiFeed {
                     requested_block_number: block_number,
                     url: Some(url),
                 };
-            ApiFeeds::<T>::insert(&submitter, &key, feed.clone());
+            ApiFeeds::<T>::insert(&cid, &key, feed.clone());
 
-            Self::deposit_event(Event::NewApiFeed { sender: submitter, key, feed });
+            Self::deposit_event(Event::NewApiFeed { sender: cid, key, feed });
 			Ok(Pays::No.into())
         }
 
-        #[pallet::weight(<T as Config>::WeightInfo::clear_api())]
-        pub fn clear_api(
+        #[pallet::weight(<T as Config>::WeightInfo::remove_api())]
+        pub fn remove_api(
             origin: OriginFor<T>,
             key: T::OracleKey,
         ) -> DispatchResult {
             let submitter = ensure_signed(origin.clone())?;
-            // ensure submitter is authorized
-            ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
+            let cid = CreatorId::AccountId(submitter);
 
-            let feed_exists = ApiFeeds::<T>::contains_key(&submitter, &key);
+            // ensure submitter is authorized
+            //ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
+
+            let feed_exists = ApiFeeds::<T>::contains_key(&cid, &key);
             if feed_exists {
-                let feed = Self::api_feeds(&submitter, &key).unwrap();
-                <ApiFeeds<T>>::remove(&submitter, &key);
-                Self::deposit_event(Event::ApiFeedRemoved { sender: submitter, key, feed });
+                let feed = Self::api_feeds(&cid, &key).unwrap();
+                <ApiFeeds<T>>::remove(&cid, &key);
+                Self::deposit_event(Event::ApiFeedRemoved { sender: cid, key, feed });
+                Ok(())
+            } else {
+                Err(DispatchError::CannotLookup)
+            }
+        }
+
+        #[pallet::weight(<T as Config>::WeightInfo::submit_api())]
+        pub fn xcm_submit_api(
+            origin: OriginFor<T>,
+            key: T::OracleKey,
+            url: Vec<u8>,
+        ) -> DispatchResultWithPostInfo {
+            let para_id =
+                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
+            let cid = CreatorId::ParaId(para_id);
+
+            // ensure submitter is authorized
+            //ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
+            
+            let block_number = <system::Pallet<T>>::block_number();
+            let feed = ApiFeed {
+                    requested_block_number: block_number,
+                    url: Some(url),
+                };
+            ApiFeeds::<T>::insert(&cid, &key, feed.clone());
+
+            Self::deposit_event(Event::NewApiFeed { sender: cid, key, feed });
+			Ok(Pays::No.into())
+        }
+
+        #[pallet::weight(<T as Config>::WeightInfo::remove_api())]
+        pub fn xcm_remove_api(
+            origin: OriginFor<T>,
+            key: T::OracleKey,
+        ) -> DispatchResult {
+            let para_id =
+                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
+            let cid = CreatorId::ParaId(para_id);
+
+            // ensure submitter is authorized
+            //ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
+
+            let feed_exists = ApiFeeds::<T>::contains_key(&cid, &key);
+            if feed_exists {
+                let feed = Self::api_feeds(&cid, &key).unwrap();
+                <ApiFeeds<T>>::remove(&cid, &key);
+                Self::deposit_event(Event::ApiFeedRemoved { sender: cid, key, feed });
                 Ok(())
             } else {
                 Err(DispatchError::CannotLookup)
@@ -410,12 +526,7 @@ pub mod pallet {
         ),
         /// New feed data is submitted.
 		NewFeedData {
-			sender: T::AccountId,
-			values: Vec<(T::OracleKey, T::OracleValue)>,
-		},
-        /// New feed data is submitted.
-		NewParaFeedData {
-            para_id: ParaId,
+			sender: CreatorId<T::AccountId>,
 			values: Vec<(T::OracleKey, T::OracleValue)>,
 		},
         NewParaEvt {
@@ -426,13 +537,13 @@ pub mod pallet {
 		},
         /// New feed is submitted.
 		NewApiFeed {
-			sender: T::AccountId,
+			sender: CreatorId<T::AccountId>,
             key: T::OracleKey,
             feed: ApiFeed<T::BlockNumber>,
 		},
         /// Apifeed is removed.
 		ApiFeedRemoved {
-			sender: T::AccountId,
+			sender: CreatorId<T::AccountId>,
             key: T::OracleKey,
             feed: ApiFeed<T::BlockNumber>,
 		},
@@ -456,68 +567,8 @@ pub mod pallet {
         }
     }
 
-    #[pallet::storage]
-    #[pallet::getter(fn next_unsigned_at)]
-    pub(super) type NextUnsignedAt<T: Config> = StorageValue<_, T::BlockNumber, ValueQuery>;
-
-    #[pallet::storage]
-	#[pallet::getter(fn api_feeds)]
-	pub type ApiFeeds<T: Config> =
-		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, T::OracleKey, ApiFeed<T::BlockNumber>>;
-
-    /// Raw values for each oracle operators
-	#[pallet::storage]
-	#[pallet::getter(fn raw_values)]
-	pub type RawValues<T: Config> =
-		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, T::OracleKey, TimestampedValueOf<T>>;
-
-    #[pallet::storage]
-	#[pallet::getter(fn p_raw_values)]
-	pub type PRawValues<T: Config> =
-		StorageDoubleMap<_, Twox64Concat, ParaId, Twox64Concat, T::OracleKey, TimestampedValueOf<T>>;
-
-
-	/// Up to date combined value from Raw Values
-	#[pallet::storage]
-	#[pallet::getter(fn values)]
-	pub type Values<T: Config> =
-		StorageMap<_, Twox64Concat, <T as Config>::OracleKey, TimestampedValueOf<T>>;
-
-	/// If an oracle operator has fed a value in this block
-	#[pallet::storage]
-	pub(crate) type HasDispatched<T: Config> =
-		StorageValue<_, OrderedSet<T::AccountId, T::MaxHasDispatchedSize>, ValueQuery>;
-
 }
 
-#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo)]
-#[cfg_attr(feature = "std", derive(Debug))]
-pub struct ApiFeed<BlockNumber> {
-    requested_block_number: BlockNumber,
-    url: Option<Vec<u8>>,
-}
-
-#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo)]
-#[cfg_attr(feature = "std", derive(Debug))]
-pub struct ParaFeed<ParaId, BlockNumber> {
-    requested_block_number: BlockNumber,
-    para_id: Option<ParaId>,
-}
-
-
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "UPPERCASE")]
-pub struct CryptoComparePrice {
-    pub usdt: f64,
-}
-
-enum TransactionType {
-    Signed,
-    UnsignedForAny,
-    UnsignedForAll,
-    Raw,
-    None,
-}
 
 impl<T: Config> Pallet<T>
 where T::AccountId: AsRef<[u8]>
@@ -598,7 +649,7 @@ where T::AccountId: AsRef<[u8]>
         }
 
         let mut values = Vec::<(T::OracleKey, T::OracleValue)>::new();
-        for (_acc, key, val) in <ApiFeeds<T> as IterableStorageDoubleMap<_, _, _>>::iter() {
+        for (_creator, key, val) in <ApiFeeds<T> as IterableStorageDoubleMap<_, _, _>>::iter() {
             // let mut response :Vec<u8>;
             if val.url.is_some() {
                 let response = Self::fetch_http_get_result(val.url.clone().unwrap())
@@ -694,32 +745,29 @@ where T::AccountId: AsRef<[u8]>
         Ok(body_str.clone().as_bytes().to_vec())
     }
 
-    fn send_qret_to_parachain(para_id: ParaId, key: T::OracleKey, value: T::OracleValue) -> DispatchResult {
-        let remark = <T as Config>::Call::from(Call::<T>::xcm_evt {
-                // :FIXME: need to add Feedback API later
-                //key, value,  
-            }
-        );
-        //let require_weight = remark.get_dispatch_info().weight + 1_000;
-        match T::XcmSender::send_xcm(
-            (
-                1,
-                Junction::Parachain(para_id.into()),
-            ),
-            Xcm(vec![Transact {
-                origin_type: OriginKind::Native,
-                require_weight_at_most: 1_000_000,
-                call: remark.encode().into(),
-            }]),
-        ) {
-            Ok(()) => Self::deposit_event(Event::FeedDataSent(
-                para_id,
-            )),
-            Err(e) => Self::deposit_event(Event::FeedDataError(
-                e,
-                para_id,
-            )),
-        }
+    fn send_qret_to_parachain(para_id: ParaId, key: &T::OracleKey, value: &T::OracleValue) -> DispatchResult {
+        // let remark = kylin::Call::KylinFeed(
+        //     kylin_feed::Call::<kylin::Runtime>::xcm_feed_back {
+        //         key:key.clone(), value:value.clone(),
+        //     }
+        // );
+        // let require_weight = remark.get_dispatch_info().weight + 1_000;
+        // T::XcmSender::send_xcm(
+        //     (
+        //         1,
+        //         Junction::Parachain(para_id.into()),
+        //     ),
+        //     Xcm(vec![Transact {
+        //         origin_type: OriginKind::Native,
+        //         require_weight_at_most: require_weight,
+        //         call: remark.encode().into(),
+        //     }]),
+        // ).map_err(
+        //     |e| {
+        //         log::error!("Error: XcmSendError {:?}, {:?}", para_id, e);
+        //         Error::<T>::XcmSendError
+        //     }
+        // )?;
 
         Ok(())
     }
@@ -743,18 +791,22 @@ where T::AccountId: AsRef<[u8]>
     }
 
     pub fn read_raw_values(key: &T::OracleKey) -> Vec<TimestampedValueOf<T>> {
-		let mut v0 :Vec<TimestampedValueOf<T>> = T::Members::sorted_members()
-			.iter()
-			.filter_map(|x| Self::raw_values(x, key))
-			.collect();
+		// let mut v0 :Vec<TimestampedValueOf<T>> = T::Members::sorted_members()
+		// 	.iter()
+		// 	.filter_map(|x| Self::raw_values(x, key))
+		// 	.collect();
         
-        let mut v1 :Vec<TimestampedValueOf<T>> = 
-            <PRawValues<T> as IterableStorageDoubleMap<_, _, _>>::iter()
+        // let mut v1 :Vec<TimestampedValueOf<T>> = 
+        //     <PRawValues<T> as IterableStorageDoubleMap<_, _, _>>::iter()
+        //     .filter_map(|(_, k, val)| if *key == k { Some(val) } else { None })
+        //     .collect();
+        
+        // v0.append(&mut v1);
+        // v0
+
+        <RawValues<T> as IterableStorageDoubleMap<_, _, _>>::iter()
             .filter_map(|(_, k, val)| if *key == k { Some(val) } else { None })
-            .collect();
-        
-        v0.append(&mut v1);
-        v0
+            .collect()
 	}
 
 	/// Fetch current combined value.
