@@ -92,8 +92,6 @@ use xcm_builder::{
 };
 pub type ReserveIdentifier = [u8; 8];
 
-use kylin_oracle::DefaultCombineData;
-
 /// common types for the runtime.
 pub use runtime_common::*;
 
@@ -645,25 +643,6 @@ impl cumulus_pallet_dmp_queue::Config for Runtime {
 	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
 }
 
-impl kylin_oracle::Config for Runtime {
-	type Event = Event;
-	type AuthorityId = kylin_oracle::crypto::TestAuthId;
-	type Call = Call;
-	type Origin = Origin;
-	type XcmSender = XcmRouter;
-	type UnsignedPriority = UnsignedPriority;
-	type UnixTime = Timestamp;
-	type WeightInfo = kylin_oracle::weights::SubstrateWeight<Runtime>;
-	type EstimateCallFee = TransactionPayment;
-	type Currency = Balances;
-
-	type CombineData = DefaultCombineData<Self, ConstU32<1>, ConstU128<600>>;
-	type OracleKey = Vec<u8>;
-	type OracleValue = i64;
-	type Members = OracleProvider;
-	type MaxHasDispatchedSize = ConstU32<100>;
-}
-
 parameter_types! {
 	pub const MinVestedTransfer: Balance = MIN_VESTING * KYL;
 }
@@ -1162,26 +1141,16 @@ parameter_types! {
 
 impl kylin_feed::Config for Runtime {
 	type Event = Event;
-	type ProtocolOrigin = frame_system::EnsureRoot<AccountId>;
+	//type ProtocolOrigin = frame_system::EnsureRoot<AccountId>;
+	type Origin = Origin;
 	type MaxRecursions = MaxRecursions;
 	type ResourceSymbolLimit = ResourceSymbolLimit;
 	type PartsLimit = PartsLimit;
 	type MaxPriorities = MaxPriorities;
 	type CollectionSymbolLimit = CollectionSymbolLimit;
 	type MaxResourcesOnMint = MaxResourcesOnMint;
+	type XcmSender = XcmRouter;
 }
-
-parameter_types! {
-	pub const MinimumOfferAmount: Balance = PCHU / 10_000;
-}
-
-impl kylin_market::Config for Runtime {
-	type Event = Event;
-	type ProtocolOrigin = frame_system::EnsureRoot<AccountId>;
-	type Currency = Balances;
-	type MinimumOfferAmount = MinimumOfferAmount;
-}
-
 
 
 construct_runtime! {
@@ -1226,7 +1195,6 @@ construct_runtime! {
 
 		// Kylin Pallets
 		OracleProvider: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>} = 54,
-		KylinOraclePallet: kylin_oracle::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 55,
 
 		// orml
 		OrmlXcm: orml_xcm = 70,
@@ -1241,7 +1209,6 @@ construct_runtime! {
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 93,
 		Uniques: pallet_uniques::{Pallet, Call, Storage, Event<T>} = 94,
 		KylinFeed: kylin_feed::{Pallet, Call, Event<T>, Storage} = 95,
-		KylinMarket: kylin_market::{Pallet, Call, Storage, Event<T>} = 96,
 		
 	}
 }
@@ -1419,7 +1386,7 @@ impl_runtime_apis! {
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 
-			add_benchmark!(params, batches, kylin_oracle, KylinOraclePallet);
+			//add_benchmark!(params, batches, kylin_oracle, KylinOraclePallet);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
@@ -1434,7 +1401,7 @@ impl_runtime_apis! {
 
 			let mut list = Vec::<BenchmarkList>::new();
 
-			list_benchmark!(list, extra, kylin_oracle, KylinOraclePallet);
+			//list_benchmark!(list, extra, kylin_oracle, KylinOraclePallet);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 

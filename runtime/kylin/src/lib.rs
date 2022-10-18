@@ -1170,24 +1170,15 @@ parameter_types! {
 
 impl kylin_feed::Config for Runtime {
 	type Event = Event;
-	type ProtocolOrigin = frame_system::EnsureRoot<AccountId>;
+	//type ProtocolOrigin = frame_system::EnsureRoot<AccountId>;
+	type Origin = Origin;
 	type MaxRecursions = MaxRecursions;
 	type ResourceSymbolLimit = ResourceSymbolLimit;
 	type PartsLimit = PartsLimit;
 	type MaxPriorities = MaxPriorities;
 	type CollectionSymbolLimit = CollectionSymbolLimit;
 	type MaxResourcesOnMint = MaxResourcesOnMint;
-}
-
-parameter_types! {
-	pub const MinimumOfferAmount: Balance = KYL / 10_000;
-}
-
-impl kylin_market::Config for Runtime {
-	type Event = Event;
-	type ProtocolOrigin = frame_system::EnsureRoot<AccountId>;
-	type Currency = Balances;
-	type MinimumOfferAmount = MinimumOfferAmount;
+	type XcmSender = XcmRouter;
 }
 
 construct_runtime! {
@@ -1246,7 +1237,6 @@ construct_runtime! {
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 93,
 		Uniques: pallet_uniques::{Pallet, Call, Storage, Event<T>} = 94,
 		KylinFeed: kylin_feed::{Pallet, Call, Event<T>, Storage} = 95,
-		KylinMarket: kylin_market::{Pallet, Call, Storage, Event<T>} = 96,
 		
 	}
 }

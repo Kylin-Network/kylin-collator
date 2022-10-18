@@ -101,10 +101,9 @@ orml-xcm-support = { path = "../../pallets/orml/xcm-support", default-features =
 orml-unknown-tokens = { path = "../../pallets/orml/unknown-tokens", default-features = false }
 
 # Local Dependencies
-kylin-oracle = { package = 'kylin-oracle', path = '../../pallets/kylin-oracle', default-features = false }
 runtime-common = { path = "../common", default-features = false }
 kylin-feed = { version = "4.0.0-dev", default-features = false, path = "../../pallets/kylin-feed" }
-kylin-market = { version = "4.0.0-dev", default-features = false, path = "../../pallets/kylin-market" }
+#kylin-market = { version = "4.0.0-dev", default-features = false, path = "../../pallets/kylin-market" }
 
 [dev-dependencies]
 hex-literal = "0.3.4"
@@ -127,7 +126,6 @@ runtime-benchmarks = [
 	'pallet-membership/runtime-benchmarks',
 	'pallet-timestamp/runtime-benchmarks',
 	'pallet-xcm/runtime-benchmarks',
-	'kylin-oracle/runtime-benchmarks',
 	'xcm-builder/runtime-benchmarks',
 	'xcm/runtime-benchmarks',
 ]
@@ -200,9 +198,8 @@ std = [
 	'orml-xcm-support/std',
 	'orml-unknown-tokens/std',
 
-	'kylin-oracle/std',
 	'kylin-feed/std',
-	'kylin-market/std',
+	#'kylin-market/std',
 ]
 
 # A feature that should be enabled when the runtime should be build for on-chain
