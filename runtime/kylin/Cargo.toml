@@ -98,7 +98,8 @@ kylin-reporter = { package = 'kylin-reporter', path = '../../pallets/kylin-repor
 runtime-common = { path = "../common", default-features = false }
 
 kylin-democracy = { package = 'kylin-democracy', path = '../../pallets/kylin-democracy', default-features = false }
-kylin-feed = { version = "4.0.0-dev", default-features = false, path = "../../pallets/kylin-feed" }
+kylin-feed = { default-features = false, path = "../../pallets/kylin-feed" }
+kylin-feedback = { default-features = false, path = "../../pallets/kylin-feedback" }
 #kylin-market = { version = "4.0.0-dev", default-features = false, path = "../../pallets/kylin-market" }
 pallet-democracy = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.28" }
 pallet-treasury = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.28" }
@@ -199,6 +200,7 @@ std = [
 
 	'kylin-reporter/std',
 	'kylin-feed/std',
+	'kylin-feedback/std',
 	#'kylin-market/std',
 ]
 

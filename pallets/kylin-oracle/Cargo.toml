@@ -38,8 +38,8 @@ xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "releas
 xcm-executor = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.28", default-features = false }
 orml-traits = { path = "../orml/traits", default-features = false }
 orml-utilities = { path = "../orml/utilities", default-features = false }
-#kylin-feed = { path = '../kylin-feed', default-features = false }
-#kylin = {package='kylin-runtime', path = '../../runtime/kylin', default-features = false }
+kylin-feedback = { path = '../kylin-feedback', default-features = false }
+kylin = {package='development-runtime', path = '../../runtime/development', default-features = false }
 
 
 [dev-dependencies]

@@ -1886,7 +1886,7 @@ dependencies = [
  "hex",
  "hex-literal",
  "kylin-democracy",
- "kylin-feed",
+ "kylin-feedback",
  "log",
  "orml-currencies",
  "orml-tokens",
@@ -3824,15 +3824,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "kylin-feedback"
+version = "4.0.0-dev"
+dependencies = [
+ "cumulus-pallet-xcm",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "kylin-oracle"
 version = "3.0.0"
 dependencies = [
  "cumulus-pallet-xcm",
  "cumulus-primitives-core",
+ "development-runtime",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "hex",
+ "kylin-feedback",
  "orml-traits",
  "orml-utilities",
  "pallet-balances",
@@ -3925,6 +3944,7 @@ dependencies = [
  "hex-literal",
  "kylin-democracy",
  "kylin-feed",
+ "kylin-feedback",
  "kylin-reporter",
  "log",
  "orml-currencies",

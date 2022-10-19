@@ -102,8 +102,8 @@ orml-unknown-tokens = { path = "../../pallets/orml/unknown-tokens", default-feat
 
 # Local Dependencies
 runtime-common = { path = "../common", default-features = false }
-kylin-feed = { version = "4.0.0-dev", default-features = false, path = "../../pallets/kylin-feed" }
-#kylin-market = { version = "4.0.0-dev", default-features = false, path = "../../pallets/kylin-market" }
+kylin-feedback = { default-features = false, path = "../../pallets/kylin-feedback" }
+#kylin-market = { default-features = false, path = "../../pallets/kylin-market" }
 
 [dev-dependencies]
 hex-literal = "0.3.4"
@@ -198,7 +198,7 @@ std = [
 	'orml-xcm-support/std',
 	'orml-unknown-tokens/std',
 
-	'kylin-feed/std',
+	'kylin-feedback/std',
 	#'kylin-market/std',
 ]
 

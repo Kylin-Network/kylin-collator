@@ -1111,24 +1111,6 @@ parameter_types! {
 	pub const MaxCollectionsEquippablePerPart: u32 = 100;
 }
 
-impl pallet_uniques::Config for Runtime {
-	type Event = Event;
-	type CollectionId = u32;
-	type ItemId = u32;
-	type Currency = Balances;
-	type ForceOrigin = frame_system::EnsureRoot<AccountId>;
-	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
-	type Locker = kylin_feed::Pallet<Runtime>;	
-	type CollectionDeposit = CollectionDeposit;
-	type ItemDeposit = ItemDeposit;
-	type MetadataDepositBase = UniquesMetadataDepositBase;
-	type AttributeDepositBase = AttributeDepositBase;
-	type DepositPerByte = DepositPerByte;
-	type StringLimit = UniquesStringLimit;
-	type KeyLimit = KeyLimit;
-	type ValueLimit = ValueLimit;
-	type WeightInfo = ();
-}
 
 parameter_types! {
 	pub const MaxRecursions: u32 = 10;
@@ -1139,17 +1121,10 @@ parameter_types! {
 	pub const MaxResourcesOnMint: u32 = 100;
 }
 
-impl kylin_feed::Config for Runtime {
+impl kylin_feedback::Config for Runtime {
 	type Event = Event;
 	//type ProtocolOrigin = frame_system::EnsureRoot<AccountId>;
 	type Origin = Origin;
-	type MaxRecursions = MaxRecursions;
-	type ResourceSymbolLimit = ResourceSymbolLimit;
-	type PartsLimit = PartsLimit;
-	type MaxPriorities = MaxPriorities;
-	type CollectionSymbolLimit = CollectionSymbolLimit;
-	type MaxResourcesOnMint = MaxResourcesOnMint;
-	type XcmSender = XcmRouter;
 }
 
 
@@ -1207,8 +1182,7 @@ construct_runtime! {
 		Council: pallet_collective::<Instance1> = 91,
 		TechnicalCommittee: pallet_collective::<Instance2> = 92,
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 93,
-		Uniques: pallet_uniques::{Pallet, Call, Storage, Event<T>} = 94,
-		KylinFeed: kylin_feed::{Pallet, Call, Event<T>, Storage} = 95,
+		KylinFeedback: kylin_feedback::{Pallet, Call, Event<T>, Storage} = 95,
 		
 	}
 }

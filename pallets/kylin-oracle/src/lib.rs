@@ -186,7 +186,7 @@ pub mod pallet {
 		type OracleKey: Parameter + Member + Eq + Into<Vec<u8>>;
 
 		/// The data value type
-		type OracleValue: Parameter + Member + Ord + From<i64>;
+		type OracleValue: Parameter + Member + Ord + From<i64> + Into<i64>;
 
         /// Oracle operators.
 		type Members: SortedMembers<Self::AccountId>;
@@ -385,7 +385,7 @@ pub mod pallet {
                 ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
 
             if let Some(val) = Self::get(&key) {
-                Self::send_qret_to_parachain(para_id, &key, &val.value)
+                Self::send_qret_to_parachain(para_id, key.into(), val.value.into())
             } else {
                 Err(DispatchError::CannotLookup)
             }
@@ -745,29 +745,29 @@ where T::AccountId: AsRef<[u8]>
         Ok(body_str.clone().as_bytes().to_vec())
     }
 
-    fn send_qret_to_parachain(para_id: ParaId, key: &T::OracleKey, value: &T::OracleValue) -> DispatchResult {
-        // let remark = kylin::Call::KylinFeed(
-        //     kylin_feed::Call::<kylin::Runtime>::xcm_feed_back {
-        //         key:key.clone(), value:value.clone(),
-        //     }
-        // );
-        // let require_weight = remark.get_dispatch_info().weight + 1_000;
-        // T::XcmSender::send_xcm(
-        //     (
-        //         1,
-        //         Junction::Parachain(para_id.into()),
-        //     ),
-        //     Xcm(vec![Transact {
-        //         origin_type: OriginKind::Native,
-        //         require_weight_at_most: require_weight,
-        //         call: remark.encode().into(),
-        //     }]),
-        // ).map_err(
-        //     |e| {
-        //         log::error!("Error: XcmSendError {:?}, {:?}", para_id, e);
-        //         Error::<T>::XcmSendError
-        //     }
-        // )?;
+    fn send_qret_to_parachain(para_id: ParaId, key: Vec<u8>, value: i64) -> DispatchResult {
+        let remark = kylin::Call::KylinFeedback(
+            kylin_feedback::Call::<kylin::Runtime>::xcm_feed_back {
+                key, value,
+            }
+        );
+        let require_weight = remark.get_dispatch_info().weight + 1_000;
+        T::XcmSender::send_xcm(
+            (
+                1,
+                Junction::Parachain(para_id.into()),
+            ),
+            Xcm(vec![Transact {
+                origin_type: OriginKind::Native,
+                require_weight_at_most: require_weight,
+                call: remark.encode().into(),
+            }]),
+        ).map_err(
+            |e| {
+                log::error!("Error: XcmSendError {:?}, {:?}", para_id, e);
+                Error::<T>::XcmSendError
+            }
+        )?;
 
         Ok(())
     }
