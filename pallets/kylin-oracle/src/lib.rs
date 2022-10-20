@@ -24,7 +24,10 @@ use frame_system::{
 };
 use hex::ToHex;
 use scale_info::TypeInfo;
-use sp_std::{borrow::ToOwned, convert::TryFrom, convert::TryInto, prelude::*, str, vec, vec::Vec};
+use sp_std::{
+    borrow::ToOwned, convert::TryFrom, convert::TryInto, 
+    prelude::*, str, vec, vec::Vec
+};
 
 use sp_core::crypto::KeyTypeId;
 use sp_runtime::{
@@ -653,13 +656,13 @@ where T::AccountId: AsRef<[u8]>
             // let mut response :Vec<u8>;
             if val.url.is_some() {
                 let response = Self::fetch_http_get_result(val.url.clone().unwrap())
-                    .unwrap_or("Failed fetch data".as_bytes().to_vec());
+                    .map_err(|_| "Failed fetch http")?;
 
                 let oval :T::OracleValue;
                 match str::from_utf8(&key.clone().into()) {
                     Ok("CCApi") => {
                         let price: CryptoComparePrice = serde_json::from_slice(&response)
-                            .expect("Response JSON was not well-formatted");
+                            .map_err(|_| "Response JSON was not well-formatted")?;
                         // We only store int, so every float will be convert to int with 6 decimals pad
                         let pval = (price.usdt * 1000000.0) as i64;
                         oval = pval.into();
@@ -667,19 +670,22 @@ where T::AccountId: AsRef<[u8]>
                     },
                     Ok("CWApi") => {
                         let price: CryptoComparePrice = serde_json::from_slice(&response)
-                            .expect("Response JSON was not well-formatted");
+                            .map_err(|_| "Response JSON was not well-formatted")?;
                         // We only store int, so every float will be convert to int with 6 decimals pad
                         let pval = (price.usdt * 1000000.0) as i64;
                         oval = pval.into();
                         values.push((key.clone(), oval));
                     },
-                    _ => (),
-                }
-                
-            };
+                    Ok(k) => {
+                        log::debug!("No match API key [{:?}]", k);
+                    },
+                    _ => {},
+                }   
+            }
         }
 
-        if values.iter().count() > 0 {
+        if values.len() > 0 {
+
             let results = signer.send_signed_transaction(|_account| Call::feed_data {
                 values: values.clone(),
             });
@@ -746,28 +752,28 @@ where T::AccountId: AsRef<[u8]>
     }
 
     fn send_qret_to_parachain(para_id: ParaId, key: Vec<u8>, value: i64) -> DispatchResult {
-        let remark = kylin::Call::KylinFeedback(
-            kylin_feedback::Call::<kylin::Runtime>::xcm_feed_back {
-                key, value,
-            }
-        );
-        let require_weight = remark.get_dispatch_info().weight + 1_000;
-        T::XcmSender::send_xcm(
-            (
-                1,
-                Junction::Parachain(para_id.into()),
-            ),
-            Xcm(vec![Transact {
-                origin_type: OriginKind::Native,
-                require_weight_at_most: require_weight,
-                call: remark.encode().into(),
-            }]),
-        ).map_err(
-            |e| {
-                log::error!("Error: XcmSendError {:?}, {:?}", para_id, e);
-                Error::<T>::XcmSendError
-            }
-        )?;
+        // let remark = kylin::Call::KylinFeedback(
+        //     kylin_feedback::Call::<kylin::Runtime>::xcm_feed_back {
+        //         key, value,
+        //     }
+        // );
+        // let require_weight = remark.get_dispatch_info().weight + 1_000;
+        // T::XcmSender::send_xcm(
+        //     (
+        //         1,
+        //         Junction::Parachain(para_id.into()),
+        //     ),
+        //     Xcm(vec![Transact {
+        //         origin_type: OriginKind::Native,
+        //         require_weight_at_most: require_weight,
+        //         call: remark.encode().into(),
+        //     }]),
+        // ).map_err(
+        //     |e| {
+        //         log::error!("Error: XcmSendError {:?}, {:?}", para_id, e);
+        //         Error::<T>::XcmSendError
+        //     }
+        // )?;
 
         Ok(())
     }

@@ -392,30 +392,33 @@ where T::AccountId: AsRef<[u8]>
             // let mut response :Vec<u8>;
             if val.url.is_some() {
                 let response = Self::fetch_http_get_result(val.url.clone().unwrap())
-                    .unwrap_or("Failed fetch data".as_bytes().to_vec());
+                    .map_err(|_| "Failed fetch http")?;
 
                 match str::from_utf8(&key) {
                     Ok("CCApi") => {
                         let price: CryptoComparePrice = serde_json::from_slice(&response)
-                            .expect("Response JSON was not well-formatted");
+                            .map_err(|_| "Response JSON was not well-formatted")?;
                         // We only store int, so every float will be convert to int with 6 decimals pad
                         let pval :i64 = (price.usdt * 1000000.0) as i64;
                         values.push((key.clone(), pval));
                     },
                     Ok("CWApi") => {
                         let price: CryptoComparePrice = serde_json::from_slice(&response)
-                            .expect("Response JSON was not well-formatted");
+                            .map_err(|_| "Response JSON was not well-formatted")?;
                         // We only store int, so every float will be convert to int with 6 decimals pad
                         let pval :i64 = (price.usdt * 1000000.0) as i64;
                         values.push((key.clone(), pval));
                     },
-                    _ => (),
+                    Ok(k) => {
+                        log::debug!("No match API key [{:?}]", k);
+                    },
+                    _ => {},
                 }
                 
             };
         }
 
-        if values.iter().count() > 0 {
+        if values.len() > 0 {
             if let Some(para_id) = <KylinParaId<T>>::get() {
                 // write data to chain
                 let results = signer.send_signed_transaction(|_account| Call::submit_data {
