@@ -320,7 +320,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T>
 		where T: pallet_uniques::Config<CollectionId = CollectionId, ItemId = NftId>,
 	{
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn create_collection(
 			origin: OriginFor<T>,
 			metadata: BoundedVec<u8, T::StringLimit>,
@@ -348,7 +348,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn set_property(
 			origin: OriginFor<T>,
 			#[pallet::compact] collection_id: CollectionId,
@@ -364,7 +364,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn destroy_collection(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -387,7 +387,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn lock_collection(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -400,7 +400,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn change_collection_issuer(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -430,7 +430,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn create_feed(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -477,7 +477,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn remove_feed(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -501,7 +501,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn query_feed(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -518,9 +518,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		
-
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn send(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -550,7 +548,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn accept_nft(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -578,7 +576,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn reject_nft(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,

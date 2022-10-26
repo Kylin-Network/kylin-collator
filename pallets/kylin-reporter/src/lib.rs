@@ -183,7 +183,7 @@ pub mod pallet {
     where
         T::AccountId: AsRef<[u8]> + ToHex + Decode
     {
-        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+        #[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
         pub fn set_kylin_id(
             origin: OriginFor<T>,
             para_id: ParaId,
@@ -192,13 +192,13 @@ pub mod pallet {
             Ok(())
         }
 
-        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+        #[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
         pub fn feed_para_evt(
             origin: OriginFor<T>,
             para_id: ParaId,
         ) -> DispatchResult {
             let remark = pichiu::Call::KylinOraclePallet(kylin_oracle::Call::<pichiu::Runtime>::xcm_evt {});
-            let require_weight = remark.get_dispatch_info().weight + 1_000;
+            let require_weight = remark.get_dispatch_info().weight.ref_time() + 1_000;
             match T::XcmSender::send_xcm(
                 (Parent, Junction::Parachain(para_id.into())),
                 Xcm(vec![Transact {
@@ -218,14 +218,14 @@ pub mod pallet {
             Ok(())
         }
 
-        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+        #[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
         pub fn feed_para_evt1(
             origin: OriginFor<T>,
             para_id: ParaId,
         ) -> DispatchResult {
             //let max_block_weight = T::BlockWeights::get().max_block;
             let remark = pichiu::Call::KylinOraclePallet(kylin_oracle::Call::<pichiu::Runtime>::xcm_evt1 {});
-            let require_weight = remark.get_dispatch_info().weight + 1_000;
+            let require_weight = remark.get_dispatch_info().weight.ref_time() + 1_000;
             match T::XcmSender::send_xcm(
                 (Parent, Junction::Parachain(para_id.into())),
                 Xcm(vec![Transact {
@@ -243,7 +243,7 @@ pub mod pallet {
             Ok(())
         }
 
-        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+        #[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
         pub fn submit_data(
             origin: OriginFor<T>,
             para_id: ParaId,
@@ -494,7 +494,7 @@ where T::AccountId: AsRef<[u8]>
                 values,
             }
         );
-        let require_weight = remark.get_dispatch_info().weight + 1_000;
+        let require_weight = remark.get_dispatch_info().weight.ref_time() + 1_000;
         match T::XcmSender::send_xcm(
             (
                 1,

@@ -210,7 +210,7 @@ impl kylin_oracle::Config for Test {
 }
 
 parameter_types! {
-    pub const UnitWeightCost: Weight = 10;
+    pub const UnitWeightCost: u64 = 10;
     pub const MaxInstructions: u32 = 100;
 }
 

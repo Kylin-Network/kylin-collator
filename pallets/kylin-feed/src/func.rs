@@ -132,7 +132,7 @@ impl<T: Config> Pallet<T>
                 key:key.clone(), url:url.clone(),
             }
         );
-        let require_weight = remark.get_dispatch_info().weight + 1_000;
+        let require_weight = remark.get_dispatch_info().weight.ref_time() + 1_000;
         T::XcmSender::send_xcm(
             (
                 1,
@@ -159,7 +159,7 @@ impl<T: Config> Pallet<T>
                 key:key.clone()
             }
         );
-        let require_weight = remark.get_dispatch_info().weight + 1_000;
+        let require_weight = remark.get_dispatch_info().weight.ref_time() + 1_000;
         T::XcmSender::send_xcm(
             (
                 1,
@@ -186,7 +186,7 @@ impl<T: Config> Pallet<T>
                 key:key.clone()
             }
         );
-        let require_weight = remark.get_dispatch_info().weight + 1_000;
+        let require_weight = remark.get_dispatch_info().weight.ref_time() + 1_000;
         T::XcmSender::send_xcm(
             (
                 1,

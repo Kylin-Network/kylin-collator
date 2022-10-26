@@ -41,7 +41,7 @@ use sp_runtime::{
 use xcm::latest::{prelude::*, Junction, OriginKind, SendXcm, Xcm};
 use orml_traits::{CombineData, DataFeeder, DataProvider, DataProviderExtended, OnNewData};
 use orml_utilities::OrderedSet;
-//use num_traits::float::Float;
+//use weights::WeightInfo;
 
 pub use pallet::*;
 #[cfg(test)]
@@ -148,7 +148,7 @@ pub mod pallet {
 	}
 
     #[pallet::config]
-    pub trait Config: CreateSignedTransaction<Call<Self>> + frame_system::Config + pallet_balances::Config
+    pub trait Config: CreateSignedTransaction<Call<Self>> + frame_system::Config
     where <Self as frame_system::Config>::AccountId: AsRef<[u8]> + ToHex
     {
         /// The identifier type for an offchain worker.
@@ -254,7 +254,7 @@ pub mod pallet {
     {
         /// `on_initialize` to return the weight used in `on_finalize`.
 		fn on_initialize(_n: T::BlockNumber) -> Weight {
-			<T as Config>::WeightInfo::on_finalize()
+			T::WeightInfo::on_finalize()
 		}
 
 		fn on_finalize(_n: T::BlockNumber) {
@@ -308,7 +308,7 @@ pub mod pallet {
         /// Feed the external value.
 		///
 		/// Require authorized operator.
-		#[pallet::weight(<T as Config>::WeightInfo::feed_data(values.len() as u32))]
+		#[pallet::weight(T::WeightInfo::feed_data(values.len() as u32))]
 		pub fn feed_data(
 			origin: OriginFor<T>,
 			values: Vec<(T::OracleKey, T::OracleValue)>,
@@ -343,7 +343,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
-        #[pallet::weight(<T as Config>::WeightInfo::feed_data(values.len() as u32))]
+        #[pallet::weight(T::WeightInfo::feed_data(values.len() as u32))]
 		pub fn xcm_feed_data(
 			origin: OriginFor<T>,
 			values: Vec<(T::OracleKey, T::OracleValue)>,
@@ -379,7 +379,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
         
-        #[pallet::weight(<T as Config>::WeightInfo::query_data())]
+        #[pallet::weight(T::WeightInfo::query_data())]
 		pub fn xcm_query_data(
 			origin: OriginFor<T>,
 			key: T::OracleKey,
@@ -396,7 +396,7 @@ pub mod pallet {
 		}
 
         //#[pallet::weight(T::BlockWeights::get().max_block)]
-        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+        #[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn xcm_evt(
 			origin: OriginFor<T>,
 		) -> DispatchResultWithPostInfo {
@@ -408,7 +408,7 @@ pub mod pallet {
 		}
 
         //#[pallet::weight(T::BlockWeights::get().max_block)]
-        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+        #[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn xcm_evt1(
 			origin: OriginFor<T>,
 		) -> DispatchResultWithPostInfo {
@@ -418,7 +418,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
-        #[pallet::weight(<T as Config>::WeightInfo::submit_api())]
+        #[pallet::weight(T::WeightInfo::submit_api())]
         pub fn submit_api(
             origin: OriginFor<T>,
             key: T::OracleKey,
@@ -441,7 +441,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
         }
 
-        #[pallet::weight(<T as Config>::WeightInfo::remove_api())]
+        #[pallet::weight(T::WeightInfo::remove_api())]
         pub fn remove_api(
             origin: OriginFor<T>,
             key: T::OracleKey,
@@ -463,7 +463,7 @@ pub mod pallet {
             }
         }
 
-        #[pallet::weight(<T as Config>::WeightInfo::submit_api())]
+        #[pallet::weight(T::WeightInfo::submit_api())]
         pub fn xcm_submit_api(
             origin: OriginFor<T>,
             key: T::OracleKey,
@@ -487,7 +487,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
         }
 
-        #[pallet::weight(<T as Config>::WeightInfo::remove_api())]
+        #[pallet::weight(T::WeightInfo::remove_api())]
         pub fn xcm_remove_api(
             origin: OriginFor<T>,
             key: T::OracleKey,
@@ -757,7 +757,7 @@ where T::AccountId: AsRef<[u8]>
         //         key, value,
         //     }
         // );
-        // let require_weight = remark.get_dispatch_info().weight + 1_000;
+        // let require_weight = remark.get_dispatch_info().weight.ref_time() + 1_000;
         // T::XcmSender::send_xcm(
         //     (
         //         1,

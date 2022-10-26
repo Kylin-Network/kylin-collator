@@ -83,7 +83,7 @@ use xcm_executor::{
 // XCM imports
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use xcm::latest::prelude::*;
+use xcm::latest::{prelude::*, Weight as XCMWeight};
 use xcm_builder::{
 	AccountId32Aliases, CurrencyAdapter, EnsureXcmOrigin, FixedWeightBounds, IsConcrete,
 	LocationInverter, NativeAsset, ParentAsSuperuser, ParentIsPreset, RelayChainAsNative,
@@ -128,7 +128,7 @@ pub fn native_version() -> NativeVersion {
 /// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used
 /// by  Operational  extrinsics.
 /// We allow for .5 seconds of compute with a 12 second average block time.
-const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
+const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND.saturating_div(2);
 
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 
@@ -408,8 +408,8 @@ impl pallet_sudo::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
-	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
+	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
+	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
 }
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
@@ -524,7 +524,7 @@ pub type XcmOriginToTransactDispatchOrigin = (
 
 parameter_types! {
 	// One XCM operation is 1_000_000 weight - almost certainly a conservative estimate.
-	pub UnitWeightCost: Weight = 1_000_000;
+	pub UnitWeightCost: u64 = 1_000_000;
 	// One ROC buys 1 second of weight.
 	pub const WeightPrice: (MultiLocation, u128) = (MultiLocation::parent(), KYL);
 	pub const MaxInstructions: u32 = 100;
@@ -554,8 +554,8 @@ impl<T: Contains<MultiLocation>> ShouldExecute for AllowAnyPaidExecutionFrom<T> 
 	fn should_execute<Call>(
 		origin: &MultiLocation,
 		_message: &mut Xcm<Call>,
-		_max_weight: Weight,
-		_weight_credit: &mut Weight,
+		_max_weight: XCMWeight,
+		_weight_credit: &mut XCMWeight,
 	) -> Result<(), ()> {
 		ensure!(T::contains(origin), ());
 		Ok(())
@@ -587,7 +587,6 @@ impl xcm_executor::Config for XcmConfig {
 }
 
 parameter_types! {
-	pub const MaxDownwardMessageWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 10;
 	pub const GracePeriod: u32 = 5;
 	pub const UnsignedInterval: u64 = 128;
 	pub const UnsignedPriority: u64 = 1 << 20;
@@ -892,7 +891,7 @@ impl orml_xcm::Config for Runtime {
 
 parameter_types! {
 	pub SelfLocation: MultiLocation =  MultiLocation::new(1, X1(Parachain(ParachainInfo::parachain_id().into())));
-	pub const BaseXcmWeight: Weight = 100_000_000;
+	pub const BaseXcmWeight: u64 = 100_000_000;
 	pub const MaxAssetsForTransfer: usize = 2;
 	pub const TreasuryPalletId: PalletId = PalletId(*b"pchutrsy");
 }

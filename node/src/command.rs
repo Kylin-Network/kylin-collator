@@ -449,10 +449,7 @@ impl CliConfiguration<Self> for RelayChainCli {
 	}
 
 	fn base_path(&self) -> Result<Option<BasePath>> {
-		Ok(self
-			.shared_params()
-			.base_path()
-			.or_else(|| self.base_path.clone().map(Into::into)))
+		self.base.base.base_path()
 	}
 
 	fn rpc_http(&self, default_listen_port: u16) -> Result<Option<SocketAddr>> {
@@ -506,10 +503,6 @@ impl CliConfiguration<Self> for RelayChainCli {
 
 	fn transaction_pool(&self, _is_dev: bool) -> Result<sc_service::config::TransactionPoolOptions> {
 		self.base.base.transaction_pool(_is_dev)
-	}
-
-	fn state_cache_child_ratio(&self) -> Result<Option<usize>> {
-		self.base.base.state_cache_child_ratio()
 	}
 
 	fn rpc_methods(&self) -> Result<sc_service::config::RpcMethods> {

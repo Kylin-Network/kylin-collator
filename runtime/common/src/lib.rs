@@ -136,10 +136,10 @@ pub mod constants {
 	pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
 	/// We allow for 0.5 seconds of compute with a 6 second average block time.
-	pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
+	pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND.saturating_div(2);
 
 	/// XCM
-	pub const BASE_XCM_WEIGHT: Weight = 100_000_000;
+	pub const BASE_XCM_WEIGHT: Weight = Weight::from_ref_time(100_000_000);
 }
 
 pub mod fee {
@@ -148,9 +148,9 @@ pub mod fee {
 	use super::types::Balance;
 
 	pub fn native_token_per_second() -> u128 {
-		let base_weight = Balance::from(ExtrinsicBaseWeight::get());
+		let base_weight = Balance::from(ExtrinsicBaseWeight::get().ref_time());
 		let base_tx_fee = KYL / 1000;
-		let base_tx_per_second = (WEIGHT_PER_SECOND as u128) / base_weight;
+		let base_tx_per_second = (WEIGHT_PER_SECOND.ref_time() as u128) / base_weight;
 		let fee_per_second = base_tx_per_second * base_tx_fee; // 1_000_000
 		fee_per_second / 100
 	}
