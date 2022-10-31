@@ -88,13 +88,13 @@ polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot", bra
 
 
 # Local orml
-orml-xcm = { path = "../../pallets/orml/xcm", default-features = false }
-orml-traits = { path = "../../pallets/orml/traits", default-features = false }
-orml-tokens = { path = "../../pallets/orml/tokens", default-features = false }
-orml-xtokens = { path = "../../pallets/orml/xtokens", default-features = false }
-orml-currencies = { path = "../../pallets/orml/currencies", default-features = false }
-orml-xcm-support = { path = "../../pallets/orml/xcm-support", default-features = false }
-orml-unknown-tokens = { path = "../../pallets/orml/unknown-tokens", default-features = false }
+orml-xcm = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.28", default-features = false }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.28", default-features = false }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.28", default-features = false }
+orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.28", default-features = false }
+orml-currencies = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.28", default-features = false }
+orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.28", default-features = false }
+orml-unknown-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.28", default-features = false }
 
 # Local Dependencies
 kylin-oracle = { package = 'kylin-oracle', path = '../../pallets/kylin-oracle', default-features = false }
