@@ -3897,8 +3897,6 @@ dependencies = [
  "hex",
  "kylin-oracle",
  "lite-json",
- "orml-traits",
- "orml-utilities",
  "pallet-balances",
  "pallet-timestamp",
  "pallet-transaction-payment",
