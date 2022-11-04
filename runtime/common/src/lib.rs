@@ -74,6 +74,9 @@ pub mod types {
 
 	// A cryptographic salt to be combined with a value before hashing.
 	pub type Salt = FixedArray<u8, 32>;
+
+	/// ID for distributions managed by the Kylin-distribution Pallet
+	pub type DistributionId = u128;
 }
 
 /// Money matters.

@@ -29,7 +29,7 @@ pub mod pallet {
 	};
 	
 	/// Contains functions necessary for the business logic for managing Distributions
-pub trait Distributionper {
+pub trait Distributor {
 	type AccountId;
 	type DistributionId;
 	type DistributionStart;
@@ -312,7 +312,7 @@ pub trait Distributionper {
 		) -> DispatchResult {
 			let creator = ensure_signed(origin)?;
 
-			<Self as Distributionper>::create_distribution(creator, start_at, vesting_schedule)
+			<Self as Distributor>::create_distribution(creator, start_at, vesting_schedule)
 		}
 
 		/// Add one or more recipients to the Distribution, specifying the token amount that each
@@ -339,7 +339,7 @@ pub trait Distributionper {
 		) -> DispatchResult {
 			let origin_id = ensure_signed(origin)?;
 
-			<Self as Distributionper>::add_recipient(origin_id, distribution_id, recipients)
+			<Self as Distributor>::add_recipient(origin_id, distribution_id, recipients)
 		}
 
 		/// Remove a recipient from an Distribution.
@@ -368,7 +368,7 @@ pub trait Distributionper {
 		) -> DispatchResult {
 			let origin_id = ensure_signed(origin)?;
 
-			<Self as Distributionper>::remove_recipient(origin_id, distribution_id, recipient)
+			<Self as Distributor>::remove_recipient(origin_id, distribution_id, recipient)
 		}
 
 		/// Start an Distribution.
@@ -392,7 +392,7 @@ pub trait Distributionper {
 		pub fn enable_distribution(origin: OriginFor<T>, distribution_id: T::DistributionId) -> DispatchResult {
 			let origin_id = ensure_signed(origin)?;
 
-			<Self as Distributionper>::enable_distribution(origin_id, distribution_id)
+			<Self as Distributor>::enable_distribution(origin_id, distribution_id)
 		}
 
 		/// Stop an Distribution.
@@ -413,7 +413,7 @@ pub trait Distributionper {
 		pub fn disable_distribution(origin: OriginFor<T>, distribution_id: T::DistributionId) -> DispatchResult {
 			let origin_id = ensure_signed(origin)?;
 
-			<Self as Distributionper>::disable_distribution(origin_id, distribution_id)?;
+			<Self as Distributor>::disable_distribution(origin_id, distribution_id)?;
 			Ok(())
 		}
 
@@ -463,7 +463,7 @@ pub trait Distributionper {
 				},
 			}
 
-			<Self as Distributionper>::claim(distribution_id, identity, reward_account)
+			<Self as Distributor>::claim(distribution_id, identity, reward_account)
 		}
 	}
 
@@ -667,7 +667,7 @@ pub trait Distributionper {
 		}
 	}
 
-	impl<T: Config> Distributionper for Pallet<T> {
+	impl<T: Config> Distributor for Pallet<T> {
 		type AccountId = AccountIdOf<T>;
 		type DistributionId = DistributionIdOf<T>;
 		type DistributionStart = MomentOf<T>;

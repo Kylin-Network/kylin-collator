@@ -104,6 +104,7 @@ orml-unknown-tokens = { path = "../../pallets/orml/unknown-tokens", default-feat
 runtime-common = { path = "../common", default-features = false }
 kylin-feedback = { default-features = false, path = "../../pallets/kylin-feedback" }
 #kylin-market = { default-features = false, path = "../../pallets/kylin-market" }
+kylin-distribution = { package = 'kylin-distribution', path = '../../pallets/kylin-distribution', default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.3.4"
@@ -200,6 +201,7 @@ std = [
 
 	'kylin-feedback/std',
 	#'kylin-market/std',
+	"kylin-distribution/std",
 ]
 
 # A feature that should be enabled when the runtime should be build for on-chain
