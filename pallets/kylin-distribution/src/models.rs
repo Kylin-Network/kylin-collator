@@ -46,18 +46,4 @@ pub enum DistributionState {
 	Enabled,
 	/// The Distribution has ended. Recipients can **NOT** claim funds.
 	Disabled,
-}
-
-/// Proof that a remote account owns a local recipient account.
-#[derive(Clone, RuntimeDebug, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
-pub enum Proof<AccountId> {
-	RelayChain(AccountId, MultiSignature),
-	Ethereum(EcdsaSignature),
-}
-
-/// Remote account that is associated with a local account.
-#[derive(Hash, Clone, PartialEq, Eq, RuntimeDebug, Encode, Decode, MaxEncodedLen, TypeInfo)]
-pub enum Identity<AccountId> {
-	RelayChain(AccountId),
-	Ethereum(EthereumAddress),
-}
+} 

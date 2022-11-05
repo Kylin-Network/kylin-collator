@@ -12,7 +12,7 @@ mod mocks;
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::{
-		models::{Distribution, DistributionState, Identity, Proof, RecipientFund},
+		models::{Distribution, DistributionState, RecipientFund},
 		weights::WeightInfo,
 	};
 	use codec::{Codec, FullCodec, MaxEncodedLen};
@@ -34,10 +34,8 @@ pub trait Distributor {
 	type DistributionId;
 	type DistributionStart;
 	type Balance;
-	type Proof;
 	type Recipient;
 	type RecipientCollection;
-	type Identity;
 	type VestingSchedule;
 
 	/// Create a new Distribution.
@@ -73,7 +71,7 @@ pub trait Distributor {
 	/// Claim a recipient reward from an Distribution.
 	fn claim(
 		distribution_id: Self::DistributionId,
-		remote_account: Self::Identity,
+		remote_account: Self::AccountId,
 		reward_account: Self::AccountId,
 	) -> DispatchResultWithPostInfo;
 }
@@ -114,10 +112,7 @@ pub trait Distributor {
 	pub type RecipientFundOf<T> = RecipientFund<<T as Config>::Balance, <T as Config>::Moment>;
 	/// [`Moment`](Config::Moment) as configured by the pallet.
 	pub type MomentOf<T> = <T as Config>::Moment;
-	/// ['Proof'](crate::models::Proof) as configured by the pallet
-	pub type ProofOf<T> = Proof<<T as Config>::RelayChainAccountId>;
-	pub type IdentityOf<T> = Identity<<T as Config>::RelayChainAccountId>;
-
+	
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
@@ -132,7 +127,7 @@ pub trait Distributor {
 		},
 		RecipientRemoved {
 			distribution_id: T::DistributionId,
-			recipient_id: IdentityOf<T>,
+			recipient_id: T::AccountId,
 			unclaimed_funds: T::Balance,
 		},
 		DistributionStarted {
@@ -144,7 +139,7 @@ pub trait Distributor {
 			at: T::Moment,
 		},
 		Claimed {
-			identity: IdentityOf<T>,
+			identity: T::AccountId,
 			recipient_account: T::AccountId,
 			amount: T::Balance,
 		},
@@ -162,7 +157,6 @@ pub trait Distributor {
 		NothingToClaim,
 		RecipientAlreadyClaimed,
 		RecipientNotFound,
-		InvalidProof,
 		UnclaimedFundsRemaining,
 	}
 
@@ -221,8 +215,8 @@ pub trait Distributor {
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 
-		/// The prefix used in proofs
-		#[pallet::constant]
+	    /// The prefix used in proofs
+	 	#[pallet::constant]
 		type Prefix: Get<&'static [u8]>;
 
 		/// The stake required to craete an Distribution
@@ -258,7 +252,7 @@ pub trait Distributor {
 		T::DistributionId,
 		Blake2_128Concat,
 		T::AccountId,
-		IdentityOf<T>,
+		T::AccountId,
 		OptionQuery,
 	>;
 
@@ -276,7 +270,7 @@ pub trait Distributor {
 		Blake2_128Concat,
 		T::DistributionId,
 		Blake2_128Concat,
-		IdentityOf<T>,
+		T::AccountId,
 		RecipientFundOf<T>,
 		OptionQuery,
 	>;
@@ -335,7 +329,7 @@ pub trait Distributor {
 		pub fn add_recipient(
 			origin: OriginFor<T>,
 			distribution_id: T::DistributionId,
-			recipients: Vec<(IdentityOf<T>, BalanceOf<T>, MomentOf<T>, bool)>,
+			recipients: Vec<(T::AccountId, BalanceOf<T>, MomentOf<T>, bool)>,
 		) -> DispatchResult {
 			let origin_id = ensure_signed(origin)?;
 
@@ -364,7 +358,7 @@ pub trait Distributor {
 		pub fn remove_recipient(
 			origin: OriginFor<T>,
 			distribution_id: T::DistributionId,
-			recipient: IdentityOf<T>,
+			recipient: T::AccountId,
 		) -> DispatchResult {
 			let origin_id = ensure_signed(origin)?;
 
@@ -426,7 +420,6 @@ pub trait Distributor {
 		/// # Parameter Sources
 		/// * `distribution_id` - user selected, provided by the system
 		/// * `reward_account` - user provided
-		/// * `proof` - calculated by the system (requires applicable signing)
 		///
 		/// # Emits
 		/// * `DistributionEnded`
@@ -436,7 +429,6 @@ pub trait Distributor {
 		/// * `DistributionIsNotEnabled` - The Distribution has not been enabled
 		/// * `AssociatedWithAnohterAccount` - Associated with a different account
 		/// * `ArithmiticError` - Overflow while totaling claimed funds
-		/// * `InvalidProof`
 		/// * `RecipientNotFound` - No recipient associated with the `identity` could be found.
 		#[pallet::weight(<T as Config>::WeightInfo::claim(TotalDistributionRecipients::<T>::get(distribution_id)))]
 		#[transactional]
@@ -444,26 +436,10 @@ pub trait Distributor {
 			origin: OriginFor<T>,
 			distribution_id: T::DistributionId,
 			reward_account: T::AccountId,
-			proof: ProofOf<T>,
 		) -> DispatchResultWithPostInfo {
 			ensure_none(origin)?;
-			let identity = Self::get_identity(proof, &reward_account, T::Prefix::get())?;
-
-			match Associations::<T>::get(distribution_id, reward_account.clone()) {
-				// Confirm association matches
-				Some(associated_account) => {
-					ensure!(
-						associated_account == identity,
-						Error::<T>::AssociatedWithAnohterAccount
-					);
-				},
-				// If no association exists, create a new one
-				None => {
-					Associations::<T>::insert(distribution_id, reward_account.clone(), identity.clone());
-				},
-			}
-
-			<Self as Distributor>::claim(distribution_id, identity, reward_account)
+			
+			<Self as Distributor>::claim(distribution_id, reward_account.clone(), reward_account)
 		}
 	}
 
@@ -518,48 +494,12 @@ pub trait Distributor {
 		/// * `RecipientNotFound` - No recipient associated with the `identity` could be found.
 		pub(crate) fn get_recipient_fund(
 			distribution_id: T::DistributionId,
-			identity: IdentityOf<T>,
+			identity: T::AccountId,
 		) -> Result<RecipientFundOf<T>, Error<T>> {
 			RecipientFunds::<T>::try_get(distribution_id, identity)
 				.map_err(|_| Error::<T>::RecipientNotFound)
 		}
 
-		/// Gets the remote account address from the `Proof`.
-		///
-		/// # Errors
-		/// * `InvalidProof` - If the proof is invalid, an error will be returned.
-		pub(crate) fn get_identity(
-			proof: ProofOf<T>,
-			reward_account: &<T as frame_system::Config>::AccountId,
-			prefix: &[u8],
-		) -> Result<IdentityOf<T>, DispatchErrorWithPostInfo<PostDispatchInfo>> {
-			let identity = match proof {
-				Proof::Ethereum(eth_proof) => {
-					let reward_account_encoded =
-						reward_account.using_encoded(signature_verification::get_encoded_vec);
-					let eth_address = signature_verification::ethereum_recover(
-						prefix,
-						&reward_account_encoded,
-						&eth_proof,
-					)
-					.map_err(|_| Error::<T>::InvalidProof)?;
-					Result::<_, DispatchError>::Ok(Identity::Ethereum(eth_address))
-				},
-				Proof::RelayChain(relay_account, relay_proof) => {
-					ensure!(
-						signature_verification::verify_relay(
-							prefix,
-							reward_account.clone(),
-							relay_account.clone().into(),
-							&relay_proof
-						),
-						Error::<T>::InvalidProof
-					);
-					Ok(Identity::RelayChain(relay_account))
-				},
-			}?;
-			Ok(identity)
-		}
 
 		/// Start an Distribution at a given moment.
 		///
@@ -672,10 +612,8 @@ pub trait Distributor {
 		type DistributionId = DistributionIdOf<T>;
 		type DistributionStart = MomentOf<T>;
 		type Balance = BalanceOf<T>;
-		type Proof = ProofOf<T>;
-		type Recipient = IdentityOf<T>;
+		type Recipient = T::AccountId;
 		type RecipientCollection = Vec<(Self::Recipient, BalanceOf<T>, MomentOf<T>, bool)>;
-		type Identity = IdentityOf<T>;
 		type VestingSchedule = MomentOf<T>;
 
 		/// Create a new Distribution.
@@ -939,7 +877,7 @@ pub trait Distributor {
 		/// * `RecipientNotFound` - No recipient associated with the `identity` could be found.
 		fn claim(
 			distribution_id: Self::DistributionId,
-			identity: Self::Identity,
+			identity: Self::AccountId,
 			reward_account: Self::AccountId,
 		) -> DispatchResultWithPostInfo {
 			let distribution_account = Self::get_distribution_account_id(distribution_id);
@@ -998,7 +936,6 @@ pub trait Distributor {
 	/// * Only claim can be called via an unsigned transaction
 	/// * The Distribution exists in the pallet's storage
 	/// * The Distribution has been enabled / has started
-	/// * The provided proof is valid
 	/// * If an association has been created for the reward account, it matches the remote account
 	/// * The recipient has funds to claim
 	#[pallet::validate_unsigned]
@@ -1006,7 +943,7 @@ pub trait Distributor {
 		type Call = Call<T>;
 
 		fn validate_unsigned(_: TransactionSource, call: &Self::Call) -> TransactionValidity {
-			if let Call::claim { distribution_id, reward_account, proof } = call {
+			if let Call::claim { distribution_id, reward_account } = call {
 				// Validity Error if the distribution does not exist
 				let distribution_state = Self::get_distribution_state(*distribution_id).map_err(|_| {
 					Into::<TransactionValidityError>::into(InvalidTransaction::Custom(
@@ -1019,30 +956,13 @@ pub trait Distributor {
 					return InvalidTransaction::Custom(ValidityError::NotClaimable as u8).into()
 				}
 
-				// Evaluate proof
-				let identity = Self::get_identity(proof.clone(), reward_account, T::Prefix::get())
-					.map_err(|_| {
-						Into::<TransactionValidityError>::into(InvalidTransaction::Custom(
-							ValidityError::InvalidProof as u8,
-						))
-					})?;
-
-				if let Some(associated_account) = Associations::<T>::get(distribution_id, reward_account)
-				{
-					// Validity Error if the account is already associated to another
-					if associated_account != identity {
-						return InvalidTransaction::Custom(ValidityError::AlreadyAssociated as u8)
-							.into()
-					}
-				}
-
 				// Validity Error if there are no funds for this recipient
-				match RecipientFunds::<T>::get(distribution_id, identity.clone()) {
+				match RecipientFunds::<T>::get(distribution_id, reward_account.clone()) {
 					None => InvalidTransaction::Custom(ValidityError::NoFunds as u8).into(),
 					Some(fund) if fund.total.is_zero() =>
 						InvalidTransaction::Custom(ValidityError::NoFunds as u8).into(),
 					Some(_) => ValidTransaction::with_tag_prefix("DistributionAssociationCheck")
-						.and_provides(identity)
+						.and_provides(reward_account)
 						.build(),
 				}
 			} else {
@@ -1053,7 +973,6 @@ pub trait Distributor {
 	}
 
 	pub enum ValidityError {
-		InvalidProof,
 		AlreadyAssociated,
 		NoFunds,
 		NotClaimable,
