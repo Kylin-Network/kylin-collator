@@ -313,11 +313,9 @@ impl kylin_distribution::Config for Runtime {
 	type Balance = Balance;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type Moment = Moment;
-	type RelayChainAccountId = sp_runtime::AccountId32;
 	type RecipientFundAsset = Balances;
 	type Time = Timestamp;
 	type PalletId = DistributionPalletId;
-	type Prefix = DistributionPrefix;
 	type Stake = DistributionStake;
 	type WeightInfo = kylin_distribution::weights::SubstrateWeight<Runtime>;
 }
@@ -1236,7 +1234,7 @@ construct_runtime! {
 		TechnicalCommittee: pallet_collective::<Instance2> = 92,
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 93,
 		
-		Distribution: kylin_distribution::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 94,
+		KylinDistribution: kylin_distribution::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 94,
 		
 	}
 }

@@ -25,7 +25,6 @@ pub mod pallet {
 			},
 		},
 		math::safe::{SafeAdd, SafeSub},
-		signature_verification,
 	};
 	
 	/// Contains functions necessary for the business logic for managing Distributions
@@ -197,13 +196,6 @@ pub trait Distributor {
 		/// Time stamp
 		type Moment: AtLeast32Bit + Parameter + Default + Copy + MaxEncodedLen + FullCodec;
 
-		/// Relay chain account ID
-		type RelayChainAccountId: Parameter
-			+ MaybeSerializeDeserialize
-			+ MaxEncodedLen
-			+ Into<AccountId32>
-			+ Ord;
-
 		/// The asset type Recipients will claim from the Distributions.
 		type RecipientFundAsset: Inspect<Self::AccountId, Balance = Self::Balance>
 			+ Transfer<Self::AccountId, Balance = Self::Balance>;
@@ -214,10 +206,6 @@ pub trait Distributor {
 		/// The pallet ID required for creating sub-accounts used by Distributions.
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
-
-	    /// The prefix used in proofs
-	 	#[pallet::constant]
-		type Prefix: Get<&'static [u8]>;
 
 		/// The stake required to craete an Distribution
 		#[pallet::constant]
