@@ -29,8 +29,7 @@ cumulus-pallet-xcm = { git = "https://github.com/paritytech/cumulus", branch = "
 xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.28" }
 
 kylin-primitives = { default-features = false, version = "0.0.1", path = "../../primitives" }
-kylin-oracle = { path = '../kylin-oracle', default-features = false }
-pichiu = {package='pichiu-runtime', path = '../../runtime/pichiu', default-features = false }
+
 
 [dev-dependencies]
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }

@@ -279,7 +279,10 @@ pub mod pallet {
 			owner: T::AccountId,
 			nft_id: NftId,
 		},
-		
+		QueryFeedBack {
+			key: Vec<u8>,
+			value: i64,
+		},
 	}
 
 	#[pallet::error]
@@ -518,6 +521,18 @@ pub mod pallet {
 			Ok(())
 		}
 
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		pub fn xcm_feed_back(
+			origin: OriginFor<T>,
+			key: Vec<u8>,
+			value: i64,
+		) -> DispatchResult {
+			let para_id =
+                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
+
+			Self::deposit_event(Event::QueryFeedBack { key, value });
+			Ok(())
+		}
 		
 
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]

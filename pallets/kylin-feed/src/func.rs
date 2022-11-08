@@ -8,6 +8,39 @@ use sp_runtime::{
     ArithmeticError,
 };
 
+#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[allow(non_camel_case_types)]
+enum KylinMockFunc {
+    #[codec(index = 1u8)]
+    xcm_feed_data { 
+        values: Vec<(Vec<u8>, i64)> 
+    },
+    #[codec(index = 2u8)]
+    xcm_query_data { 
+        key: Vec<u8> 
+    },
+    #[codec(index = 3u8)]
+    xcm_evt {},
+    #[codec(index = 4u8)]
+    xcm_evt1 {}, 
+    #[codec(index = 7u8)]
+    xcm_submit_api {
+        key: Vec<u8>,
+        url: Vec<u8>,
+    },
+    #[codec(index = 8u8)]
+    xcm_remove_api { 
+        key: Vec<u8> 
+    },
+}
+
+#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[allow(non_camel_case_types)]
+enum KylinMockCall {
+    #[codec(index = 166u8)]
+    KylinOraclePallet(KylinMockFunc),
+}
+
 pub const SALT_NFT: &[u8; 8] = b"KylinNft";
 
 impl<T: Config> Pallet<T>
@@ -127,12 +160,9 @@ impl<T: Config> Pallet<T>
     }
 
     pub fn do_create_feed(para_id: u32, key: &Vec<u8>, url: &Vec<u8>) -> DispatchResult {
-        let remark = pichiu::Call::KylinOraclePallet(
-            kylin_oracle::Call::<pichiu::Runtime>::xcm_submit_api {
-                key:key.clone(), url:url.clone(),
-            }
-        );
-        let require_weight = remark.get_dispatch_info().weight + 1_000;
+        let remark = KylinMockCall::KylinOraclePallet(KylinMockFunc::xcm_submit_api{
+            key:key.clone(), url:url.clone(),
+        });
         T::XcmSender::send_xcm(
             (
                 1,
@@ -140,7 +170,7 @@ impl<T: Config> Pallet<T>
             ),
             Xcm(vec![Transact {
                 origin_type: OriginKind::Native,
-                require_weight_at_most: require_weight,
+                require_weight_at_most: 1_000_000_000,
                 call: remark.encode().into(),
             }]),
         ).map_err(
@@ -154,12 +184,9 @@ impl<T: Config> Pallet<T>
     }
 
     pub fn do_remove_feed(para_id: u32, key: &Vec<u8>) -> DispatchResult {
-        let remark = pichiu::Call::KylinOraclePallet(
-            kylin_oracle::Call::<pichiu::Runtime>::xcm_remove_api {
-                key:key.clone()
-            }
-        );
-        let require_weight = remark.get_dispatch_info().weight + 1_000;
+        let remark = KylinMockCall::KylinOraclePallet(KylinMockFunc::xcm_remove_api{
+            key:key.clone()
+        });
         T::XcmSender::send_xcm(
             (
                 1,
@@ -167,7 +194,7 @@ impl<T: Config> Pallet<T>
             ),
             Xcm(vec![Transact {
                 origin_type: OriginKind::Native,
-                require_weight_at_most: require_weight,
+                require_weight_at_most: 1_000_000_000,
                 call: remark.encode().into(),
             }]),
         ).map_err(
@@ -181,12 +208,9 @@ impl<T: Config> Pallet<T>
     }
 
     pub fn do_query_feed(para_id: u32, key: &Vec<u8>) -> DispatchResult {
-        let remark = pichiu::Call::KylinOraclePallet(
-            kylin_oracle::Call::<pichiu::Runtime>::xcm_query_data {
-                key:key.clone()
-            }
-        );
-        let require_weight = remark.get_dispatch_info().weight + 1_000;
+        let remark = KylinMockCall::KylinOraclePallet(KylinMockFunc::xcm_query_data{
+            key:key.clone()
+        });
         T::XcmSender::send_xcm(
             (
                 1,
@@ -194,7 +218,7 @@ impl<T: Config> Pallet<T>
             ),
             Xcm(vec![Transact {
                 origin_type: OriginKind::Native,
-                require_weight_at_most: require_weight,
+                require_weight_at_most: 1_000_000_000,
                 call: remark.encode().into(),
             }]),
         ).map_err(

@@ -1203,7 +1203,7 @@ construct_runtime! {
 
 		// Kylin Pallets
 		OracleProvider: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>} = 54,
-		KylinOraclePallet: kylin_oracle::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 55,
+		KylinOraclePallet: kylin_oracle::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 166, // Fix index 166
 
 		// orml
 		OrmlXcm: orml_xcm::{Pallet, Call, Event<T>} = 70,
