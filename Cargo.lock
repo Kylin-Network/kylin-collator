@@ -3924,8 +3924,6 @@ dependencies = [
  "hex",
  "kylin-oracle",
  "lite-json",
- "orml-traits",
- "orml-utilities",
  "pallet-balances",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -5351,17 +5349,15 @@ dependencies = [
 [[package]]
 name = "orml-currencies"
 version = "0.4.1-dev"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.29#44fda4432b71f49ee59a650cf4775db895ab97af"
 dependencies = [
  "frame-support",
  "frame-system",
- "orml-tokens",
  "orml-traits",
  "orml-utilities",
- "pallet-balances",
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -5370,17 +5366,14 @@ dependencies = [
 [[package]]
 name = "orml-tokens"
 version = "0.4.1-dev"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.29#44fda4432b71f49ee59a650cf4775db895ab97af"
 dependencies = [
  "frame-support",
  "frame-system",
  "orml-traits",
- "pallet-elections-phragmen",
- "pallet-treasury",
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core",
- "sp-io",
  "sp-runtime",
  "sp-std",
 ]
@@ -5388,6 +5381,7 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.29#44fda4432b71f49ee59a650cf4775db895ab97af"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -5405,6 +5399,7 @@ dependencies = [
 [[package]]
 name = "orml-unknown-tokens"
 version = "0.4.1-dev"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.29#44fda4432b71f49ee59a650cf4775db895ab97af"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5412,9 +5407,6 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
  "sp-std",
  "xcm",
 ]
@@ -5422,13 +5414,12 @@ dependencies = [
 [[package]]
 name = "orml-utilities"
 version = "0.4.1-dev"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.29#44fda4432b71f49ee59a650cf4775db895ab97af"
 dependencies = [
  "frame-support",
- "frame-system",
  "parity-scale-codec",
  "scale-info",
  "serde",
- "serde_json",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -5437,6 +5428,7 @@ dependencies = [
 [[package]]
 name = "orml-xcm"
 version = "0.4.1-dev"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.29#44fda4432b71f49ee59a650cf4775db895ab97af"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5445,12 +5437,12 @@ dependencies = [
  "scale-info",
  "sp-std",
  "xcm",
- "xcm-executor",
 ]
 
 [[package]]
 name = "orml-xcm-support"
 version = "0.4.1-dev"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.29#44fda4432b71f49ee59a650cf4775db895ab97af"
 dependencies = [
  "frame-support",
  "orml-traits",
@@ -5464,33 +5456,22 @@ dependencies = [
 [[package]]
 name = "orml-xtokens"
 version = "0.4.1-dev"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.29#44fda4432b71f49ee59a650cf4775db895ab97af"
 dependencies = [
- "cumulus-pallet-dmp-queue",
- "cumulus-pallet-xcm",
- "cumulus-pallet-xcmp-queue",
  "cumulus-primitives-core",
  "frame-support",
  "frame-system",
- "orml-tokens",
  "orml-traits",
- "orml-xcm",
  "orml-xcm-support",
- "pallet-balances",
  "pallet-xcm",
- "parachain-info",
  "parity-scale-codec",
- "polkadot-parachain",
- "polkadot-runtime-parachains",
  "scale-info",
  "serde",
- "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std",
  "xcm",
- "xcm-builder",
  "xcm-executor",
- "xcm-simulator",
 ]
 
 [[package]]
@@ -12591,23 +12572,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "xcm-simulator"
-version = "0.9.29"
-source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.29#94078b44fb6c9767bf60ffcaaa3be40681be5a76"
-dependencies = [
- "frame-support",
- "parity-scale-codec",
- "paste",
- "polkadot-core-primitives",
- "polkadot-parachain",
- "polkadot-runtime-parachains",
- "sp-io",
- "sp-std",
- "xcm",
- "xcm-executor",
 ]
 
 [[package]]

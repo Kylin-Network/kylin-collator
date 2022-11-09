@@ -40,9 +40,6 @@ use sp_runtime::{
     traits::{Hash, UniqueSaturatedInto, Zero},
 };
 use xcm::latest::{prelude::*, Junction, OriginKind, SendXcm, Xcm};
-use orml_traits::{CombineData, DataFeeder, DataProvider, DataProviderExtended, OnNewData};
-use orml_utilities::OrderedSet;
-//use num_traits::float::Float;
 
 pub use pallet::*;
 #[cfg(test)]
