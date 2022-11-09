@@ -279,7 +279,10 @@ pub mod pallet {
 			owner: T::AccountId,
 			nft_id: NftId,
 		},
-		
+		QueryFeedBack {
+			key: Vec<u8>,
+			value: i64,
+		},
 	}
 
 	#[pallet::error]
@@ -515,6 +518,19 @@ pub mod pallet {
 			let nft = Nfts::<T>::get(collection_id, nft_id).ok_or(Error::<T>::NoAvailableNftId)?;
 			let mdata: MetaData = serde_json::from_slice(&nft.metadata).map_err(|_| Error::<T>::JsonError)?;
 			Self::do_query_feed(mdata.oracle_paraid, &mdata.key)?;
+			Ok(())
+		}
+
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
+		pub fn xcm_feed_back(
+			origin: OriginFor<T>,
+			key: Vec<u8>,
+			value: i64,
+		) -> DispatchResult {
+			let para_id =
+                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
+
+			Self::deposit_event(Event::QueryFeedBack { key, value });
 			Ok(())
 		}
 

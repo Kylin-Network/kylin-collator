@@ -97,6 +97,23 @@ pub mod crypto {
     }
 }
 
+#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[allow(non_camel_case_types)]
+enum KylinMockFunc {
+    #[codec(index = 8u8)]
+    xcm_feed_back { 
+        key: Vec<u8>,
+		value: i64,
+    },
+}
+
+#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[allow(non_camel_case_types)]
+enum KylinMockCall {
+    #[codec(index = 167u8)]
+    KylinFeed(KylinMockFunc),
+}
+
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, Ord, PartialOrd, TypeInfo, MaxEncodedLen)]
 pub enum CreatorId<AccountId> {
 	AccountId(AccountId),
@@ -752,28 +769,25 @@ where T::AccountId: AsRef<[u8]>
     }
 
     fn send_qret_to_parachain(para_id: ParaId, key: Vec<u8>, value: i64) -> DispatchResult {
-        // let remark = kylin::Call::KylinFeedback(
-        //     kylin_feedback::Call::<kylin::Runtime>::xcm_feed_back {
-        //         key, value,
-        //     }
-        // );
-        // let require_weight = remark.get_dispatch_info().weight.ref_time() + 1_000;
-        // T::XcmSender::send_xcm(
-        //     (
-        //         1,
-        //         Junction::Parachain(para_id.into()),
-        //     ),
-        //     Xcm(vec![Transact {
-        //         origin_type: OriginKind::Native,
-        //         require_weight_at_most: require_weight,
-        //         call: remark.encode().into(),
-        //     }]),
-        // ).map_err(
-        //     |e| {
-        //         log::error!("Error: XcmSendError {:?}, {:?}", para_id, e);
-        //         Error::<T>::XcmSendError
-        //     }
-        // )?;
+        let remark = KylinMockCall::KylinFeed(KylinMockFunc::xcm_feed_back{
+            key, value,
+        });
+        T::XcmSender::send_xcm(
+            (
+                1,
+                Junction::Parachain(para_id.into()),
+            ),
+            Xcm(vec![Transact {
+                origin_type: OriginKind::Native,
+                require_weight_at_most: 1_000_000_000,
+                call: remark.encode().into(),
+            }]),
+        ).map_err(
+            |e| {
+                log::error!("Error: XcmSendError {:?}, {:?}", para_id, e);
+                Error::<T>::XcmSendError
+            }
+        )?;
 
         Ok(())
     }

@@ -1180,12 +1180,6 @@ impl kylin_feed::Config for Runtime {
 	type XcmSender = XcmRouter;
 }
 
-impl kylin_feedback::Config for Runtime {
-	type Event = Event;
-	//type ProtocolOrigin = frame_system::EnsureRoot<AccountId>;
-	type Origin = Origin;
-}
-
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -1241,8 +1235,7 @@ construct_runtime! {
 		TechnicalCommittee: pallet_collective::<Instance2> = 92,
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 93,
 		Uniques: pallet_uniques::{Pallet, Call, Storage, Event<T>} = 94,
-		KylinFeed: kylin_feed::{Pallet, Call, Event<T>, Storage} = 95,
-		KylinFeedback: kylin_feedback::{Pallet, Call, Event<T>, Storage} = 96,
+		KylinFeed: kylin_feed::{Pallet, Call, Event<T>, Storage} = 167, // Fix index 167
 		
 	}
 }
