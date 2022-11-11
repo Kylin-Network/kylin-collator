@@ -171,14 +171,14 @@ pub mod pallet {
         /// The identifier type for an offchain worker.
         type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 
-        type Origin: From<<Self as SystemConfig>::Origin>
-            + Into<Result<CumulusOrigin, <Self as Config>::Origin>>;
+        type RuntimeOrigin: From<<Self as SystemConfig>::RuntimeOrigin>
+            + Into<Result<CumulusOrigin, <Self as Config>::RuntimeOrigin>>;
 
         /// The overarching event type.
-        type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+        type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
         /// The overarching dispatch call type.
-        type Call: From<Call<Self>> + Encode;
+        type RuntimeCall: From<Call<Self>> + Encode;
 
         type XcmSender: SendXcm;
 
@@ -366,7 +366,7 @@ pub mod pallet {
 			values: Vec<(T::OracleKey, T::OracleValue)>,
 		) -> DispatchResultWithPostInfo {
             let para_id =
-                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
             let cid = CreatorId::ParaId(para_id);
 
             // // ensure feeder is authorized
@@ -402,7 +402,7 @@ pub mod pallet {
 			key: T::OracleKey,
 		) -> DispatchResult {
 			let para_id =
-                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
 
             if let Some(val) = Self::get(&key) {
                 Self::send_qret_to_parachain(para_id, key.into(), val.value.into())
@@ -418,7 +418,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 		) -> DispatchResultWithPostInfo {
             let para_id =
-                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
 
             Self::deposit_event(Event::NewParaEvt {para_id });
 			Ok(Pays::No.into())
@@ -487,7 +487,7 @@ pub mod pallet {
             url: Vec<u8>,
         ) -> DispatchResultWithPostInfo {
             let para_id =
-                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
             let cid = CreatorId::ParaId(para_id);
 
             // ensure submitter is authorized
@@ -510,7 +510,7 @@ pub mod pallet {
             key: T::OracleKey,
         ) -> DispatchResult {
             let para_id =
-                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
             let cid = CreatorId::ParaId(para_id);
 
             // ensure submitter is authorized

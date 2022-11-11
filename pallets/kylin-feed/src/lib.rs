@@ -175,11 +175,11 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_uniques::Config {
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		//type ProtocolOrigin: EnsureOrigin<Self::Origin>;
-		type Origin: From<<Self as SystemConfig>::Origin>
-            + Into<Result<CumulusOrigin, <Self as Config>::Origin>>;
+		type RuntimeOrigin: From<<Self as SystemConfig>::RuntimeOrigin>
+			+ Into<Result<CumulusOrigin, <Self as Config>::RuntimeOrigin>>;
 		type MaxRecursions: Get<u32>;
 
 		#[pallet::constant]
@@ -528,7 +528,7 @@ pub mod pallet {
 			value: i64,
 		) -> DispatchResult {
 			let para_id =
-                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
 
 			Self::deposit_event(Event::QueryFeedBack { key, value });
 			Ok(())

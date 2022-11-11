@@ -39,11 +39,10 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeOrigin: From<<Self as SystemConfig>::RuntimeOrigin>
+            + Into<Result<CumulusOrigin, <Self as Config>::RuntimeOrigin>>;
 
-		type Origin: From<<Self as SystemConfig>::Origin>
-            + Into<Result<CumulusOrigin, <Self as Config>::Origin>>;
-		
+        type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 	}
 
 	#[pallet::event]
@@ -97,7 +96,7 @@ pub mod pallet {
 			value: i64,
 		) -> DispatchResult {
 			let para_id =
-                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
 
 			Self::deposit_event(Event::QueryFeedBack { key, value });
 			Ok(())

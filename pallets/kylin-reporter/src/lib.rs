@@ -125,14 +125,14 @@ pub mod pallet {
         /// The identifier type for an offchain worker.
         type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 
-        type Origin: From<<Self as SystemConfig>::Origin>
-            + Into<Result<CumulusOrigin, <Self as Config>::Origin>>;
+        type RuntimeOrigin: From<<Self as SystemConfig>::RuntimeOrigin>
+            + Into<Result<CumulusOrigin, <Self as Config>::RuntimeOrigin>>;
 
         /// The overarching event type.
-        type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+        type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
         /// The overarching dispatch call type.
-        type Call: From<Call<Self>> + Encode;
+        type RuntimeCall: From<Call<Self>> + Encode;
 
         type XcmSender: SendXcm;
 
