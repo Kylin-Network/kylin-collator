@@ -4,6 +4,8 @@ FROM rust:1.61-slim as builder
 
 WORKDIR /kylin-collator
 COPY . /kylin-collator
+RUN export http_proxy='http://127.0.0.1:1081'
+RUN export https_proxy='https://127.0.0.1:1081' 
 RUN apt-get update && apt-get install -y git cmake pkg-config libssl-dev git clang libclang-dev
 RUN rustup default nightly && rustup target add wasm32-unknown-unknown
 RUN cargo build --release
@@ -24,7 +26,8 @@ COPY --from=builder /kylin-collator/target/release/kylin-collator /usr/local/bin
 COPY --from=builder /kylin-collator/pichiu-rococo-parachain-2102.json .
 COPY --from=builder /kylin-collator/rococo.json .
 
-
+RUN apt-get update && apt-get install -y ca-certificates
+RUN update-ca-certificates
 RUN mkdir -p /data /kylin-collator/.local/share && \
 	ln -s /data /kylin-collator/.local/share/kylin-collator && \
 # check if executable works in this container

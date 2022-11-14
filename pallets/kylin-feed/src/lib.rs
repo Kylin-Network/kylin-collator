@@ -1,11 +1,20 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::unused_unit)]
 #![allow(clippy::too_many_arguments)]
+#![allow(unused_variables)]
+#![allow(unused_imports)]
+#![allow(dead_code)]
 
 use frame_support::{
-	dispatch::DispatchResult, ensure, traits::tokens::nonfungibles::*, BoundedVec,
+	dispatch::{GetDispatchInfo, DispatchResult},
+	ensure, traits::tokens::nonfungibles::*, BoundedVec,
+	pallet_prelude::*,
+	log,
 };
-use frame_system::ensure_signed;
+use frame_system::{
+	ensure_signed,
+    Config as SystemConfig,
+};
 
 use sp_runtime::{traits::StaticLookup, DispatchError, Permill};
 use kylin_primitives::nft::NftInfo;
@@ -16,8 +25,13 @@ use kylin_primitives::resource::{Resource, ResourceInfo, ResourceTypes};
 use kylin_primitives::collection::{Collection, CollectionInfo};
 use kylin_primitives::types::*;
 use sp_std::convert::TryInto;
-
 use sp_std::result::Result;
+use sp_std::{prelude::*, str, vec::Vec};
+use codec::{Decode, Encode};
+use serde::{Deserialize, Serialize};
+use scale_info::TypeInfo;
+use cumulus_pallet_xcm::{ensure_sibling_para, Origin as CumulusOrigin};
+use xcm::latest::{prelude::*, Junction, OriginKind, SendXcm, Xcm};
 
 #[cfg(test)]
 mod mock;
@@ -54,6 +68,14 @@ pub type BoundedResourceTypeOf<T> = BoundedVec<
 	>,
 	<T as Config>::MaxResourcesOnMint,
 >;
+
+#[derive(Encode, Decode)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypeInfo,)]
+pub struct MetaData {
+	oracle_paraid: u32,
+    key: Vec<u8>,
+    url: Vec<u8>,
+}
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -156,9 +178,11 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_uniques::Config {
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
-		type ProtocolOrigin: EnsureOrigin<Self::Origin>;
+		//type ProtocolOrigin: EnsureOrigin<Self::Origin>;
+		type RuntimeOrigin: From<<Self as SystemConfig>::RuntimeOrigin>
+			+ Into<Result<CumulusOrigin, <Self as Config>::RuntimeOrigin>>;
 		type MaxRecursions: Get<u32>;
 
 		#[pallet::constant]
@@ -171,6 +195,7 @@ pub mod pallet {
 		type MaxPriorities: Get<u32>;
 		type CollectionSymbolLimit: Get<u32>;
 		type MaxResourcesOnMint: Get<u32>;
+		type XcmSender: SendXcm;
 	}
 
 	#[pallet::event]
@@ -247,6 +272,20 @@ pub mod pallet {
 			collection_id: CollectionId,
 			nft_id: NftId,
 		},
+		FeedCreated {
+			owner: T::AccountId,
+			collection_id: CollectionId,
+			nft_id: NftId,
+			metadata: MetaData,
+		},
+		FeedRemoved {
+			owner: T::AccountId,
+			nft_id: NftId,
+		},
+		QueryFeedBack {
+			key: Vec<u8>,
+			value: i64,
+		},
 	}
 
 	#[pallet::error]
@@ -278,6 +317,8 @@ pub mod pallet {
 		/// Accepting a resource that is not pending should fail
 		ResourceNotPending,
 		NonTransferable,
+		JsonError,
+		XcmSendError,
 	}
 
 
@@ -285,7 +326,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T>
 		where T: pallet_uniques::Config<CollectionId = CollectionId, ItemId = NftId>,
 	{
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn create_collection(
 			origin: OriginFor<T>,
 			metadata: BoundedVec<u8, T::StringLimit>,
@@ -313,7 +354,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn set_property(
 			origin: OriginFor<T>,
 			#[pallet::compact] collection_id: CollectionId,
@@ -329,97 +370,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		pub fn add_basic_resource(
-			origin: OriginFor<T>,
-			collection_id: CollectionId,
-			nft_id: NftId,
-			resource: BasicResource<StringLimitOf<T>>,
-		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
-
-			let resource_id =
-				Self::resource_add(sender, collection_id, nft_id, ResourceTypes::Basic(resource))?;
-
-			Self::deposit_event(Event::ResourceAdded { nft_id, resource_id });
-			Ok(())
-		}
-
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		pub fn accept_resource(
-			origin: OriginFor<T>,
-			collection_id: CollectionId,
-			nft_id: NftId,
-			resource_id: ResourceId,
-		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
-			ensure!(
-				Resources::<T>::get((collection_id, nft_id, resource_id)).is_some(),
-				Error::<T>::ResourceDoesntExist
-			);
-
-			let (owner, _) = Pallet::<T>::lookup_root_owner(collection_id, nft_id)?;
-			ensure!(owner == sender, Error::<T>::NoPermission);
-
-			Resources::<T>::try_mutate_exists(
-				(collection_id, nft_id, resource_id),
-				|resource| -> DispatchResult {
-					if let Some(res) = resource.into_mut() {
-						ensure!(res.pending, Error::<T>::ResourceNotPending);
-						res.pending = false;
-					}
-					Ok(())
-				},
-			)?;
-
-			Self::deposit_event(Event::ResourceAccepted { nft_id, resource_id });
-			Ok(())
-		}
-
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		pub fn remove_resource(
-			origin: OriginFor<T>,
-			collection_id: CollectionId,
-			nft_id: NftId,
-			resource_id: ResourceId,
-		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
-
-			Self::resource_remove(sender, collection_id, nft_id, resource_id)?;
-
-			Self::deposit_event(Event::ResourceRemoval { nft_id, resource_id });
-			Ok(())
-		}
-
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		pub fn accept_resource_removal(
-			origin: OriginFor<T>,
-			collection_id: CollectionId,
-			nft_id: NftId,
-			resource_id: ResourceId,
-		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
-
-			Self::accept_removal(sender, collection_id, nft_id, resource_id)?;
-
-			Self::deposit_event(Event::ResourceRemovalAccepted { nft_id, resource_id });
-			Ok(())
-		}
-
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		pub fn set_priority(
-			origin: OriginFor<T>,
-			collection_id: CollectionId,
-			nft_id: NftId,
-			priorities: BoundedVec<ResourceId, T::MaxPriorities>,
-		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
-			Self::priority_set(sender, collection_id, nft_id, priorities)?;
-			Self::deposit_event(Event::PrioritySet { collection_id, nft_id });
-			Ok(())
-		}
-
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn destroy_collection(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -442,7 +393,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn lock_collection(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -455,7 +406,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn change_collection_issuer(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -485,14 +436,13 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		pub fn mint_nft(
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
+		pub fn create_feed(
 			origin: OriginFor<T>,
-			owner: Option<T::AccountId>,
 			collection_id: CollectionId,
-			metadata: BoundedVec<u8, T::StringLimit>,
-			// transferable: bool,
-			// resources: Option<BoundedResourceTypeOf<T>>,
+			oracle_paraid: u32,
+			key: Vec<u8>,
+            url: Vec<u8>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
 			if let Some(collection_issuer) =
@@ -503,16 +453,21 @@ pub mod pallet {
 				return Err(Error::<T>::CollectionUnknown.into())
 			}
 
-			let nft_owner = match owner {
-				Some(owner) => owner,
-				None => sender.clone(),
-			};
+			Self::do_create_feed(oracle_paraid, &key, &url)?;
 
+			let mdata = MetaData { oracle_paraid, key, url };
+			let meta_str = serde_json::to_string(&mdata).map_err(|_| Error::<T>::JsonError)?;
+			let metadata: BoundedVec<u8, T::StringLimit> = meta_str.as_bytes().to_vec()
+				.try_into().map_err(
+				|_| Error::<T>::StorageOverflow
+			)?;
+
+			let nft_owner = sender.clone();
 			let (collection_id, nft_id) = Self::nft_mint(
 				sender,
 				nft_owner.clone(),
 				collection_id,
-				metadata,
+				metadata.clone(),
 				true,
 			)?;
 
@@ -523,19 +478,13 @@ pub mod pallet {
 				|_details| Ok(()),
 			)?;
 
-			// if let Some(resources) = resources {
-			// 	for res in resources {
-			// 		Self::resource_add(nft_owner.clone(), collection_id, nft_id, res)?;
-			// 	}
-			// }
-
-			Self::deposit_event(Event::NftMinted { owner: nft_owner, collection_id, nft_id });
+			Self::deposit_event(Event::FeedCreated { owner: nft_owner, collection_id, nft_id, metadata:mdata });
 
 			Ok(())
 		}
 
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		pub fn burn_nft(
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
+		pub fn remove_feed(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
 			nft_id: NftId,
@@ -544,16 +493,51 @@ pub mod pallet {
 			let (root_owner, _) = Pallet::<T>::lookup_root_owner(collection_id, nft_id)?;
 			// Check ownership
 			ensure!(sender == root_owner, Error::<T>::NoPermission);
+
+			let nft = Nfts::<T>::get(collection_id, nft_id).ok_or(Error::<T>::NoAvailableNftId)?;
+			let mdata: MetaData = serde_json::from_slice(&nft.metadata).map_err(|_| Error::<T>::JsonError)?;
+			Self::do_remove_feed(mdata.oracle_paraid, &mdata.key)?;
+
 			let max_recursions = T::MaxRecursions::get();
 			let (_collection_id, nft_id) = Self::nft_burn(collection_id, nft_id, max_recursions)?;
 
 			pallet_uniques::Pallet::<T>::do_burn(collection_id, nft_id, |_, _| Ok(()))?;
 
-			Self::deposit_event(Event::NFTBurned { owner: sender, nft_id });
+			Self::deposit_event(Event::FeedRemoved { owner: sender, nft_id });
 			Ok(())
 		}
 
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
+		pub fn query_feed(
+			origin: OriginFor<T>,
+			collection_id: CollectionId,
+			nft_id: NftId,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin.clone())?;
+			let (root_owner, _) = Pallet::<T>::lookup_root_owner(collection_id, nft_id)?;
+			// Check ownership
+			ensure!(sender == root_owner, Error::<T>::NoPermission);
+
+			let nft = Nfts::<T>::get(collection_id, nft_id).ok_or(Error::<T>::NoAvailableNftId)?;
+			let mdata: MetaData = serde_json::from_slice(&nft.metadata).map_err(|_| Error::<T>::JsonError)?;
+			Self::do_query_feed(mdata.oracle_paraid, &mdata.key)?;
+			Ok(())
+		}
+
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
+		pub fn xcm_feed_back(
+			origin: OriginFor<T>,
+			key: Vec<u8>,
+			value: i64,
+		) -> DispatchResult {
+			let para_id =
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
+
+			Self::deposit_event(Event::QueryFeedBack { key, value });
+			Ok(())
+		}
+
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn send(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -583,7 +567,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn accept_nft(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -611,7 +595,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn reject_nft(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,

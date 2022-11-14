@@ -150,7 +150,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T>
 		where T: pallet_uniques::Config<CollectionId = CollectionId, ItemId = NftId>,
 	{
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn buy(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -162,7 +162,7 @@ pub mod pallet {
 			Self::do_buy(sender, collection_id, nft_id, amount, false)
 		}
 
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn list(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -201,7 +201,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn unlist(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -224,7 +224,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn make_offer(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -266,7 +266,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn withdraw_offer(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -300,7 +300,7 @@ pub mod pallet {
 			)
 		}
 
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn accept_offer(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
