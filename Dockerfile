@@ -8,7 +8,7 @@ RUN export http_proxy='http://127.0.0.1:1081'
 RUN export https_proxy='https://127.0.0.1:1081' 
 RUN apt-get update && apt-get install -y git cmake pkg-config libssl-dev git clang libclang-dev
 RUN rustup default nightly && rustup target add wasm32-unknown-unknown
-RUN cargo build --locked --release
+RUN cargo build --release
 
 # This is the 2nd stage: a very small image where we copy the kylin-collator binary."
 # FROM docker.io/library/ubuntu:20.04
