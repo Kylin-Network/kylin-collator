@@ -1,5 +1,5 @@
 #![cfg(test)]
-use crate::{self as pallet_airdrop, models::Proof};
+use crate::{self as pallet_distribution, models::Proof};
 use codec::Encode;
 use kylin_support::{
 	signature_verification,
@@ -21,14 +21,14 @@ pub type EthereumKey = libsecp256k1::SecretKey;
 pub type RelayChainKey = ed25519::Pair;
 
 pub type AccountId = AccountId32;
-pub type AirdropId = u64;
+pub type DistributionId = u64;
 pub type Balance = u128;
 pub type BlockNumber = u32;
 pub type Moment = u64;
 pub type RelayChainAccountId = [u8; 32];
 
 pub const PROOF_PREFIX: &[u8] = b"kylin-";
-pub const STAKE: Balance = 10_000;
+pub const STAKE: Balance = 10_000_000_000_000_000_000;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
 type Block = frame_system::mocking::MockBlock<MockRuntime>;
@@ -79,13 +79,13 @@ impl pallet_balances::Config for MockRuntime {
 }
 
 parameter_types! {
-	pub const AirdropPalletId: PalletId = PalletId(*b"pal_aird");
+	pub const DistributionPalletId: PalletId = PalletId(*b"pal_aird");
 	pub const Prefix: &'static [u8] = PROOF_PREFIX;
 	pub const Stake: Balance = STAKE;
 }
 
-impl pallet_airdrop::Config for MockRuntime {
-	type AirdropId = AirdropId;
+impl pallet_distribution::Config for MockRuntime {
+	type DistributionId = DistributionId;
 	type Balance = Balance;
 	type Convert = ConvertInto;
 	type Event = Event;
@@ -93,7 +93,7 @@ impl pallet_airdrop::Config for MockRuntime {
 	type RelayChainAccountId = RelayChainAccountId;
 	type RecipientFundAsset = Balances;
 	type Time = Timestamp;
-	type PalletId = AirdropPalletId;
+	type PalletId = DistributionPalletId;
 	type Prefix = Prefix;
 	type Stake = Stake;
 	type WeightInfo = ();
@@ -119,7 +119,7 @@ construct_runtime!(
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		Balances: pallet_balances::{Pallet, Storage, Event<T>, Config<T>},
-		Airdrop: pallet_airdrop::{Pallet, Storage, Call, Event<T>}
+		Distribution: pallet_distribution::{Pallet, Storage, Call, Event<T>}
 	}
 );
 
@@ -165,7 +165,7 @@ impl Identity {
 
 	pub fn claim(
 		&self,
-		airdrop_id: AirdropId,
+		distribution_id: DistributionId,
 		reward_account: AccountId,
 	) -> DispatchResultWithPostInfo {
 		let proof = match self {
@@ -174,7 +174,7 @@ impl Identity {
 				ethereum_proof(ethereum_account, reward_account.clone()),
 		};
 
-		Airdrop::claim(Origin::none(), airdrop_id, reward_account, proof)
+		Distribution::claim(Origin::none(), distribution_id, reward_account, proof)
 	}
 }
 

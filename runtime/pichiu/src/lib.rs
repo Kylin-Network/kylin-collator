@@ -305,6 +305,24 @@ impl kylin_democracy::Config for Runtime {
 	type MaxProposals = MaxProposals;
 }
 
+parameter_types! {
+	pub const DistributionPalletId: PalletId = PalletId(*b"pdistrib");
+	pub DistributionStake: Balance = 10 * Balance::from(10_u64.pow(18));
+	pub const DistributionPrefix: &'static [u8] = b"kylin-";
+}
+
+impl kylin_distribution::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type DistributionId = DistributionId;
+	type Balance = Balance;
+	type Convert = sp_runtime::traits::ConvertInto;
+	type Moment = Moment;
+	type RecipientFundAsset = Balances;
+	type Time = Timestamp;
+	type PalletId = DistributionPalletId;
+	type Stake = DistributionStake;
+	type WeightInfo = kylin_distribution::weights::SubstrateWeight<Runtime>;
+}
 
 parameter_types! {
 	pub const CouncilMotionDuration: BlockNumber = 5 * DAYS;
@@ -1207,6 +1225,7 @@ construct_runtime! {
 		// Kylin Pallets
 		OracleProvider: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>} = 54,
 		KylinOraclePallet: kylin_oracle = 166, // Fix index 166
+		KylinDistribution: kylin_distribution::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 140,
 
 		// orml
 		OrmlXcm: orml_xcm = 70,
