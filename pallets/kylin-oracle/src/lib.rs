@@ -1,4 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(unused_variables)]
+#![allow(unused_imports)]
+#![allow(dead_code)]
 /// Edit this file to define custom logic or remove it if it is not needed.
 /// Learn more about FRAME and the core library of Substrate FRAME pallets:
 /// <https://substrate.dev/docs/en/knowledgebase/runtime/frame>
@@ -97,6 +100,23 @@ pub mod crypto {
     }
 }
 
+#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[allow(non_camel_case_types)]
+enum KylinMockFunc {
+    #[codec(index = 8u8)]
+    xcm_feed_back { 
+        key: Vec<u8>,
+		value: i64,
+    },
+}
+
+#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[allow(non_camel_case_types)]
+enum KylinMockCall {
+    #[codec(index = 167u8)]
+    KylinFeed(KylinMockFunc),
+}
+
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, Ord, PartialOrd, TypeInfo, MaxEncodedLen)]
 pub enum CreatorId<AccountId> {
 	AccountId(AccountId),
@@ -154,14 +174,14 @@ pub mod pallet {
         /// The identifier type for an offchain worker.
         type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 
-        type Origin: From<<Self as SystemConfig>::Origin>
-            + Into<Result<CumulusOrigin, <Self as Config>::Origin>>;
+        type RuntimeOrigin: From<<Self as SystemConfig>::RuntimeOrigin>
+            + Into<Result<CumulusOrigin, <Self as Config>::RuntimeOrigin>>;
 
         /// The overarching event type.
-        type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+        type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
         /// The overarching dispatch call type.
-        type Call: From<Call<Self>> + Encode;
+        type RuntimeCall: From<Call<Self>> + Encode;
 
         type XcmSender: SendXcm;
 
@@ -349,7 +369,7 @@ pub mod pallet {
 			values: Vec<(T::OracleKey, T::OracleValue)>,
 		) -> DispatchResultWithPostInfo {
             let para_id =
-                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
             let cid = CreatorId::ParaId(para_id);
 
             // // ensure feeder is authorized
@@ -385,7 +405,7 @@ pub mod pallet {
 			key: T::OracleKey,
 		) -> DispatchResult {
 			let para_id =
-                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
 
             if let Some(val) = Self::get(&key) {
                 Self::send_qret_to_parachain(para_id, key.into(), val.value.into())
@@ -401,7 +421,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 		) -> DispatchResultWithPostInfo {
             let para_id =
-                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
 
             Self::deposit_event(Event::NewParaEvt {para_id });
 			Ok(Pays::No.into())
@@ -470,7 +490,7 @@ pub mod pallet {
             url: Vec<u8>,
         ) -> DispatchResultWithPostInfo {
             let para_id =
-                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
             let cid = CreatorId::ParaId(para_id);
 
             // ensure submitter is authorized
@@ -493,7 +513,7 @@ pub mod pallet {
             key: T::OracleKey,
         ) -> DispatchResult {
             let para_id =
-                ensure_sibling_para(<T as Config>::Origin::from(origin.clone()))?;
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
             let cid = CreatorId::ParaId(para_id);
 
             // ensure submitter is authorized
@@ -752,28 +772,25 @@ where T::AccountId: AsRef<[u8]>
     }
 
     fn send_qret_to_parachain(para_id: ParaId, key: Vec<u8>, value: i64) -> DispatchResult {
-        // let remark = kylin::Call::KylinFeedback(
-        //     kylin_feedback::Call::<kylin::Runtime>::xcm_feed_back {
-        //         key, value,
-        //     }
-        // );
-        // let require_weight = remark.get_dispatch_info().weight.ref_time() + 1_000;
-        // T::XcmSender::send_xcm(
-        //     (
-        //         1,
-        //         Junction::Parachain(para_id.into()),
-        //     ),
-        //     Xcm(vec![Transact {
-        //         origin_type: OriginKind::Native,
-        //         require_weight_at_most: require_weight,
-        //         call: remark.encode().into(),
-        //     }]),
-        // ).map_err(
-        //     |e| {
-        //         log::error!("Error: XcmSendError {:?}, {:?}", para_id, e);
-        //         Error::<T>::XcmSendError
-        //     }
-        // )?;
+        let remark = KylinMockCall::KylinFeed(KylinMockFunc::xcm_feed_back{
+            key, value,
+        });
+        T::XcmSender::send_xcm(
+            (
+                1,
+                Junction::Parachain(para_id.into()),
+            ),
+            Xcm(vec![Transact {
+                origin_type: OriginKind::Native,
+                require_weight_at_most: 1_000_000_000,
+                call: remark.encode().into(),
+            }]),
+        ).map_err(
+            |e| {
+                log::error!("Error: XcmSendError {:?}, {:?}", para_id, e);
+                Error::<T>::XcmSendError
+            }
+        )?;
 
         Ok(())
     }

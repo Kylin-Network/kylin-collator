@@ -1,6 +1,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::unused_unit)]
 #![allow(clippy::too_many_arguments)]
+#![allow(unused_variables)]
+#![allow(unused_imports)]
+#![allow(dead_code)]
 
 use frame_support::{
 	dispatch::{GetDispatchInfo, DispatchResult},
@@ -175,11 +178,11 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_uniques::Config {
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		//type ProtocolOrigin: EnsureOrigin<Self::Origin>;
-		type Origin: From<<Self as SystemConfig>::Origin>
-            + Into<Result<CumulusOrigin, <Self as Config>::Origin>>;
+		type RuntimeOrigin: From<<Self as SystemConfig>::RuntimeOrigin>
+			+ Into<Result<CumulusOrigin, <Self as Config>::RuntimeOrigin>>;
 		type MaxRecursions: Get<u32>;
 
 		#[pallet::constant]
@@ -279,7 +282,10 @@ pub mod pallet {
 			owner: T::AccountId,
 			nft_id: NftId,
 		},
-		
+		QueryFeedBack {
+			key: Vec<u8>,
+			value: i64,
+		},
 	}
 
 	#[pallet::error]
@@ -515,6 +521,19 @@ pub mod pallet {
 			let nft = Nfts::<T>::get(collection_id, nft_id).ok_or(Error::<T>::NoAvailableNftId)?;
 			let mdata: MetaData = serde_json::from_slice(&nft.metadata).map_err(|_| Error::<T>::JsonError)?;
 			Self::do_query_feed(mdata.oracle_paraid, &mdata.key)?;
+			Ok(())
+		}
+
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
+		pub fn xcm_feed_back(
+			origin: OriginFor<T>,
+			key: Vec<u8>,
+			value: i64,
+		) -> DispatchResult {
+			let para_id =
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
+
+			Self::deposit_event(Event::QueryFeedBack { key, value });
 			Ok(())
 		}
 

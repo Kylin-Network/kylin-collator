@@ -116,7 +116,7 @@ The `parachain-launch` utility allows you to launch your network seamlessly by p
 
   - There are two sections in the file which are essential: `relaychain` and `parachains` 
   - relaychain: 3 key parameters
-    - image: Specify the polkadot image (in our case we use parity/polkadot:v0.9.29). You can provide another version of polkadot image.
+    - image: Specify the polkadot image (in our case we use parity/polkadot:v0.9.28). You can provide another version of polkadot image.
     - chain: Specify the type of the chain (in our case we will use rococo-local as we are launching a local network)
     - nodes: Configure the number of validators you want to have (we've added six validators, feel free to change per your requirement. The rule of thumb is at least two validators per collator). You can pass the name of the validators, additional flags, and both the tcp and websocket ports to be exposed.
 

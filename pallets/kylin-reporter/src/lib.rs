@@ -1,4 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(unused_variables)]
+#![allow(unused_imports)]
+#![allow(dead_code)]
 /// Edit this file to define custom logic or remove it if it is not needed.
 /// Learn more about FRAME and the core library of Substrate FRAME pallets:
 /// <https://substrate.dev/docs/en/knowledgebase/runtime/frame>
@@ -40,9 +43,6 @@ use sp_runtime::{
     traits::{Hash, UniqueSaturatedInto, Zero},
 };
 use xcm::latest::{prelude::*, Junction, OriginKind, SendXcm, Xcm};
-use orml_traits::{CombineData, DataFeeder, DataProvider, DataProviderExtended, OnNewData};
-use orml_utilities::OrderedSet;
-//use num_traits::float::Float;
 
 pub use pallet::*;
 #[cfg(test)]
@@ -95,9 +95,28 @@ pub mod crypto {
     }
 }
 
+#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[allow(non_camel_case_types)]
+enum KylinMockFunc {
+    #[codec(index = 1u8)]
+    xcm_feed_data { values: Vec<(Vec<u8>, i64)> },
+    #[codec(index = 2u8)]
+    xcm_query_data { key: Vec<u8> },
+    #[codec(index = 3u8)]
+    xcm_evt {},
+    #[codec(index = 4u8)]
+    xcm_evt1 {}, 
+}
+
+#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[allow(non_camel_case_types)]
+enum KylinMockCall {
+    #[codec(index = 166u8)]
+    KylinOraclePallet(KylinMockFunc),
+}
+
 /// An index to a block.
 ///
-
 #[frame_support::pallet]
 pub mod pallet {
     use super::*;
@@ -109,14 +128,14 @@ pub mod pallet {
         /// The identifier type for an offchain worker.
         type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 
-        type Origin: From<<Self as SystemConfig>::Origin>
-            + Into<Result<CumulusOrigin, <Self as Config>::Origin>>;
+        type RuntimeOrigin: From<<Self as SystemConfig>::RuntimeOrigin>
+            + Into<Result<CumulusOrigin, <Self as Config>::RuntimeOrigin>>;
 
         /// The overarching event type.
-        type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+        type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
         /// The overarching dispatch call type.
-        type Call: From<Call<Self>> + Encode;
+        type RuntimeCall: From<Call<Self>> + Encode;
 
         type XcmSender: SendXcm;
 
@@ -197,13 +216,12 @@ pub mod pallet {
             origin: OriginFor<T>,
             para_id: ParaId,
         ) -> DispatchResult {
-            let remark = pichiu::Call::KylinOraclePallet(kylin_oracle::Call::<pichiu::Runtime>::xcm_evt {});
-            let require_weight = remark.get_dispatch_info().weight.ref_time() + 1_000;
+            let remark = KylinMockCall::KylinOraclePallet(KylinMockFunc::xcm_evt{});
             match T::XcmSender::send_xcm(
                 (Parent, Junction::Parachain(para_id.into())),
                 Xcm(vec![Transact {
                     origin_type: OriginKind::Native,
-                    require_weight_at_most: require_weight,
+                    require_weight_at_most: 1_000_000_000,
                     call: remark.encode().into(),
                 }]),
             ) {
@@ -224,13 +242,12 @@ pub mod pallet {
             para_id: ParaId,
         ) -> DispatchResult {
             //let max_block_weight = T::BlockWeights::get().max_block;
-            let remark = pichiu::Call::KylinOraclePallet(kylin_oracle::Call::<pichiu::Runtime>::xcm_evt1 {});
-            let require_weight = remark.get_dispatch_info().weight.ref_time() + 1_000;
+            let remark = KylinMockCall::KylinOraclePallet(KylinMockFunc::xcm_evt1{});
             match T::XcmSender::send_xcm(
                 (Parent, Junction::Parachain(para_id.into())),
                 Xcm(vec![Transact {
                     origin_type: OriginKind::SovereignAccount,
-                    require_weight_at_most: require_weight,
+                    require_weight_at_most: 1_000_000_000,
                     call: remark.encode().into(),
                 }]),
             ) {
@@ -489,12 +506,9 @@ where T::AccountId: AsRef<[u8]>
     }
 
     fn feed_data_to_parachain(para_id: ParaId, values: Vec<(Vec<u8>, i64)>) -> DispatchResult {
-        let remark = pichiu::Call::KylinOraclePallet(
-            kylin_oracle::Call::<pichiu::Runtime>::xcm_feed_data {
-                values,
-            }
-        );
-        let require_weight = remark.get_dispatch_info().weight.ref_time() + 1_000;
+        let remark = KylinMockCall::KylinOraclePallet(KylinMockFunc::xcm_feed_data {
+            values,
+        });
         match T::XcmSender::send_xcm(
             (
                 1,
@@ -502,7 +516,7 @@ where T::AccountId: AsRef<[u8]>
             ),
             Xcm(vec![Transact {
                 origin_type: OriginKind::Native,
-                require_weight_at_most: require_weight,
+                require_weight_at_most: 1_000_000_000,
                 call: remark.encode().into(),
             }]),
         ) {
