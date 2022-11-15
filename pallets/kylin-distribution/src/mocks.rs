@@ -28,7 +28,7 @@ pub type Moment = u64;
 pub type RelayChainAccountId = [u8; 32];
 
 pub const PROOF_PREFIX: &[u8] = b"kylin-";
-pub const STAKE: Balance = 10_000;
+pub const STAKE: Balance = 10_000_000_000_000_000_000;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
 type Block = frame_system::mocking::MockBlock<MockRuntime>;

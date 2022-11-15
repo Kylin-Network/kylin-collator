@@ -47,3 +47,10 @@ pub enum DistributionState {
 	/// The Distribution has ended. Recipients can **NOT** claim funds.
 	Disabled,
 } 
+
+#[derive(Debug, Encode, Decode, PartialEq, Eq, Copy, Clone, TypeInfo, MaxEncodedLen)]
+pub enum DistributionDestination {
+	FeedPallet,
+	ReporterPallet,
+	OraclePallet,
+} 
