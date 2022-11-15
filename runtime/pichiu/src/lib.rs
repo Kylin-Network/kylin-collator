@@ -312,7 +312,7 @@ parameter_types! {
 }
 
 impl kylin_distribution::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type DistributionId = DistributionId;
 	type Balance = Balance;
 	type Convert = sp_runtime::traits::ConvertInto;
@@ -1225,6 +1225,7 @@ construct_runtime! {
 		// Kylin Pallets
 		OracleProvider: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>} = 54,
 		KylinOraclePallet: kylin_oracle = 166, // Fix index 166
+		KylinDistribution: kylin_distribution::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 140,
 
 		// orml
 		OrmlXcm: orml_xcm = 70,

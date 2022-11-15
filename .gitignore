@@ -38,9 +38,3 @@ rococo-local-parachain-2000-raw.json
 startnode.sh
 upgraded-chain.json
 chaindata*
-rlch*
-paradb*
-para-pichiu*
-pichiu-parachain*
-rococo-playground*
-temp*

@@ -102,6 +102,7 @@ orml-unknown-tokens = { git = "https://github.com/open-web3-stack/open-runtime-m
 
 # Local Dependencies
 runtime-common = { path = "../common", default-features = false }
+kylin-distribution = { package = 'kylin-distribution', path = '../../pallets/kylin-distribution', default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.3.4"
@@ -195,6 +196,7 @@ std = [
 	'orml-currencies/std',
 	'orml-xcm-support/std',
 	'orml-unknown-tokens/std',
+	"kylin-distribution/std",
 ]
 
 # A feature that should be enabled when the runtime should be build for on-chain

@@ -35,60 +35,6 @@ use sp_std::fmt::Debug;
 use sp_std::hash::Hash;
 use sp_std::str::FromStr;
 
-	//! Traits used in the implementation of the Distribution pallet.
-
-	use sp_runtime::DispatchError;
-	
-	/// Contains functions necessary functions for the business logic for managing Distributions
-	pub trait Distributor {
-		type AccountId;
-		type DistributionId;
-		type DistributionStart;
-		type Balance;
-		type Proof;
-		type Recipient;
-		type RecipientCollection;
-		type Identity;
-		type VestingSchedule;
-	
-		/// Create a new Distribution.
-		fn create_distribution(
-			creator_id: Self::AccountId,
-			start: Option<Self::DistributionStart>,
-			schedule: Self::VestingSchedule,
-		) -> DispatchResult;
-	
-		/// Add one or more recipients to an Distribution.
-		fn add_recipient(
-			origin_id: Self::AccountId,
-			distribution_id: Self::DistributionId,
-			recipients: Self::RecipientCollection,
-		) -> DispatchResult;
-	
-		/// Remove a recipient from an Distribution.
-		fn remove_recipient(
-			origin_id: Self::AccountId,
-			distribution_id: Self::DistributionId,
-			recipient: Self::Recipient,
-		) -> DispatchResult;
-	
-		/// Start an Distribution.
-		fn enable_distribution(origin_id: Self::AccountId, distribution_id: Self::DistributionId) -> DispatchResult;
-	
-		/// Stop an Distribution.
-		fn disable_distribution(
-			origin_id: Self::AccountId,
-			distribution_id: Self::DistributionId,
-		) -> Result<Self::Balance, DispatchError>;
-	
-		/// Claim a recipient reward from an Distribution.
-		fn claim(
-			distribution_id: Self::DistributionId,
-			remote_account: Self::Identity,
-			reward_account: Self::AccountId,
-		) -> DispatchResultWithPostInfo;
-	}
-
 /// A trait used for loosely coupling the claim pallet with a reward mechanism.
 ///
 /// ## Overview
