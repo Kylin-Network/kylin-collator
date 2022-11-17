@@ -415,29 +415,6 @@ pub mod pallet {
             
 		}
 
-        //#[pallet::weight(T::BlockWeights::get().max_block)]
-        #[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
-		pub fn xcm_evt(
-			origin: OriginFor<T>,
-		) -> DispatchResultWithPostInfo {
-            let para_id =
-                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
-
-            Self::deposit_event(Event::NewParaEvt {para_id });
-			Ok(Pays::No.into())
-		}
-
-        //#[pallet::weight(T::BlockWeights::get().max_block)]
-        #[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
-		pub fn xcm_evt1(
-			origin: OriginFor<T>,
-		) -> DispatchResultWithPostInfo {
-            let feeder = ensure_signed(origin.clone())?;
-
-            Self::deposit_event(Event::NewParaEvt1 {sender: feeder });
-			Ok(Pays::No.into())
-		}
-
         #[pallet::weight(T::WeightInfo::submit_api())]
         pub fn submit_api(
             origin: OriginFor<T>,

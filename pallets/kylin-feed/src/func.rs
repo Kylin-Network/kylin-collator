@@ -19,16 +19,12 @@ enum KylinMockFunc {
     xcm_query_data { 
         key: Vec<u8> 
     },
-    #[codec(index = 3u8)]
-    xcm_evt {},
-    #[codec(index = 4u8)]
-    xcm_evt1 {}, 
-    #[codec(index = 7u8)]
+    #[codec(index = 5u8)]
     xcm_submit_api {
         key: Vec<u8>,
         url: Vec<u8>,
     },
-    #[codec(index = 8u8)]
+    #[codec(index = 6u8)]
     xcm_remove_api { 
         key: Vec<u8> 
     },

@@ -102,10 +102,6 @@ enum KylinMockFunc {
     xcm_feed_data { values: Vec<(Vec<u8>, i64)> },
     #[codec(index = 2u8)]
     xcm_query_data { key: Vec<u8> },
-    #[codec(index = 3u8)]
-    xcm_evt {},
-    #[codec(index = 4u8)]
-    xcm_evt1 {}, 
 }
 
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
@@ -208,55 +204,6 @@ pub mod pallet {
             para_id: ParaId,
         ) -> DispatchResult {
             <KylinParaId<T>>::put(para_id);
-            Ok(())
-        }
-
-        #[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
-        pub fn feed_para_evt(
-            origin: OriginFor<T>,
-            para_id: ParaId,
-        ) -> DispatchResult {
-            let remark = KylinMockCall::KylinOraclePallet(KylinMockFunc::xcm_evt{});
-            match T::XcmSender::send_xcm(
-                (Parent, Junction::Parachain(para_id.into())),
-                Xcm(vec![Transact {
-                    origin_type: OriginKind::Native,
-                    require_weight_at_most: 1_000_000_000,
-                    call: remark.encode().into(),
-                }]),
-            ) {
-                Ok(()) => Self::deposit_event(Event::FeedDataSent(
-                    para_id,
-                )),
-                Err(e) => {
-                    Self::deposit_event(Event::FeedDataError(e, para_id,))
-                },
-            }
-
-            Ok(())
-        }
-
-        #[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
-        pub fn feed_para_evt1(
-            origin: OriginFor<T>,
-            para_id: ParaId,
-        ) -> DispatchResult {
-            //let max_block_weight = T::BlockWeights::get().max_block;
-            let remark = KylinMockCall::KylinOraclePallet(KylinMockFunc::xcm_evt1{});
-            match T::XcmSender::send_xcm(
-                (Parent, Junction::Parachain(para_id.into())),
-                Xcm(vec![Transact {
-                    origin_type: OriginKind::SovereignAccount,
-                    require_weight_at_most: 1_000_000_000,
-                    call: remark.encode().into(),
-                }]),
-            ) {
-                Ok(()) => Self::deposit_event(Event::FeedDataSent(para_id,)),
-                Err(e) => {
-                    Self::deposit_event(Event::FeedDataError(e, para_id,))
-                },
-            }
-
             Ok(())
         }
 
