@@ -134,7 +134,8 @@ pub struct ApiFeed<BlockNumber> {
     url: Option<Vec<u8>>,
 }
 
-/// Crypto price data structure, hardcoded for now 
+/// :TODO: Crypto price data structure, hardcoded for now, 
+/// need to use more flexible type struct later 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
 pub struct CryptoComparePrice {
@@ -691,6 +692,8 @@ where T::AccountId: AsRef<[u8]>
             )?;
         }
 
+        // :TODO: now we handle URL Endpoint result with specific hardcoded keys,
+        // need to handle dynamic result type later 
         let mut values = Vec::<(T::OracleKey, T::OracleValue)>::new();
         for (_creator, key, val) in <ApiFeeds<T> as IterableStorageDoubleMap<_, _, _>>::iter() {
             // let mut response :Vec<u8>;
