@@ -30,7 +30,7 @@ use sp_std::marker::PhantomData;
 /// Weight functions needed for kylin_oracle.
 pub trait WeightInfo {
     fn submit_api() -> Weight;
-    fn clear_api() -> Weight;
+    fn remove_api() -> Weight;
 }
 
 /// Weights for kylin_oracle using the Substrate node and recommended hardware.
@@ -40,7 +40,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
         Weight::from_ref_time(6_284_000)
             .saturating_add(T::DbWeight::get().writes(1 as u64))
     }
-    fn clear_api() -> Weight {
+    fn remove_api() -> Weight {
         Weight::from_ref_time(6_284_000)
             .saturating_add(T::DbWeight::get().writes(1 as u64))
     }
@@ -54,7 +54,7 @@ impl WeightInfo for () {
         Weight::from_ref_time(6_284_000)
             .saturating_add(RocksDbWeight::get().writes(1 as u64))
     }
-    fn clear_api() -> Weight {
+    fn remove_api() -> Weight {
         Weight::from_ref_time(6_284_000)
             .saturating_add(RocksDbWeight::get().writes(1 as u64))
     }

@@ -8,6 +8,7 @@ use sp_runtime::{
     ArithmeticError,
 };
 
+/// Mock structure for XCM Call message encoding
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[allow(non_camel_case_types)]
 enum KylinMockFunc {
@@ -30,6 +31,7 @@ enum KylinMockFunc {
     },
 }
 
+/// Mock structure for XCM Call message encoding
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[allow(non_camel_case_types)]
 enum KylinMockCall {

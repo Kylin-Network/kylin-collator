@@ -95,6 +95,7 @@ pub mod crypto {
     }
 }
 
+/// Mock structure for XCM Call message encoding
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[allow(non_camel_case_types)]
 enum KylinMockFunc {
@@ -104,6 +105,7 @@ enum KylinMockFunc {
     xcm_query_data { key: Vec<u8> },
 }
 
+/// Mock structure for XCM Call message encoding
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[allow(non_camel_case_types)]
 enum KylinMockCall {
@@ -198,6 +200,13 @@ pub mod pallet {
     where
         T::AccountId: AsRef<[u8]> + ToHex + Decode
     {
+        /// Set the parachain ID of the Kylin Oracle chain.
+		///
+		/// Can be called by authorized origin.
+		///
+		/// # Parameter:
+		/// * `para_id` - parachain ID of the Kylin Oracle chain
+		/// 
         #[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
         pub fn set_kylin_id(
             origin: OriginFor<T>,
@@ -207,8 +216,16 @@ pub mod pallet {
             Ok(())
         }
 
+        /// Feed the external value.
+		///
+		/// Call by the offchain worker.
+		///
+		/// # Parameter:
+        /// * `para_id` - parachain ID of the Oracle chain
+		/// * `values` - value array for the feed
+		/// 
         #[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
-        pub fn submit_data(
+        pub fn feed_data(
             origin: OriginFor<T>,
             para_id: ParaId,
             values: Vec<(Vec<u8>, i64)>,
@@ -216,6 +233,16 @@ pub mod pallet {
             Self::feed_data_to_parachain(para_id, values)
         }
 
+        /// Submit the URL Endpoint for the feed.
+		///
+		/// Can be called by authorized origin.
+		///
+		/// # Parameter:
+		/// * `key` - key for the feed
+		/// * `url` - url for the feed
+		/// 
+		/// # Emits
+		/// * `NewFeed`
         #[pallet::weight(<T as Config>::WeightInfo::submit_api())]
         pub fn submit_api(
             origin: OriginFor<T>,
@@ -237,8 +264,17 @@ pub mod pallet {
 			Ok(Pays::No.into())
         }
 
-        #[pallet::weight(<T as Config>::WeightInfo::clear_api())]
-        pub fn clear_api(
+        /// Remove the URL Endpoint for the feed.
+		///
+		/// Can be called by authorized origin.
+		///
+		/// # Parameter:
+		/// * `key` - key for the feed
+		/// 
+		/// # Emits
+		/// * `FeedRemoved`
+        #[pallet::weight(<T as Config>::WeightInfo::remove_api())]
+        pub fn remove_api(
             origin: OriginFor<T>,
             key: Vec<u8>,
         ) -> DispatchResult {
@@ -267,9 +303,11 @@ pub mod pallet {
     where
         T::AccountId: AsRef<[u8]> + ToHex + Decode,
     {
+        /// Feed data have been sent.
         FeedDataSent(
             ParaId,
         ),
+        /// Feed data sending error.
         FeedDataError(
             SendError,
             ParaId,
@@ -306,10 +344,12 @@ pub mod pallet {
         }
     }
 
+    /// Parachain ID of the Kylin Oracle chain
     #[pallet::storage]
     #[pallet::getter(fn get_kylin_id)]
     pub(super) type KylinParaId<T: Config> = StorageValue<_, ParaId, OptionQuery>;
 
+    /// Storage map for the feed URL Endpoint
     #[pallet::storage]
 	#[pallet::getter(fn api_feeds)]
 	pub type ApiFeeds<T: Config> =
@@ -317,7 +357,7 @@ pub mod pallet {
 
 }
 
-
+/// Feed URL Endpoint data structure
 #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Debug))]
 pub struct ApiFeed<BlockNumber> {
@@ -325,6 +365,7 @@ pub struct ApiFeed<BlockNumber> {
     url: Option<Vec<u8>>,
 }
 
+/// Crypto price data structure, hardcoded for now 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
 pub struct CryptoComparePrice {
@@ -385,7 +426,7 @@ where T::AccountId: AsRef<[u8]>
         if values.len() > 0 {
             if let Some(para_id) = <KylinParaId<T>>::get() {
                 // write data to chain
-                let results = signer.send_signed_transaction(|_account| Call::submit_data {
+                let results = signer.send_signed_transaction(|_account| Call::feed_data {
                     para_id: para_id,
                     values: values.clone(),
                 });
