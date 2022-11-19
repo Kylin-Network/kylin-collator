@@ -90,16 +90,19 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	/// NFT ID tracker, increased after new NFT minted
 	#[pallet::storage]
 	#[pallet::getter(fn next_nft_id)]
 	pub type NextNftId<T: Config> = StorageMap<_,
 		Twox64Concat, CollectionId,
 		NftId, ValueQuery>;
 
+	/// Collection ID tracker, increased after new collection created
 	#[pallet::storage]
 	#[pallet::getter(fn collection_index)]
 	pub type CollectionIndex<T: Config> = StorageValue<_, CollectionId, ValueQuery>;
 
+	/// Resource ID tracker, increased after new resource created
 	#[pallet::storage]
 	#[pallet::getter(fn next_resource_id)]
 	pub type NextResourceId<T: Config> = StorageDoubleMap<
@@ -108,6 +111,7 @@ pub mod pallet {
 		Twox64Concat, NftId,
 		ResourceId, ValueQuery>;
 
+	/// Storage map for collection infomation 
 	#[pallet::storage]
 	#[pallet::getter(fn collections)]
 	pub type Collections<T: Config> = StorageMap<
@@ -116,6 +120,7 @@ pub mod pallet {
 		CollectionInfo<StringLimitOf<T>, BoundedCollectionSymbolOf<T>, T::AccountId>,
 	>;
 
+	/// Storage map for NFT infomation 
 	#[pallet::storage]
 	#[pallet::getter(fn nfts)]
 	pub type Nfts<T: Config> =
@@ -124,6 +129,7 @@ pub mod pallet {
 		Twox64Concat, NftId,
 		InstanceInfoOf<T>>;
 
+	/// Storage map for Priorities infomation 
 	#[pallet::storage]
 	#[pallet::getter(fn priorities)]
 	pub type Priorities<T: Config> = StorageNMap<
@@ -137,6 +143,7 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
+	/// Storage tree for NFTs
 	#[pallet::storage]
 	#[pallet::getter(fn children)]
 	pub type Children<T: Config> = StorageDoubleMap<
@@ -146,6 +153,7 @@ pub mod pallet {
 		(),
 	>;
 
+	/// Storage map for resource 
 	#[pallet::storage]
 	#[pallet::getter(fn resources)]
 	pub type Resources<T: Config> = StorageNMap<
@@ -159,6 +167,7 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
+	/// Storage map for Properties 
 	#[pallet::storage]
 	#[pallet::getter(fn properties)]
 	pub(super) type Properties<T: Config> = StorageNMap<
@@ -172,6 +181,7 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
+	/// Collection operation lock
 	#[pallet::storage]
 	#[pallet::getter(fn lock)]
 	pub type Lock<T: Config> = StorageMap<_, Twox64Concat, (CollectionId, NftId), bool, ValueQuery>;
@@ -205,7 +215,6 @@ pub mod pallet {
 			issuer: T::AccountId,
 			collection_id: CollectionId,
 		},
-		// NftMinted(T::AccountId, CollectionId, NftId),
 		NftMinted {
 			owner: T::AccountId,
 			collection_id: CollectionId,
@@ -326,6 +335,17 @@ pub mod pallet {
 	impl<T: Config> Pallet<T>
 		where T: pallet_uniques::Config<CollectionId = CollectionId, ItemId = NftId>,
 	{
+		/// Create a new collection, a container for user NFTs.
+		///
+		/// Can be called by any signed origin.
+		///
+		/// # Parameter:
+		/// * `metadata` - metadata for the collection
+		/// * `max` - max count for NFT
+		/// * `symbol` - symbol for the collection
+		/// 
+		/// # Emits
+		/// * `CollectionCreated`
 		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn create_collection(
 			origin: OriginFor<T>,
@@ -354,6 +374,18 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Set the property for the collection, a container for user NFTs.
+		///
+		/// Can be called only by the collection issuer.
+		///
+		/// # Parameter:
+		/// * `collection_id` - collection ID
+		/// * `maybe_nft_id` - NFT ID, optional
+		/// * `key` - key
+		/// * `value` - property value
+		/// 
+		/// # Emits
+		/// * `PropertySet`
 		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn set_property(
 			origin: OriginFor<T>,
@@ -370,6 +402,15 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Destroy the collection.
+		///
+		/// Can be called only by the collection issuer.
+		///
+		/// # Parameter:
+		/// * `collection_id` - collection ID
+		/// 
+		/// # Emits
+		/// * `CollectionDestroyed`
 		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn destroy_collection(
 			origin: OriginFor<T>,
@@ -393,6 +434,15 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Lock the collection, so as to suspend operations.
+		///
+		/// Can be called only by the collection issuer.
+		///
+		/// # Parameter:
+		/// * `collection_id` - collection ID
+		/// 
+		/// # Emits
+		/// * `CollectionLocked`
 		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn lock_collection(
 			origin: OriginFor<T>,
@@ -406,6 +456,16 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Change the collection issuer.
+		///
+		/// Can be called only by the collection issuer.
+		///
+		/// # Parameter:
+		/// * `collection_id` - collection ID
+		/// * `new_issuer` - new issuer
+		/// 
+		/// # Emits
+		/// * `IssuerChanged`
 		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn change_collection_issuer(
 			origin: OriginFor<T>,
@@ -436,6 +496,18 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Create new feed with a NFT attached in the specific collection
+		///
+		/// Can be called only by the collection issuer.
+		///
+		/// # Parameter:
+		/// * `collection_id` - collection ID
+		/// * `oracle_paraid` - parachain ID of the Oracle chain
+		/// * `key` - key for the feed
+		/// * `url` - url for the feed
+		/// 
+		/// # Emits
+		/// * `FeedCreated`
 		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn create_feed(
 			origin: OriginFor<T>,
@@ -483,6 +555,16 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Remove a feed
+		///
+		/// Can be called only by the feed owner.
+		///
+		/// # Parameter:
+		/// * `collection_id` - collection ID
+		/// * `nft_id` - nft ID
+		/// 
+		/// # Emits
+		/// * `FeedRemoved`
 		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn remove_feed(
 			origin: OriginFor<T>,
@@ -507,6 +589,14 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Query the feed data
+		///
+		/// Can be called only by the feed owner.
+		///
+		/// # Parameter:
+		/// * `collection_id` - collection ID
+		/// * `nft_id` - NFT ID
+		/// 
 		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn query_feed(
 			origin: OriginFor<T>,
@@ -524,6 +614,16 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Feed data query feed back from Oracle parachain
+		///
+		/// Can be only XCM call from parachain.
+		///
+		/// # Parameter:
+		/// * `key` - key for the feed
+		/// * `value` - value for the feed
+		/// 
+		/// # Emits
+		/// * `QueryFeedBack`
 		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn xcm_feed_back(
 			origin: OriginFor<T>,
@@ -537,6 +637,17 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Transfer the ownership of the NFT
+		///
+		/// Can be called only by the NFT owner.
+		///
+		/// # Parameter:
+		/// * `collection_id` - collection ID
+		/// * `nft_id` - nft ID
+		/// * `new_owner` - new owner
+		/// 
+		/// # Emits
+		/// * `NFTSent`
 		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn send(
 			origin: OriginFor<T>,
@@ -567,6 +678,17 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Accept the ownership of the transfered NFT
+		///
+		/// Can be called only by the NFT root owner.
+		///
+		/// # Parameter:
+		/// * `collection_id` - collection ID
+		/// * `nft_id` - nft ID
+		/// * `new_owner` - new owner
+		/// 
+		/// # Emits
+		/// * `NFTAccepted`
 		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn accept_nft(
 			origin: OriginFor<T>,
@@ -595,6 +717,16 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Reject the ownership of the transfered NFT
+		///
+		/// Can be called only by the NFT root owner.
+		///
+		/// # Parameter:
+		/// * `collection_id` - collection ID
+		/// * `nft_id` - nft ID
+		/// 
+		/// # Emits
+		/// * `NFTRejected`
 		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn reject_nft(
 			origin: OriginFor<T>,

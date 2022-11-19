@@ -100,6 +100,7 @@ pub mod crypto {
     }
 }
 
+/// Mock structure for XCM Call message encoding
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[allow(non_camel_case_types)]
 enum KylinMockFunc {
@@ -110,6 +111,7 @@ enum KylinMockFunc {
     },
 }
 
+/// Mock structure for XCM Call message encoding
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[allow(non_camel_case_types)]
 enum KylinMockCall {
@@ -117,13 +119,14 @@ enum KylinMockCall {
     KylinFeed(KylinMockFunc),
 }
 
+// Creator may be a AccountId or from a parachain
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, Ord, PartialOrd, TypeInfo, MaxEncodedLen)]
 pub enum CreatorId<AccountId> {
 	AccountId(AccountId),
 	ParaId(ParaId),
 }
 
-
+/// Feed URL Endpoint data structure
 #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Debug))]
 pub struct ApiFeed<BlockNumber> {
@@ -131,14 +134,8 @@ pub struct ApiFeed<BlockNumber> {
     url: Option<Vec<u8>>,
 }
 
-#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo)]
-#[cfg_attr(feature = "std", derive(Debug))]
-pub struct ParaFeed<BlockNumber> {
-    requested_block_number: BlockNumber,
-    para_id: Option<ParaId>,
-}
-
-
+/// :TODO: Crypto price data structure, hardcoded for now, 
+/// need to use more flexible type struct later 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
 pub struct CryptoComparePrice {
@@ -226,13 +223,10 @@ pub mod pallet {
     pub struct Pallet<T>(_);
 
     #[pallet::storage]
-    #[pallet::getter( fn running_status)]
-    type SystemRunnig<T> = StorageValue<_, bool, ValueQuery>;
-
-    #[pallet::storage]
     #[pallet::getter(fn next_unsigned_at)]
     pub(super) type NextUnsignedAt<T: Config> = StorageValue<_, T::BlockNumber, ValueQuery>;
 
+    /// Storage map for the feed URL Endpoint
     #[pallet::storage]
 	#[pallet::getter(fn api_feeds)]
 	pub type ApiFeeds<T: Config> =
@@ -301,16 +295,6 @@ pub mod pallet {
             // This function reads storage entries of the current state.
             let res = Self::fetch_api_and_feed_data(block_number);
 
-            // let should_send = Self::choose_transaction_type(block_number);
-            // let res = match should_send {
-            //     TransactionType::Signed => Self::fetch_data_and_send_signed(block_number),
-            //     TransactionType::Raw
-            //     | TransactionType::UnsignedForAll
-            //     | TransactionType::UnsignedForAny => {
-            //         Self::fetch_data_and_send_raw_unsigned(block_number)
-            //     }
-            //     _ => Ok(()),
-            // };
             if let Err(e) = res {
                 log::error!("Error: {}", e);
             }
@@ -327,7 +311,13 @@ pub mod pallet {
     {
         /// Feed the external value.
 		///
-		/// Require authorized operator.
+		/// Call by the offchain worker.
+		///
+		/// # Parameter:
+		/// * `values` - value array for the feed
+		/// 
+		/// # Emits
+		/// * `NewFeedData`
 		#[pallet::weight(T::WeightInfo::feed_data(values.len() as u32))]
 		pub fn feed_data(
 			origin: OriginFor<T>,
@@ -363,6 +353,15 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+        /// Feed the external value.
+		///
+		/// Can be only XCM call from reporter parachain.
+		///
+		/// # Parameter:
+		/// * `values` - value array for the feed
+		/// 
+		/// # Emits
+		/// * `NewFeedData`
         #[pallet::weight(T::WeightInfo::feed_data(values.len() as u32))]
 		pub fn xcm_feed_data(
 			origin: OriginFor<T>,
@@ -399,6 +398,13 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
         
+        /// Query the feed data.
+		///
+		/// Can be only XCM call from feed parachain.
+		///
+		/// # Parameter:
+		/// * `key` - key for the feed
+		/// 
         #[pallet::weight(T::WeightInfo::query_data())]
 		pub fn xcm_query_data(
 			origin: OriginFor<T>,
@@ -415,29 +421,16 @@ pub mod pallet {
             
 		}
 
-        //#[pallet::weight(T::BlockWeights::get().max_block)]
-        #[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
-		pub fn xcm_evt(
-			origin: OriginFor<T>,
-		) -> DispatchResultWithPostInfo {
-            let para_id =
-                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
-
-            Self::deposit_event(Event::NewParaEvt {para_id });
-			Ok(Pays::No.into())
-		}
-
-        //#[pallet::weight(T::BlockWeights::get().max_block)]
-        #[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
-		pub fn xcm_evt1(
-			origin: OriginFor<T>,
-		) -> DispatchResultWithPostInfo {
-            let feeder = ensure_signed(origin.clone())?;
-
-            Self::deposit_event(Event::NewParaEvt1 {sender: feeder });
-			Ok(Pays::No.into())
-		}
-
+        /// Submit the URL Endpoint for the feed.
+		///
+		/// Can be called by authorized origin.
+		///
+		/// # Parameter:
+		/// * `key` - key for the feed
+		/// * `url` - url for the feed
+		/// 
+		/// # Emits
+		/// * `NewApiFeed`
         #[pallet::weight(T::WeightInfo::submit_api())]
         pub fn submit_api(
             origin: OriginFor<T>,
@@ -461,6 +454,15 @@ pub mod pallet {
 			Ok(Pays::No.into())
         }
 
+        /// Remove the URL Endpoint for the feed.
+		///
+		/// Can be called by authorized origin.
+		///
+		/// # Parameter:
+		/// * `key` - key for the feed
+		/// 
+		/// # Emits
+		/// * `ApiFeedRemoved`
         #[pallet::weight(T::WeightInfo::remove_api())]
         pub fn remove_api(
             origin: OriginFor<T>,
@@ -483,6 +485,16 @@ pub mod pallet {
             }
         }
 
+        /// Submit the URL Endpoint for the feed.
+		///
+		/// Can be only XCM call from feed parachain.
+		///
+		/// # Parameter:
+		/// * `key` - key for the feed
+		/// * `url` - url for the feed
+		/// 
+		/// # Emits
+		/// * `NewApiFeed`
         #[pallet::weight(T::WeightInfo::submit_api())]
         pub fn xcm_submit_api(
             origin: OriginFor<T>,
@@ -507,6 +519,15 @@ pub mod pallet {
 			Ok(Pays::No.into())
         }
 
+        /// Remove the URL Endpoint for the feed.
+		///
+		/// Can be only XCM call from feed parachain.
+		///
+		/// # Parameter:
+		/// * `key` - key for the feed
+		/// 
+		/// # Emits
+		/// * `ApiFeedRemoved`
         #[pallet::weight(T::WeightInfo::remove_api())]
         pub fn xcm_remove_api(
             origin: OriginFor<T>,
@@ -671,6 +692,8 @@ where T::AccountId: AsRef<[u8]>
             )?;
         }
 
+        // :TODO: now we handle URL Endpoint result with specific hardcoded keys,
+        // need to handle dynamic result type later 
         let mut values = Vec::<(T::OracleKey, T::OracleValue)>::new();
         for (_creator, key, val) in <ApiFeeds<T> as IterableStorageDoubleMap<_, _, _>>::iter() {
             // let mut response :Vec<u8>;
