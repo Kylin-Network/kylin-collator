@@ -26,7 +26,7 @@ These document show how to integrate the kylin-feed into other parachain runtime
      ...
      "pallet-aura/std",
      "pallet-balances/std",
-     'pallet-uniques/std',
+     "pallet-uniques/std",
      "kylin-feed/std",
      ...
    ]
@@ -41,8 +41,8 @@ These document show how to integrate the kylin-feed into other parachain runtime
 
    ```rust
    parameter_types! {
-       pub const CollectionDeposit: Balance = UNITS / 10; // 1 / 10 UNIT deposit to create asset class
-       pub const ItemDeposit: Balance = UNITS / 1_000; // 1 / 1000 UNIT deposit to create asset instance
+       pub const CollectionDeposit: Balance = deposit(100, 100);
+       pub const ItemDeposit: Balance = deposit(1, 100);
        pub const KeyLimit: u32 = 32;   // Max 32 bytes per key
        pub const ValueLimit: u32 = 64; // Max 64 bytes per value
        pub const UniquesMetadataDepositBase: Balance = deposit(1, 129);
@@ -87,7 +87,7 @@ These document show how to integrate the kylin-feed into other parachain runtime
        type MaxPriorities = MaxPriorities;
        type CollectionSymbolLimit = CollectionSymbolLimit;
        type MaxResourcesOnMint = MaxResourcesOnMint;
-       type XcmSender = XcmRouter;
+       type XcmSender = XcmpQueue;
    }
    ```
 
