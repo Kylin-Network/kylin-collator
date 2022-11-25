@@ -410,12 +410,21 @@ where T::AccountId: AsRef<[u8]>
                         let pval :i64 = (price.usdt * 1000000.0) as i64;
                         values.push((key.clone(), pval));
                     },
-                    Ok("CWApi") => {
+                    Ok("PriceBtcUsdt") => {
+                        let price: CryptoComparePrice = serde_json::Pric(&response)
+                            .map_err(|_| "Response JSON was not well-formatted")?;
+                        // We only store int, so every float will be convert to int with 6 decimals pad
+                        let pval = (price.usdt * 1000000.0) as i64;
+                        oval = pval.into();
+                        values.push((key.clone(), oval));
+                    },
+                    Ok("PriceEthUsdt") => {
                         let price: CryptoComparePrice = serde_json::from_slice(&response)
                             .map_err(|_| "Response JSON was not well-formatted")?;
                         // We only store int, so every float will be convert to int with 6 decimals pad
-                        let pval :i64 = (price.usdt * 1000000.0) as i64;
-                        values.push((key.clone(), pval));
+                        let pval = (price.usdt * 1000000.0) as i64;
+                        oval = pval.into();
+                        values.push((key.clone(), oval));
                     },
                     Ok(k) => {
                         log::debug!("No match API key [{:?}]", k);

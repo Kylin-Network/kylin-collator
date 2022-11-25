@@ -1145,7 +1145,6 @@ parameter_types! {
 	pub const MaxCollectionsEquippablePerPart: u32 = 100;
 }
 
-
 impl pallet_uniques::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type CollectionId = u32;
