@@ -26,6 +26,7 @@ use frame_system::{
     Config as SystemConfig,
 };
 use hex::ToHex;
+use serde_json::{Value as JValue};
 use scale_info::TypeInfo;
 use sp_std::{
     borrow::ToOwned, convert::TryFrom, convert::TryInto, 
@@ -132,14 +133,7 @@ pub enum CreatorId<AccountId> {
 pub struct ApiFeed<BlockNumber> {
     requested_block_number: BlockNumber,
     url: Option<Vec<u8>>,
-}
-
-/// :TODO: Crypto price data structure, hardcoded for now, 
-/// need to use more flexible type struct later 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "UPPERCASE")]
-pub struct CryptoComparePrice {
-    pub usdt: f64,
+    vpath: Option<Vec<u8>>,
 }
 
 enum TransactionType {
@@ -428,6 +422,9 @@ pub mod pallet {
 		/// # Parameter:
 		/// * `key` - key for the feed
 		/// * `url` - url for the feed
+        /// * `vpath` - value path of the URL result
+		///     example: json = {"x":{"y": ["z", "zz"]}}
+        ///     path: "/x/y/1" = "zz" 
 		/// 
 		/// # Emits
 		/// * `NewApiFeed`
@@ -436,6 +433,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             key: T::OracleKey,
             url: Vec<u8>,
+            vpath: Vec<u8>,
         ) -> DispatchResultWithPostInfo {
             let submitter = ensure_signed(origin.clone())?;
             let cid = CreatorId::AccountId(submitter);
@@ -447,6 +445,7 @@ pub mod pallet {
             let feed = ApiFeed {
                     requested_block_number: block_number,
                     url: Some(url),
+                    vpath: Some(vpath),
                 };
             ApiFeeds::<T>::insert(&cid, &key, feed.clone());
 
@@ -492,7 +491,10 @@ pub mod pallet {
 		/// # Parameter:
 		/// * `key` - key for the feed
 		/// * `url` - url for the feed
-		/// 
+		/// * `vpath` - value path of the URL result
+		///     example: json = {"x":{"y": ["z", "zz"]}}
+        ///     path: "/x/y/1" = "zz"
+        ///  
 		/// # Emits
 		/// * `NewApiFeed`
         #[pallet::weight(T::WeightInfo::submit_api())]
@@ -500,6 +502,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             key: T::OracleKey,
             url: Vec<u8>,
+            vpath: Vec<u8>,
         ) -> DispatchResultWithPostInfo {
             let para_id =
                 ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
@@ -512,6 +515,7 @@ pub mod pallet {
             let feed = ApiFeed {
                     requested_block_number: block_number,
                     url: Some(url),
+                    vpath: Some(vpath),
                 };
             ApiFeeds::<T>::insert(&cid, &key, feed.clone());
 
@@ -692,51 +696,29 @@ where T::AccountId: AsRef<[u8]>
             )?;
         }
 
-        // :TODO: now we handle URL Endpoint result with specific hardcoded keys,
-        // need to handle dynamic result type later 
         let mut values = Vec::<(T::OracleKey, T::OracleValue)>::new();
         for (_creator, key, val) in <ApiFeeds<T> as IterableStorageDoubleMap<_, _, _>>::iter() {
             // let mut response :Vec<u8>;
-            if val.url.is_some() {
+            if val.url.is_some() && val.vpath.is_some() {
+                let vpath = val.vpath.unwrap();
                 let response = Self::fetch_http_get_result(val.url.clone().unwrap())
                     .map_err(|_| "Failed fetch http")?;
+                let res_json :JValue = serde_json::from_slice(&response)
+                    .map_err(|_| "Response JSON was not well-formatted")?;
+                let path = str::from_utf8(&vpath)
+                    .map_err(|_| "vpath contain invalid utf8 string")?;
+                let fval = res_json.pointer(path)
+                    .ok_or("vpath error")?
+                    .as_f64()
+                    .ok_or("vpath value type error")?;
 
-                let oval :T::OracleValue;
-                match str::from_utf8(&key.clone().into()) {
-                    Ok("CCApi") => {
-                        let price: CryptoComparePrice = serde_json::from_slice(&response)
-                            .map_err(|_| "Response JSON was not well-formatted")?;
-                        // We only store int, so every float will be convert to int with 6 decimals pad
-                        let pval = (price.usdt * 1000000.0) as i64;
-                        oval = pval.into();
-                        values.push((key.clone(), oval));
-                    },
-                    Ok("PriceBtcUsdt") => {
-                        let price: CryptoComparePrice = serde_json::from_slice(&response)
-                            .map_err(|_| "Response JSON was not well-formatted")?;
-                        // We only store int, so every float will be convert to int with 6 decimals pad
-                        let pval = (price.usdt * 1000000.0) as i64;
-                        oval = pval.into();
-                        values.push((key.clone(), oval));
-                    },
-                    Ok("PriceEthUsdt") => {
-                        let price: CryptoComparePrice = serde_json::from_slice(&response)
-                            .map_err(|_| "Response JSON was not well-formatted")?;
-                        // We only store int, so every float will be convert to int with 6 decimals pad
-                        let pval = (price.usdt * 1000000.0) as i64;
-                        oval = pval.into();
-                        values.push((key.clone(), oval));
-                    },
-                    Ok(k) => {
-                        log::debug!("No match API key [{:?}]", k);
-                    },
-                    _ => {},
-                }   
+                // We only store int, so every float will be convert to int with 6 decimals pad
+                let ival :i64 = (fval * 1000000.0) as i64;
+                values.push((key.clone(), ival.into()));
             }
         }
 
         if values.len() > 0 {
-
             let results = signer.send_signed_transaction(|_account| Call::feed_data {
                 values: values.clone(),
             });
