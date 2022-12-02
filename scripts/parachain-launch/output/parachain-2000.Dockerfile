@@ -1,2 +1,2 @@
-FROM kylinnetworks/kylin-collator:v0.0.3
+FROM kylinnetworks/kylin-collator:ro-v0.9.30
 COPY . /app

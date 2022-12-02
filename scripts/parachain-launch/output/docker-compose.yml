@@ -159,7 +159,7 @@ services:
       - --force-authoring
       - --execution=wasm
       - --alice
-      - --node-key=b5facb7ae1dae48b98b35647beaeee38ee352971ea9936e61eb30a12de1c2593
+      - --node-key=99c21f2f2519791cf25c48f8d5e77a4f99a25a22068b498cdff656204111c765
       - --listen-addr=/ip4/0.0.0.0/tcp/30333
       - --
       - --chain=/app/rococo-local.json
@@ -189,36 +189,66 @@ services:
       - --force-authoring
       - --execution=wasm
       - --bob
-      - --bootnodes=/dns/parachain-2000-0/tcp/30333/p2p/12D3KooWHPy5p7GwF28Z1qXodpsHPHr3MxMSHSDpo3K1eRDC9DWb
+      - --bootnodes=/dns/parachain-2000-0/tcp/30333/p2p/12D3KooWAfaDn9Wjcx3cQFBsjB3LsWbsgh5h2WVvoQtmgVjaMUAN
       - --listen-addr=/ip4/0.0.0.0/tcp/30333
       - --
       - --chain=/app/rococo-local.json
       - --execution=wasm
     environment: {}
     ulimits: *a1
-  parachain-2000-2:
+  parachain-2010-0:
     ports:
-      - 9952:9944
-      - 9941:9933
-      - 30341:30333
+      - 8544:9944
+      - 8533:9933
+      - 50336:30333
     volumes:
-      - parachain-2000-2:/kylin/data
+      - parachain-2010-0:/kylin/data
     build:
       context: .
-      dockerfile: parachain-2000.Dockerfile
+      dockerfile: parachain-2010.Dockerfile
     command:
       - --base-path=/kylin/data
-      - --chain=/app/pichiu-local-2000.json
+      - --chain=/app/kylin-local-2010.json
       - --ws-external
       - --rpc-external
       - --rpc-cors=all
-      - --name=parachain-2000-2
+      - --name=parachain-2010-0
       - --collator
       - --rpc-methods=unsafe
       - --force-authoring
       - --execution=wasm
-      - --charlie
-      - --bootnodes=/dns/parachain-2000-0/tcp/30333/p2p/12D3KooWHPy5p7GwF28Z1qXodpsHPHr3MxMSHSDpo3K1eRDC9DWb
+      - --alice
+      - --node-key=b790460081339878d4fc0db82526233e2deeaa77f0fbcda0e7413aae7a95c959
+      - --listen-addr=/ip4/0.0.0.0/tcp/30333
+      - --
+      - --chain=/app/rococo-local.json
+      - --execution=wasm
+      - --name=relaychain-alice
+    environment: {}
+    ulimits: *a1
+  parachain-2010-1:
+    ports:
+      - 9953:9944
+      - 9942:9933
+      - 30342:30333
+    volumes:
+      - parachain-2010-1:/kylin/data
+    build:
+      context: .
+      dockerfile: parachain-2010.Dockerfile
+    command:
+      - --base-path=/kylin/data
+      - --chain=/app/kylin-local-2010.json
+      - --ws-external
+      - --rpc-external
+      - --rpc-cors=all
+      - --name=parachain-2010-1
+      - --collator
+      - --rpc-methods=unsafe
+      - --force-authoring
+      - --execution=wasm
+      - --bob
+      - --bootnodes=/dns/parachain-2010-0/tcp/30333/p2p/12D3KooWSea4mkQq5R55DHYQWHuYHS1Yf66TnpqhMvPAk9jX2uyZ
       - --listen-addr=/ip4/0.0.0.0/tcp/30333
       - --
       - --chain=/app/rococo-local.json
@@ -226,12 +256,13 @@ services:
     environment: {}
     ulimits: *a1
 volumes:
-  ? relaychain-alice
-  ? relaychain-bob
-  ? relaychain-charlie
-  ? relaychain-dave
-  ? relaychain-eve
-  ? relaychain-ferdie
-  ? parachain-2000-0
-  ? parachain-2000-1
-  ? parachain-2000-2
+  relaychain-alice: null
+  relaychain-bob: null
+  relaychain-charlie: null
+  relaychain-dave: null
+  relaychain-eve: null
+  relaychain-ferdie: null
+  parachain-2000-0: null
+  parachain-2000-1: null
+  parachain-2010-0: null
+  parachain-2010-1: null
