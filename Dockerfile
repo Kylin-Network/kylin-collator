@@ -4,9 +4,7 @@ FROM rust:1.61-slim as builder
 
 WORKDIR /kylin-collator
 COPY . /kylin-collator
-RUN export http_proxy='http://127.0.0.1:1081'
-RUN export https_proxy='https://127.0.0.1:1081' 
-RUN apt-get update && apt-get install -y git cmake pkg-config libssl-dev git clang libclang-dev
+RUN apt-get update && apt-get install -y git cmake pkg-config libssl-dev git clang libclang-dev protobuf-compiler
 RUN rustup default nightly && rustup target add wasm32-unknown-unknown
 RUN cargo build --release
 

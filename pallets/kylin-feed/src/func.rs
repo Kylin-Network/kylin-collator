@@ -24,6 +24,7 @@ enum KylinMockFunc {
     xcm_submit_api {
         key: Vec<u8>,
         url: Vec<u8>,
+        vpath: Vec<u8>,
     },
     #[codec(index = 6u8)]
     xcm_remove_api { 
@@ -157,9 +158,9 @@ impl<T: Config> Pallet<T>
         Ok(())
     }
 
-    pub fn do_create_feed(para_id: u32, key: &Vec<u8>, url: &Vec<u8>) -> DispatchResult {
+    pub fn do_create_feed(para_id: u32, key: &Vec<u8>, url: &Vec<u8>, vpath: &Vec<u8>) -> DispatchResult {
         let remark = KylinMockCall::KylinOraclePallet(KylinMockFunc::xcm_submit_api{
-            key:key.clone(), url:url.clone(),
+            key:key.clone(), url:url.clone(), vpath:vpath.clone(),
         });
         T::XcmSender::send_xcm(
             (

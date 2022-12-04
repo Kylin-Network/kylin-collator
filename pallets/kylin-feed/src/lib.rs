@@ -75,6 +75,7 @@ pub struct MetaData {
 	oracle_paraid: u32,
     key: Vec<u8>,
     url: Vec<u8>,
+	vpath: Vec<u8>,
 }
 
 #[frame_support::pallet]
@@ -505,6 +506,9 @@ pub mod pallet {
 		/// * `oracle_paraid` - parachain ID of the Oracle chain
 		/// * `key` - key for the feed
 		/// * `url` - url for the feed
+		/// * `vpath` - value path of the URL result
+		///     example: json = {"x":{"y": ["z", "zz"]}}
+        ///     path: "/x/y/1" = "zz" 
 		/// 
 		/// # Emits
 		/// * `FeedCreated`
@@ -515,6 +519,7 @@ pub mod pallet {
 			oracle_paraid: u32,
 			key: Vec<u8>,
             url: Vec<u8>,
+			vpath: Vec<u8>,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
 			if let Some(collection_issuer) =
@@ -525,9 +530,9 @@ pub mod pallet {
 				return Err(Error::<T>::CollectionUnknown.into())
 			}
 
-			Self::do_create_feed(oracle_paraid, &key, &url)?;
+			Self::do_create_feed(oracle_paraid, &key, &url, &vpath)?;
 
-			let mdata = MetaData { oracle_paraid, key, url };
+			let mdata = MetaData { oracle_paraid, key, url, vpath };
 			let meta_str = serde_json::to_string(&mdata).map_err(|_| Error::<T>::JsonError)?;
 			let metadata: BoundedVec<u8, T::StringLimit> = meta_str.as_bytes().to_vec()
 				.try_into().map_err(

@@ -1,6 +1,6 @@
 # Relaychain Configuration
 relaychain:
-  image: parity/polkadot:v0.9.28 # the docker image to use
+  image: parity/polkadot:v0.9.30 # the docker image to use
   chain: rococo-local # the chain to use
   runtimeGenesisConfig: # additonal genesis override
     configuration:
@@ -25,7 +25,7 @@ relaychain:
 # Parachain Configuration
 parachains:
 # Config for first parachain
-- image: kylinnetworks/kylin-collator:v0.0.3
+- image: kylinnetworks/kylin-collator:ro-v0.9.30
   chain: # this could be a string like `dev` or a config object
     base: pichiu-local # the chain to use
     collators: # override collators
@@ -56,5 +56,35 @@ parachains:
       - --name=relaychain-alice
   - flags:
     - --bob
+
+- image: kylinnetworks/kylin-collator:ro-v0.9.30
+  chain: # this could be a string like `dev` or a config object
+    base: kylin-local # the chain to use
+    collators: # override collators
+      - alice # this imply //Alice
+      - 5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty # or could be a session key public address
+      - charlie
+    sudo: alice # override sudo key to //Alice
+    runtimeGenesisConfig: # additonal genesis override
+      balances:
+        balances:
+          - [5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty, 10000000000000000]
+  id: 2010 # override parachain id
+  parachain: true # this is parachain, not parathread
+  flags: # CLI flags for this parachain nodes
+    - --rpc-methods=unsafe
+    - --force-authoring
+    - --execution=wasm
+  relaychainFlags: # CLI flags for the relaychain port
+    - --execution=wasm
+  volumePath: /kylin/data # The path to mount volume and base path, default to /data
+  nodes: # nodes config
+  - wsPort: 8544
+    rpcPort: 8533
+    port: 50336
+    flags: # additional CLI flags for this node
+      - --alice
+    relaychainFlags: # additional CLI flags for relaychain part
+      - --name=relaychain-alice
   - flags:
-    - --charlie
+    - --bob
