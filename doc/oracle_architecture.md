@@ -13,7 +13,7 @@ Kylin is building a decentralised oracle system with a configurable framework fo
 
 ## Kylin Decentralised Oracle Architecture
 
-![Oracle Architecture](C:\Users\tristan\Desktop\Kylin\img\oracle_architecture.jpg)
+![Oracle Architecture](imgs/oracle_architecture.jpg)
 
 Other Parachains can easily integrate into Kylin decentralised oracle system with 1 or 2 pallets installed.
 
@@ -48,7 +48,7 @@ A tutorial for demonstrate the Kylin decentralised oracle system
 
 ## Data flow between Kylin and other parachains
 
-![photo_2022-11-25_17-55-02](C:\Users\tristan\Desktop\Kylin\img\oracle_flow.jpg)
+![photo_2022-11-25_17-55-02](imgs/oracle_flow.jpg)
 
 
 
