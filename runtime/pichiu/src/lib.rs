@@ -1,3 +1,5 @@
+// SBP-M1 review: update below description
+
 // Copyright 2019-2021 Parity Technologies (UK) Ltd.
 // This file is part of Cumulus.
 
@@ -286,7 +288,7 @@ impl kylin_democracy::Config for Runtime {
 		pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 2, 3>;
 	// To cancel a proposal before it has been passed, the technical committee must be unanimous or
 	// Root must agree.
-	type CancelProposalOrigin = EitherOfDiverse<
+    type CancelProposalOrigin = EitherOfDiverse<
 		EnsureRoot<AccountId>,
 		pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCollective, 1, 1>,
 	>;
@@ -433,6 +435,9 @@ impl pallet_transaction_payment::Config for Runtime {
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 }
 
+
+// SBP-M1 review: Sudo pallet is not recommended for production
+// You should consider creating sth like council entities
 impl pallet_sudo::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
@@ -550,6 +555,8 @@ match_types! {
 //     // ^^^ Parent and its exec plurality get free execution
 //     AllowUnpaidExecutionFrom<SpecParachain>,
 // );
+
+// SBP-M1 review: are you sure about unpaid execution from everything?
 pub type Barrier = AllowUnpaidExecutionFrom<Everything>;
 
 pub struct AllowAnyPaidExecutionFrom<T>(PhantomData<T>);
@@ -1210,6 +1217,9 @@ construct_runtime! {
 		Vesting: pallet_vesting = 13,
 
 		// Collator support. The order of these 4 are important and shall not change.
+
+        // SBP-M1 review: generally speaking you should not modify pallets' indexes
+        // It can break creation of XCM messages while we need to directly point pallet by index
 		Authorship: pallet_authorship = 20,
 		CollatorSelection: pallet_collator_selection = 21,
 		Session: pallet_session = 22,

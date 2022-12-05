@@ -1,6 +1,8 @@
 use crate::{mock::*, Error};
 use frame_support::{assert_noop, assert_ok};
 
+// SBP-M1 review: missing test for `kylin-market`
+
 #[test]
 fn it_works_for_default_value() {
 	new_test_ext().execute_with(|| {

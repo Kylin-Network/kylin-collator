@@ -13,6 +13,8 @@ pub trait WeightInfo {
 	fn claim(x: u32) -> Weight;
 }
 
+// SBP-M1 review: missing benchmarks for generated/hardcoded values
+
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	fn create_distribution() -> Weight {

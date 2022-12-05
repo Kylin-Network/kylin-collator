@@ -1,3 +1,4 @@
+// SBP-M1 review: update comments
 //! Benchmarking setup for pallet-template
 
 use super::*;
@@ -6,6 +7,8 @@ use super::*;
 use crate::Pallet as Template;
 use frame_benchmarking::{benchmarks, whitelisted_caller};
 use frame_system::RawOrigin;
+
+// SBP-M1 review: missing benchmarks for pallet `kylin-market`
 
 benchmarks! {
 	do_something {

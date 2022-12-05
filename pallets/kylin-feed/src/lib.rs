@@ -1,4 +1,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+
+// SBP-M1 review: missing testing & benchmarking
+
+// SBP-M1 review: these instructions suggest that proper refactor is needed
 #![allow(clippy::unused_unit)]
 #![allow(clippy::too_many_arguments)]
 #![allow(unused_variables)]
@@ -353,7 +357,9 @@ pub mod pallet {
 			max: Option<u32>,
 			symbol: BoundedCollectionSymbolOf<T>,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			// SBP-M1 review: do not clone if unnecessary
+            // See https://github.com/paritytech/substrate/blob/polkadot-v0.9.31/frame/assets/src/lib.rs#L693
+            let sender = ensure_signed(origin.clone())?;
 
 			let collection_id = Self::collection_create(sender.clone(), metadata, max, symbol)?;
 
@@ -394,7 +400,9 @@ pub mod pallet {
 			key: KeyLimitOf<T>,
 			value: ValueLimitOf<T>,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			// SBP-M1 review: do not clone if unnecessary
+            // See https://github.com/paritytech/substrate/blob/polkadot-v0.9.31/frame/assets/src/lib.rs#L693
+            let sender = ensure_signed(origin.clone())?;
 
 			Self::property_set(sender, collection_id, maybe_nft_id, key.clone(), value.clone())?;
 
@@ -416,7 +424,9 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			// SBP-M1 review: do not clone if unnecessary
+            // See https://github.com/paritytech/substrate/blob/polkadot-v0.9.31/frame/assets/src/lib.rs#L693
+            let sender = ensure_signed(origin.clone())?;
 
 			Self::collection_burn(sender.clone(), collection_id)?;
 
@@ -448,7 +458,9 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			// SBP-M1 review: do not clone if unnecessary
+            // See https://github.com/paritytech/substrate/blob/polkadot-v0.9.31/frame/assets/src/lib.rs#L693
+            let sender = ensure_signed(origin.clone())?;
 
 			let collection_id = Self::collection_lock(sender.clone(), collection_id)?;
 
@@ -472,7 +484,9 @@ pub mod pallet {
 			collection_id: CollectionId,
 			new_issuer: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+		    // SBP-M1 review: do not clone if unnecessary
+            // See https://github.com/paritytech/substrate/blob/polkadot-v0.9.31/frame/assets/src/lib.rs#L693
+            let sender = ensure_signed(origin.clone())?;
 			let collection =
 				Self::collections(collection_id).ok_or(Error::<T>::CollectionUnknown)?;
 			ensure!(collection.issuer == sender, Error::<T>::NoPermission);
@@ -513,9 +527,12 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
 			oracle_paraid: u32,
-			key: Vec<u8>,
+			// SBP-M1 review: use bounded vectors
+            key: Vec<u8>,
             url: Vec<u8>,
 		) -> DispatchResult {
+            // SBP-M1 review: do not clone if unnecessary
+            // See https://github.com/paritytech/substrate/blob/polkadot-v0.9.31/frame/assets/src/lib.rs#L693
 			let sender = ensure_signed(origin.clone())?;
 			if let Some(collection_issuer) =
 			pallet_uniques::Pallet::<T>::collection_owner(collection_id)
@@ -571,6 +588,8 @@ pub mod pallet {
 			collection_id: CollectionId,
 			nft_id: NftId,
 		) -> DispatchResult {
+            // SBP-M1 review: do not clone if unnecessary
+            // See https://github.com/paritytech/substrate/blob/polkadot-v0.9.31/frame/assets/src/lib.rs#L693
 			let sender = ensure_signed(origin.clone())?;
 			let (root_owner, _) = Pallet::<T>::lookup_root_owner(collection_id, nft_id)?;
 			// Check ownership
@@ -603,6 +622,8 @@ pub mod pallet {
 			collection_id: CollectionId,
 			nft_id: NftId,
 		) -> DispatchResult {
+            // SBP-M1 review: do not clone if unnecessary
+            // See https://github.com/paritytech/substrate/blob/polkadot-v0.9.31/frame/assets/src/lib.rs#L693
 			let sender = ensure_signed(origin.clone())?;
 			let (root_owner, _) = Pallet::<T>::lookup_root_owner(collection_id, nft_id)?;
 			// Check ownership
@@ -627,10 +648,13 @@ pub mod pallet {
 		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn xcm_feed_back(
 			origin: OriginFor<T>,
-			key: Vec<u8>,
+			// SBP-M1 review: use bounded vectors
+            key: Vec<u8>,
 			value: i64,
 		) -> DispatchResult {
-			let para_id =
+			// SBP-M1 review: do not clone if unnecessary
+            // See https://github.com/paritytech/substrate/blob/polkadot-v0.9.31/frame/assets/src/lib.rs#L693
+            let para_id =
                 ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
 
 			Self::deposit_event(Event::QueryFeedBack { key, value });
@@ -655,6 +679,8 @@ pub mod pallet {
 			nft_id: NftId,
 			new_owner: AccountIdOrCollectionNftTuple<T::AccountId>,
 		) -> DispatchResult {
+            // SBP-M1 review: do not clone if unnecessary
+            // See https://github.com/paritytech/substrate/blob/polkadot-v0.9.31/frame/assets/src/lib.rs#L693
 			let sender = ensure_signed(origin.clone())?;
 
 			let (new_owner_account, approval_required) =
@@ -696,6 +722,8 @@ pub mod pallet {
 			nft_id: NftId,
 			new_owner: AccountIdOrCollectionNftTuple<T::AccountId>,
 		) -> DispatchResult {
+            // SBP-M1 review: do not clone if unnecessary
+            // See https://github.com/paritytech/substrate/blob/polkadot-v0.9.31/frame/assets/src/lib.rs#L693
 			let sender = ensure_signed(origin.clone())?;
 
 			let (new_owner_account, collection_id, nft_id) =
@@ -733,7 +761,9 @@ pub mod pallet {
 			collection_id: CollectionId,
 			nft_id: NftId,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			// SBP-M1 review: do not clone if unnecessary
+            // See https://github.com/paritytech/substrate/blob/polkadot-v0.9.31/frame/assets/src/lib.rs#L693
+            let sender = ensure_signed(origin.clone())?;
 
 			let max_recursions = T::MaxRecursions::get();
 			let (sender, collection_id, nft_id) =

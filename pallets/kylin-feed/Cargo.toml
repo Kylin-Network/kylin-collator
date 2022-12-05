@@ -4,6 +4,7 @@ version = "4.0.0-dev"
 description = "Kylin Feed"
 authors = ["Kylin"]
 edition = "2021"
+# SBP-M1 review: set proper license & update crate details
 license = "Unlicense"
 publish = false
 repository = ""

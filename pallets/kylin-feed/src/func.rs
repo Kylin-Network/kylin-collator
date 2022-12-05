@@ -11,6 +11,8 @@ use sp_runtime::{
 /// Mock structure for XCM Call message encoding
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[allow(non_camel_case_types)]
+// SBP-M1 review: this enum can be seen in almost each pallet
+// I suggest extracting it
 enum KylinMockFunc {
     #[codec(index = 1u8)]
     xcm_feed_data { 
@@ -61,6 +63,7 @@ impl<T: Config> Pallet<T>
         let parent = pallet_uniques::Pallet::<T>::owner(collection_id, nft_id);
         parent.as_ref().ok_or(Error::<T>::NoAvailableNftId)?;
 
+        // SBP-M1 review: provide proper error handling instead of `unwrap`
         let owner = parent.unwrap();
         match Self::decode_nft_account_id::<T::AccountId>(owner.clone()) {
             None => Ok((owner, (collection_id, nft_id))),
@@ -105,6 +108,8 @@ impl<T: Config> Pallet<T>
         if parent.is_none() {
             return found_child
         }
+
+        // SBP-M1 review: provide proper error handling instead of `unwrap`
         let owner = parent.as_ref().unwrap();
         match Self::decode_nft_account_id::<T::AccountId>(owner.clone()) {
             None => found_child,
@@ -161,6 +166,7 @@ impl<T: Config> Pallet<T>
         let remark = KylinMockCall::KylinOraclePallet(KylinMockFunc::xcm_submit_api{
             key:key.clone(), url:url.clone(),
         });
+        // SBP-M1 review: I strongly suggest using constants instead of hardcoded values
         T::XcmSender::send_xcm(
             (
                 1,
@@ -205,6 +211,8 @@ impl<T: Config> Pallet<T>
         Ok(())
     }
 
+    // SBP-M1 review: these functions differs only in remark
+    // Think about refactor
     pub fn do_query_feed(para_id: u32, key: &Vec<u8>) -> DispatchResult {
         let remark = KylinMockCall::KylinOraclePallet(KylinMockFunc::xcm_query_data{
             key:key.clone()
@@ -252,6 +260,8 @@ for Pallet<T>
             priority_index += 1;
         }
 
+        // SBP-M1 review: depositing events should be done in extrinsics
+        // It simplifies debugging & enables code reusing
         Self::deposit_event(Event::PrioritySet { collection_id, nft_id });
         Ok(())
     }
@@ -530,6 +540,7 @@ impl<T: Config> Nft<T::AccountId, StringLimitOf<T>> for Pallet<T>
         Ok((collection_id, nft_id))
     }
 
+    // SBP-M1 review: too long function
     fn nft_send(
         sender: T::AccountId,
         collection_id: CollectionId,

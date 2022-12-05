@@ -1,6 +1,7 @@
 [package]
 name = "kylin-democracy"
 version = "4.0.0-dev"
+# SBP-M1 review: set proper authors
 authors = ["Parity Technologies <admin@parity.io>"]
 edition = "2021"
 license = "Apache-2.0"

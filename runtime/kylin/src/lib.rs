@@ -1,3 +1,5 @@
+// SBP-M1 review: update description below
+
 // Copyright 2019-2021 Parity Technologies (UK) Ltd.
 // This file is part of Cumulus.
 
@@ -401,6 +403,8 @@ impl pallet_transaction_payment::Config for Runtime {
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 }
 
+// SBP-M1 review: for development purpose Sudo pallet is ok
+// For production you should introduce entity like a council
 impl pallet_sudo::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;

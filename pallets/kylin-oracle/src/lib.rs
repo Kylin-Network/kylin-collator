@@ -2,20 +2,15 @@
 #![allow(unused_variables)]
 #![allow(unused_imports)]
 #![allow(dead_code)]
-/// Edit this file to define custom logic or remove it if it is not needed.
-/// Learn more about FRAME and the core library of Substrate FRAME pallets:
-/// <https://substrate.dev/docs/en/knowledgebase/runtime/frame>
-
-use serde::{Deserialize, Serialize};
 use codec::{Decode, Encode};
 use cumulus_pallet_xcm::{ensure_sibling_para, Origin as CumulusOrigin};
 use cumulus_primitives_core::ParaId;
 use frame_support::{
-    dispatch::{GetDispatchInfo, DispatchResultWithPostInfo},
+    dispatch::{DispatchResultWithPostInfo, GetDispatchInfo},
     log,
     pallet_prelude::*,
-    traits::{Currency, EstimateCallFee, UnixTime, ChangeMembers, Get, SortedMembers},
-    IterableStorageMap, IterableStorageDoubleMap,
+    traits::{ChangeMembers, Currency, EstimateCallFee, Get, SortedMembers, UnixTime},
+    IterableStorageDoubleMap, IterableStorageMap,
 };
 use frame_system::{
     self as system,
@@ -27,11 +22,14 @@ use frame_system::{
 };
 use hex::ToHex;
 use scale_info::TypeInfo;
-use sp_std::{
-    borrow::ToOwned, convert::TryFrom, convert::TryInto, 
-    prelude::*, str, vec, vec::Vec
-};
+/// Edit this file to define custom logic or remove it if it is not needed.
+/// Learn more about FRAME and the core library of Substrate FRAME pallets:
+/// <https://substrate.dev/docs/en/knowledgebase/runtime/frame>
+use serde::{Deserialize, Serialize};
+use sp_std::{borrow::ToOwned, convert::TryFrom, convert::TryInto, prelude::*, str, vec, vec::Vec};
 
+use orml_traits::{CombineData, DataFeeder, DataProvider, DataProviderExtended, OnNewData};
+use orml_utilities::OrderedSet;
 use sp_core::crypto::KeyTypeId;
 use sp_runtime::{
     offchain::{
@@ -42,8 +40,6 @@ use sp_runtime::{
     traits::{Hash, UniqueSaturatedInto, Zero},
 };
 use xcm::latest::{prelude::*, Junction, OriginKind, SendXcm, Xcm};
-use orml_traits::{CombineData, DataFeeder, DataProvider, DataProviderExtended, OnNewData};
-use orml_utilities::OrderedSet;
 //use weights::WeightInfo;
 
 pub use pallet::*;
@@ -81,8 +77,8 @@ pub mod crypto {
         app_crypto::{app_crypto, sr25519},
         traits::Verify,
     };
-    use sp_std::{convert::TryFrom};
     use sp_runtime::{MultiSignature, MultiSigner};
+    use sp_std::convert::TryFrom;
     app_crypto!(sr25519, KEY_TYPE);
     pub struct TestAuthId;
     // implemented for ocw-runtime
@@ -100,15 +96,15 @@ pub mod crypto {
     }
 }
 
+// SBP-M1 review: is it the same struct as in kylin-reporter pallet?
+// If yes, think about refactoring (extract to some common module)
+
 /// Mock structure for XCM Call message encoding
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[allow(non_camel_case_types)]
 enum KylinMockFunc {
     #[codec(index = 8u8)]
-    xcm_feed_back { 
-        key: Vec<u8>,
-		value: i64,
-    },
+    xcm_feed_back { key: Vec<u8>, value: i64 },
 }
 
 /// Mock structure for XCM Call message encoding
@@ -122,8 +118,8 @@ enum KylinMockCall {
 // Creator may be a AccountId or from a parachain
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, Ord, PartialOrd, TypeInfo, MaxEncodedLen)]
 pub enum CreatorId<AccountId> {
-	AccountId(AccountId),
-	ParaId(ParaId),
+    AccountId(AccountId),
+    ParaId(ParaId),
 }
 
 /// Feed URL Endpoint data structure
@@ -134,8 +130,8 @@ pub struct ApiFeed<BlockNumber> {
     url: Option<Vec<u8>>,
 }
 
-/// :TODO: Crypto price data structure, hardcoded for now, 
-/// need to use more flexible type struct later 
+/// :TODO: Crypto price data structure, hardcoded for now,
+/// need to use more flexible type struct later
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
 pub struct CryptoComparePrice {
@@ -155,18 +151,31 @@ pub mod pallet {
     use super::*;
 
     //pub(crate) type MomentOf<T> = <<T as Config>::Time as Time>::Moment;
-	pub(crate) type TimestampedValueOf<T> = TimestampedValue<<T as Config>::OracleValue, u128>;
+    pub(crate) type TimestampedValueOf<T> = TimestampedValue<<T as Config>::OracleValue, u128>;
 
-	#[derive(Encode, Decode, RuntimeDebug, Eq, PartialEq, Clone, Copy, Ord, PartialOrd, TypeInfo, MaxEncodedLen)]
-	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-	pub struct TimestampedValue<Value, Moment> {
-		pub value: Value,
-		pub timestamp: Moment,
-	}
+    #[derive(
+        Encode,
+        Decode,
+        RuntimeDebug,
+        Eq,
+        PartialEq,
+        Clone,
+        Copy,
+        Ord,
+        PartialOrd,
+        TypeInfo,
+        MaxEncodedLen,
+    )]
+    #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+    pub struct TimestampedValue<Value, Moment> {
+        pub value: Value,
+        pub timestamp: Moment,
+    }
 
     #[pallet::config]
     pub trait Config: CreateSignedTransaction<Call<Self>> + frame_system::Config
-    where <Self as frame_system::Config>::AccountId: AsRef<[u8]> + ToHex
+    where
+        <Self as frame_system::Config>::AccountId: AsRef<[u8]> + ToHex,
     {
         /// The identifier type for an offchain worker.
         type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
@@ -199,22 +208,21 @@ pub mod pallet {
         type Currency: frame_support::traits::Currency<Self::AccountId>;
 
         /// Provide the implementation to combine raw values to produce
-		/// aggregated value
-		type CombineData: CombineData<Self::OracleKey, TimestampedValueOf<Self>>;
+        /// aggregated value
+        type CombineData: CombineData<Self::OracleKey, TimestampedValueOf<Self>>;
 
         /// The data key type
-		type OracleKey: Parameter + Member + Eq + Into<Vec<u8>>;
+        type OracleKey: Parameter + Member + Eq + Into<Vec<u8>>;
 
-		/// The data value type
-		type OracleValue: Parameter + Member + Ord + From<i64> + Into<i64>;
+        /// The data value type
+        type OracleValue: Parameter + Member + Ord + From<i64> + Into<i64>;
 
         /// Oracle operators.
-		type Members: SortedMembers<Self::AccountId>;
+        type Members: SortedMembers<Self::AccountId>;
 
-		/// Maximum size of HasDispatched
-		#[pallet::constant]
-		type MaxHasDispatchedSize: Get<u32>;
-
+        /// Maximum size of HasDispatched
+        #[pallet::constant]
+        type MaxHasDispatchedSize: Get<u32>;
     }
 
     #[pallet::pallet]
@@ -228,35 +236,47 @@ pub mod pallet {
 
     /// Storage map for the feed URL Endpoint
     #[pallet::storage]
-	#[pallet::getter(fn api_feeds)]
-	pub type ApiFeeds<T: Config> =
-		StorageDoubleMap<_, Twox64Concat, CreatorId<T::AccountId>, Twox64Concat, T::OracleKey, ApiFeed<T::BlockNumber>>;
+    #[pallet::getter(fn api_feeds)]
+    pub type ApiFeeds<T: Config> = StorageDoubleMap<
+        _,
+        Twox64Concat,
+        CreatorId<T::AccountId>,
+        Twox64Concat,
+        T::OracleKey,
+        ApiFeed<T::BlockNumber>,
+    >;
 
     /// Raw values for each oracle operators
-	#[pallet::storage]
-	#[pallet::getter(fn raw_values)]
-	pub type RawValues<T: Config> =
-		StorageDoubleMap<_, Twox64Concat, CreatorId<T::AccountId>, Twox64Concat, T::OracleKey, TimestampedValueOf<T>>;
+    #[pallet::storage]
+    #[pallet::getter(fn raw_values)]
+    pub type RawValues<T: Config> = StorageDoubleMap<
+        _,
+        Twox64Concat,
+        CreatorId<T::AccountId>,
+        Twox64Concat,
+        T::OracleKey,
+        TimestampedValueOf<T>,
+    >;
 
-	/// Up to date combined value from Raw Values
-	#[pallet::storage]
-	#[pallet::getter(fn values)]
-	pub type Values<T: Config> =
-		StorageMap<_, Twox64Concat, <T as Config>::OracleKey, TimestampedValueOf<T>>;
+    /// Up to date combined value from Raw Values
+    #[pallet::storage]
+    #[pallet::getter(fn values)]
+    pub type Values<T: Config> =
+        StorageMap<_, Twox64Concat, <T as Config>::OracleKey, TimestampedValueOf<T>>;
 
-	/// If an oracle operator has fed a value in this block
-	#[pallet::storage]
-	pub(crate) type HasDispatched<T: Config> =
-		StorageValue<_, OrderedSet<CreatorId<T::AccountId>, T::MaxHasDispatchedSize>, ValueQuery>;
+    /// If an oracle operator has fed a value in this block
+    #[pallet::storage]
+    pub(crate) type HasDispatched<T: Config> =
+        StorageValue<_, OrderedSet<CreatorId<T::AccountId>, T::MaxHasDispatchedSize>, ValueQuery>;
 
-	#[pallet::error]
+    #[pallet::error]
     pub enum Error<T> {
         /// DataRequest Fields is too large to store on-chain.
         TooLarge,
         /// Sender does not have permission
-		NoPermission,
-		/// Feeder has already feeded at this block
-		AlreadyFeeded,
+        NoPermission,
+        /// Feeder has already feeded at this block
+        AlreadyFeeded,
         /// XCM Send error
         XcmSendError,
     }
@@ -264,17 +284,18 @@ pub mod pallet {
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T>
     where
-        T::AccountId: AsRef<[u8]> + ToHex + Decode
+        T::AccountId: AsRef<[u8]> + ToHex + Decode,
     {
+        // SBP-M1 review: why do you return `on_finalize` weight instead of `on_initialize`?
         /// `on_initialize` to return the weight used in `on_finalize`.
-		fn on_initialize(_n: T::BlockNumber) -> Weight {
-			T::WeightInfo::on_finalize()
-		}
+        fn on_initialize(_n: T::BlockNumber) -> Weight {
+            T::WeightInfo::on_finalize()
+        }
 
-		fn on_finalize(_n: T::BlockNumber) {
-			// cleanup for next block
-			<HasDispatched<T>>::kill();
-		}
+        fn on_finalize(_n: T::BlockNumber) {
+            // cleanup for next block
+            <HasDispatched<T>>::kill();
+        }
 
         fn offchain_worker(block_number: T::BlockNumber) {
             // Note that having logs compiled to WASM may cause the size of the blob to increase
@@ -307,24 +328,28 @@ pub mod pallet {
     #[pallet::call]
     impl<T: Config> Pallet<T>
     where
-        T::AccountId: AsRef<[u8]> + ToHex + Decode
+        T::AccountId: AsRef<[u8]> + ToHex + Decode,
     {
         /// Feed the external value.
-		///
-		/// Call by the offchain worker.
-		///
-		/// # Parameter:
-		/// * `values` - value array for the feed
-		/// 
-		/// # Emits
-		/// * `NewFeedData`
-		#[pallet::weight(T::WeightInfo::feed_data(values.len() as u32))]
-		pub fn feed_data(
-			origin: OriginFor<T>,
-			values: Vec<(T::OracleKey, T::OracleValue)>,
-		) -> DispatchResultWithPostInfo {
-			let feeder = ensure_signed(origin.clone())?;
+        ///
+        /// Call by the offchain worker.
+        ///
+        /// # Parameter:
+        /// * `values` - value array for the feed
+        ///
+        /// # Emits
+        /// * `NewFeedData`
+        #[pallet::weight(T::WeightInfo::feed_data(values.len() as u32))]
+        pub fn feed_data(
+            origin: OriginFor<T>,
+            values: Vec<(T::OracleKey, T::OracleValue)>,
+        ) -> DispatchResultWithPostInfo {
+            // SBP-M1 review: do not clone if unnecessary
+            // See https://github.com/paritytech/substrate/blob/polkadot-v0.9.31/frame/assets/src/lib.rs#L693
+            let feeder = ensure_signed(origin.clone())?;
             let cid = CreatorId::AccountId(feeder);
+
+            // SBP-M1 review: get rid of unnecessary code
 
             // ensure feeder is authorized
             //ensure!(T::Members::contains(&feeder), Error::<T>::NoPermission);
@@ -349,26 +374,30 @@ pub mod pallet {
                 }
             }
 
-            Self::deposit_event(Event::NewFeedData { sender: cid, values });
-			Ok(Pays::No.into())
-		}
+            Self::deposit_event(Event::NewFeedData {
+                sender: cid,
+                values,
+            });
+            Ok(Pays::No.into())
+        }
 
         /// Feed the external value.
-		///
-		/// Can be only XCM call from reporter parachain.
-		///
-		/// # Parameter:
-		/// * `values` - value array for the feed
-		/// 
-		/// # Emits
-		/// * `NewFeedData`
+        ///
+        /// Can be only XCM call from reporter parachain.
+        ///
+        /// # Parameter:
+        /// * `values` - value array for the feed
+        ///
+        /// # Emits
+        /// * `NewFeedData`
         #[pallet::weight(T::WeightInfo::feed_data(values.len() as u32))]
-		pub fn xcm_feed_data(
-			origin: OriginFor<T>,
-			values: Vec<(T::OracleKey, T::OracleValue)>,
-		) -> DispatchResultWithPostInfo {
-            let para_id =
-                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
+        pub fn xcm_feed_data(
+            origin: OriginFor<T>,
+            values: Vec<(T::OracleKey, T::OracleValue)>,
+        ) -> DispatchResultWithPostInfo {
+            // SBP-M1 review: do not clone if unnecessary
+            // See https://github.com/paritytech/substrate/blob/polkadot-v0.9.31/frame/assets/src/lib.rs#L693
+            let para_id = ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
             let cid = CreatorId::ParaId(para_id);
 
             // // ensure feeder is authorized
@@ -380,6 +409,7 @@ pub mod pallet {
                 Error::<T>::AlreadyFeeded
             );
 
+            // SBP-M1 review: it would be better to take block time from header
             let now = T::UnixTime::now().as_millis();
             for (key, value) in &values {
                 let timestamped = TimestampedValue {
@@ -394,80 +424,85 @@ pub mod pallet {
                 }
             }
 
-            Self::deposit_event(Event::NewFeedData { sender: cid, values });
-			Ok(Pays::No.into())
-		}
-        
+            Self::deposit_event(Event::NewFeedData {
+                sender: cid,
+                values,
+            });
+            Ok(Pays::No.into())
+        }
+
         /// Query the feed data.
-		///
-		/// Can be only XCM call from feed parachain.
-		///
-		/// # Parameter:
-		/// * `key` - key for the feed
-		/// 
+        ///
+        /// Can be only XCM call from feed parachain.
+        ///
+        /// # Parameter:
+        /// * `key` - key for the feed
+        ///
         #[pallet::weight(T::WeightInfo::query_data())]
-		pub fn xcm_query_data(
-			origin: OriginFor<T>,
-			key: T::OracleKey,
-		) -> DispatchResult {
-			let para_id =
-                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
+        pub fn xcm_query_data(origin: OriginFor<T>, key: T::OracleKey) -> DispatchResult {
+            // SBP-M1 review: do not clone if unnecessary
+            // See https://github.com/paritytech/substrate/blob/polkadot-v0.9.31/frame/assets/src/lib.rs#L693
+            let para_id = ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
 
             if let Some(val) = Self::get(&key) {
                 Self::send_qret_to_parachain(para_id, key.into(), val.value.into())
             } else {
                 Err(DispatchError::CannotLookup)
             }
-            
-		}
+        }
 
         /// Submit the URL Endpoint for the feed.
-		///
-		/// Can be called by authorized origin.
-		///
-		/// # Parameter:
-		/// * `key` - key for the feed
-		/// * `url` - url for the feed
-		/// 
-		/// # Emits
-		/// * `NewApiFeed`
+        ///
+        /// Can be called by authorized origin.
+        ///
+        /// # Parameter:
+        /// * `key` - key for the feed
+        /// * `url` - url for the feed
+        ///
+        /// # Emits
+        /// * `NewApiFeed`
         #[pallet::weight(T::WeightInfo::submit_api())]
         pub fn submit_api(
             origin: OriginFor<T>,
             key: T::OracleKey,
             url: Vec<u8>,
         ) -> DispatchResultWithPostInfo {
+            // SBP-M1 review: do not clone if unnecessary
+            // See https://github.com/paritytech/substrate/blob/polkadot-v0.9.31/frame/assets/src/lib.rs#L693
             let submitter = ensure_signed(origin.clone())?;
             let cid = CreatorId::AccountId(submitter);
 
             // ensure submitter is authorized
             //ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
-            
+
             let block_number = <system::Pallet<T>>::block_number();
             let feed = ApiFeed {
-                    requested_block_number: block_number,
-                    url: Some(url),
-                };
+                requested_block_number: block_number,
+                url: Some(url),
+            };
             ApiFeeds::<T>::insert(&cid, &key, feed.clone());
 
-            Self::deposit_event(Event::NewApiFeed { sender: cid, key, feed });
-			Ok(Pays::No.into())
+            Self::deposit_event(Event::NewApiFeed {
+                sender: cid,
+                key,
+                feed,
+            });
+            Ok(Pays::No.into())
         }
 
         /// Remove the URL Endpoint for the feed.
-		///
-		/// Can be called by authorized origin.
-		///
-		/// # Parameter:
-		/// * `key` - key for the feed
-		/// 
-		/// # Emits
-		/// * `ApiFeedRemoved`
+        ///
+        /// Can be called by authorized origin.
+        ///
+        /// # Parameter:
+        /// * `key` - key for the feed
+        ///
+        /// # Emits
+        /// * `ApiFeedRemoved`
         #[pallet::weight(T::WeightInfo::remove_api())]
-        pub fn remove_api(
-            origin: OriginFor<T>,
-            key: T::OracleKey,
-        ) -> DispatchResult {
+        pub fn remove_api(origin: OriginFor<T>, key: T::OracleKey) -> DispatchResult {
+            // SBP-M1 review: do not clone if unnecessary
+            // See https://github.com/paritytech/substrate/blob/polkadot-v0.9.31/frame/assets/src/lib.rs#L693
             let submitter = ensure_signed(origin.clone())?;
             let cid = CreatorId::AccountId(submitter);
 
@@ -478,7 +513,11 @@ pub mod pallet {
             if feed_exists {
                 let feed = Self::api_feeds(&cid, &key).unwrap();
                 <ApiFeeds<T>>::remove(&cid, &key);
-                Self::deposit_event(Event::ApiFeedRemoved { sender: cid, key, feed });
+                Self::deposit_event(Event::ApiFeedRemoved {
+                    sender: cid,
+                    key,
+                    feed,
+                });
                 Ok(())
             } else {
                 Err(DispatchError::CannotLookup)
@@ -486,55 +525,59 @@ pub mod pallet {
         }
 
         /// Submit the URL Endpoint for the feed.
-		///
-		/// Can be only XCM call from feed parachain.
-		///
-		/// # Parameter:
-		/// * `key` - key for the feed
-		/// * `url` - url for the feed
-		/// 
-		/// # Emits
-		/// * `NewApiFeed`
+        ///
+        /// Can be only XCM call from feed parachain.
+        ///
+        /// # Parameter:
+        /// * `key` - key for the feed
+        /// * `url` - url for the feed
+        ///
+        /// # Emits
+        /// * `NewApiFeed`
         #[pallet::weight(T::WeightInfo::submit_api())]
         pub fn xcm_submit_api(
             origin: OriginFor<T>,
             key: T::OracleKey,
+            // SBP-M1 review: use bounded vectors
             url: Vec<u8>,
         ) -> DispatchResultWithPostInfo {
-            let para_id =
-                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
+            // SBP-M1 review: do not clone if unnecessary
+            // See https://github.com/paritytech/substrate/blob/polkadot-v0.9.31/frame/assets/src/lib.rs#L693
+            let para_id = ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
             let cid = CreatorId::ParaId(para_id);
 
             // ensure submitter is authorized
             //ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
-            
+
             let block_number = <system::Pallet<T>>::block_number();
             let feed = ApiFeed {
-                    requested_block_number: block_number,
-                    url: Some(url),
-                };
+                requested_block_number: block_number,
+                url: Some(url),
+            };
             ApiFeeds::<T>::insert(&cid, &key, feed.clone());
 
-            Self::deposit_event(Event::NewApiFeed { sender: cid, key, feed });
-			Ok(Pays::No.into())
+            Self::deposit_event(Event::NewApiFeed {
+                sender: cid,
+                key,
+                feed,
+            });
+            Ok(Pays::No.into())
         }
 
         /// Remove the URL Endpoint for the feed.
-		///
-		/// Can be only XCM call from feed parachain.
-		///
-		/// # Parameter:
-		/// * `key` - key for the feed
-		/// 
-		/// # Emits
-		/// * `ApiFeedRemoved`
+        ///
+        /// Can be only XCM call from feed parachain.
+        ///
+        /// # Parameter:
+        /// * `key` - key for the feed
+        ///
+        /// # Emits
+        /// * `ApiFeedRemoved`
         #[pallet::weight(T::WeightInfo::remove_api())]
-        pub fn xcm_remove_api(
-            origin: OriginFor<T>,
-            key: T::OracleKey,
-        ) -> DispatchResult {
-            let para_id =
-                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
+        pub fn xcm_remove_api(origin: OriginFor<T>, key: T::OracleKey) -> DispatchResult {
+            // SBP-M1 review: do not clone if unnecessary
+            // See https://github.com/paritytech/substrate/blob/polkadot-v0.9.31/frame/assets/src/lib.rs#L693
+            let para_id = ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
             let cid = CreatorId::ParaId(para_id);
 
             // ensure submitter is authorized
@@ -544,13 +587,16 @@ pub mod pallet {
             if feed_exists {
                 let feed = Self::api_feeds(&cid, &key).unwrap();
                 <ApiFeeds<T>>::remove(&cid, &key);
-                Self::deposit_event(Event::ApiFeedRemoved { sender: cid, key, feed });
+                Self::deposit_event(Event::ApiFeedRemoved {
+                    sender: cid,
+                    key,
+                    feed,
+                });
                 Ok(())
             } else {
                 Err(DispatchError::CannotLookup)
             }
         }
-        
     }
 
     // #[pallet::event where <T as frame_system::Config>:: AccountId: AsRef<[u8]> + ToHex + Decode + Serialize]
@@ -561,36 +607,31 @@ pub mod pallet {
     where
         T::AccountId: AsRef<[u8]> + ToHex + Decode,
     {
-        FeedDataSent(
-            ParaId,
-        ),
-        FeedDataError(
-            SendError,
-            ParaId,
-        ),
+        FeedDataSent(ParaId),
+        FeedDataError(SendError, ParaId),
         /// New feed data is submitted.
-		NewFeedData {
-			sender: CreatorId<T::AccountId>,
-			values: Vec<(T::OracleKey, T::OracleValue)>,
-		},
+        NewFeedData {
+            sender: CreatorId<T::AccountId>,
+            values: Vec<(T::OracleKey, T::OracleValue)>,
+        },
         NewParaEvt {
             para_id: ParaId,
-		},
+        },
         NewParaEvt1 {
             sender: T::AccountId,
-		},
+        },
         /// New feed is submitted.
-		NewApiFeed {
-			sender: CreatorId<T::AccountId>,
+        NewApiFeed {
+            sender: CreatorId<T::AccountId>,
             key: T::OracleKey,
             feed: ApiFeed<T::BlockNumber>,
-		},
+        },
         /// Apifeed is removed.
-		ApiFeedRemoved {
-			sender: CreatorId<T::AccountId>,
+        ApiFeedRemoved {
+            sender: CreatorId<T::AccountId>,
             key: T::OracleKey,
             feed: ApiFeed<T::BlockNumber>,
-		},
+        },
     }
 
     #[pallet::validate_unsigned]
@@ -610,12 +651,13 @@ pub mod pallet {
             InvalidTransaction::Call.into()
         }
     }
-
 }
 
-
+// SBP-M1 review: some of the functions look similiar to `kylin-reporter`
+// Think about refactoring
 impl<T: Config> Pallet<T>
-where T::AccountId: AsRef<[u8]>
+where
+    T::AccountId: AsRef<[u8]>,
 {
     fn choose_transaction_type(block_number: T::BlockNumber) -> TransactionType {
         /// A friendlier name for the error that is going to be returned in case we are in the grace
@@ -693,15 +735,16 @@ where T::AccountId: AsRef<[u8]>
         }
 
         // :TODO: now we handle URL Endpoint result with specific hardcoded keys,
-        // need to handle dynamic result type later 
+        // need to handle dynamic result type later
         let mut values = Vec::<(T::OracleKey, T::OracleValue)>::new();
+        // SBP-M1 review: comments as in `kylin-reporter`
         for (_creator, key, val) in <ApiFeeds<T> as IterableStorageDoubleMap<_, _, _>>::iter() {
             // let mut response :Vec<u8>;
             if val.url.is_some() {
                 let response = Self::fetch_http_get_result(val.url.clone().unwrap())
                     .map_err(|_| "Failed fetch http")?;
 
-                let oval :T::OracleValue;
+                let oval: T::OracleValue;
                 match str::from_utf8(&key.clone().into()) {
                     Ok("CCApi") => {
                         let price: CryptoComparePrice = serde_json::from_slice(&response)
@@ -710,7 +753,7 @@ where T::AccountId: AsRef<[u8]>
                         let pval = (price.usdt * 1000000.0) as i64;
                         oval = pval.into();
                         values.push((key.clone(), oval));
-                    },
+                    }
                     Ok("CWApi") => {
                         let price: CryptoComparePrice = serde_json::from_slice(&response)
                             .map_err(|_| "Response JSON was not well-formatted")?;
@@ -718,17 +761,16 @@ where T::AccountId: AsRef<[u8]>
                         let pval = (price.usdt * 1000000.0) as i64;
                         oval = pval.into();
                         values.push((key.clone(), oval));
-                    },
+                    }
                     Ok(k) => {
                         log::debug!("No match API key [{:?}]", k);
-                    },
-                    _ => {},
-                }   
+                    }
+                    _ => {}
+                }
             }
         }
 
         if values.len() > 0 {
-
             let results = signer.send_signed_transaction(|_account| Call::feed_data {
                 values: values.clone(),
             });
@@ -742,7 +784,7 @@ where T::AccountId: AsRef<[u8]>
 
         Ok(())
     }
-    
+
     /// Fetch current price and return the result in cents.
     fn fetch_http_get_result(url: Vec<u8>) -> Result<Vec<u8>, http::Error> {
         // We want to keep the offchain worker execution time reasonable, so we set a hard-coded
@@ -795,25 +837,19 @@ where T::AccountId: AsRef<[u8]>
     }
 
     fn send_qret_to_parachain(para_id: ParaId, key: Vec<u8>, value: i64) -> DispatchResult {
-        let remark = KylinMockCall::KylinFeed(KylinMockFunc::xcm_feed_back{
-            key, value,
-        });
+        let remark = KylinMockCall::KylinFeed(KylinMockFunc::xcm_feed_back { key, value });
         T::XcmSender::send_xcm(
-            (
-                1,
-                Junction::Parachain(para_id.into()),
-            ),
+            (1, Junction::Parachain(para_id.into())),
             Xcm(vec![Transact {
                 origin_type: OriginKind::Native,
                 require_weight_at_most: 1_000_000_000,
                 call: remark.encode().into(),
             }]),
-        ).map_err(
-            |e| {
-                log::error!("Error: XcmSendError {:?}, {:?}", para_id, e);
-                Error::<T>::XcmSendError
-            }
-        )?;
+        )
+        .map_err(|e| {
+            log::error!("Error: XcmSendError {:?}, {:?}", para_id, e);
+            Error::<T>::XcmSendError
+        })?;
 
         Ok(())
     }
@@ -837,36 +873,36 @@ where T::AccountId: AsRef<[u8]>
     }
 
     pub fn read_raw_values(key: &T::OracleKey) -> Vec<TimestampedValueOf<T>> {
-		// let mut v0 :Vec<TimestampedValueOf<T>> = T::Members::sorted_members()
-		// 	.iter()
-		// 	.filter_map(|x| Self::raw_values(x, key))
-		// 	.collect();
-        
-        // let mut v1 :Vec<TimestampedValueOf<T>> = 
+        // let mut v0 :Vec<TimestampedValueOf<T>> = T::Members::sorted_members()
+        // 	.iter()
+        // 	.filter_map(|x| Self::raw_values(x, key))
+        // 	.collect();
+
+        // let mut v1 :Vec<TimestampedValueOf<T>> =
         //     <PRawValues<T> as IterableStorageDoubleMap<_, _, _>>::iter()
         //     .filter_map(|(_, k, val)| if *key == k { Some(val) } else { None })
         //     .collect();
-        
+
         // v0.append(&mut v1);
         // v0
 
         <RawValues<T> as IterableStorageDoubleMap<_, _, _>>::iter()
             .filter_map(|(_, k, val)| if *key == k { Some(val) } else { None })
             .collect()
-	}
+    }
 
-	/// Fetch current combined value.
-	pub fn get(key: &T::OracleKey) -> Option<TimestampedValueOf<T>> {
-		Self::values(key)
-	}
+    /// Fetch current combined value.
+    pub fn get(key: &T::OracleKey) -> Option<TimestampedValueOf<T>> {
+        Self::values(key)
+    }
 
-	#[allow(clippy::complexity)]
-	pub fn get_all_values() -> Vec<(T::OracleKey, Option<TimestampedValueOf<T>>)> {
-		<Values<T>>::iter().map(|(k, v)| (k, Some(v))).collect()
-	}
+    #[allow(clippy::complexity)]
+    pub fn get_all_values() -> Vec<(T::OracleKey, Option<TimestampedValueOf<T>>)> {
+        <Values<T>>::iter().map(|(k, v)| (k, Some(v))).collect()
+    }
 
-	fn combined(key: &T::OracleKey) -> Option<TimestampedValueOf<T>> {
-		let values = Self::read_raw_values(key);
-		T::CombineData::combine_data(key, values, Self::values(key))
-	}
+    fn combined(key: &T::OracleKey) -> Option<TimestampedValueOf<T>> {
+        let values = Self::read_raw_values(key);
+        T::CombineData::combine_data(key, values, Self::values(key))
+    }
 }

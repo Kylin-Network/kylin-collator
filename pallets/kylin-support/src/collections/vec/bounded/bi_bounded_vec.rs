@@ -1,3 +1,6 @@
+// SBP-M1 review: why have you implemented another bounded vec
+// Instead of using current impl from substrate/polkadot?
+
 //! https://github.com/ergoplatform/bounded-vec/issues/13
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;

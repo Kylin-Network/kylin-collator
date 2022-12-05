@@ -1,3 +1,5 @@
+// SBP-M1 review: update below description
+
 // Copyright 2019-2021 Parity Technologies (UK) Ltd.
 // This file is part of Cumulus.
 
@@ -336,6 +338,7 @@ impl pallet_collective::Config<TechnicalCollective> for Runtime {
 	type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
 }
 
+// SBP-M1 review: for development Sudo pallet is ok
 type ApproveOrigin = EnsureRoot<AccountId>;
 type EnsureRootOrHalfCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,

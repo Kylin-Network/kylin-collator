@@ -212,6 +212,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             para_id: ParaId,
         ) -> DispatchResult {
+            // SBP-M1 review: everyone can modify KylinParaId
             <KylinParaId<T>>::put(para_id);
             Ok(())
         }
@@ -230,6 +231,8 @@ pub mod pallet {
             para_id: ParaId,
             values: Vec<(Vec<u8>, i64)>,
         ) -> DispatchResult {
+            // SBP-M1 review: can be called by anyone
+            // You should introduce signature verification
             Self::feed_data_to_parachain(para_id, values)
         }
 
@@ -246,10 +249,14 @@ pub mod pallet {
         #[pallet::weight(<T as Config>::WeightInfo::submit_api())]
         pub fn submit_api(
             origin: OriginFor<T>,
+            // SBP-M1 review: security issue -> unbounded vectors
             key: Vec<u8>,
             url: Vec<u8>,
         ) -> DispatchResultWithPostInfo {
+            // SBP-M1 review: do not clone if unnecessary
+            // See https://github.com/paritytech/substrate/blob/polkadot-v0.9.31/frame/assets/src/lib.rs#L693
             let submitter = ensure_signed(origin.clone())?;
+            // SBP-M1 review: remove the code when is not useful
             // ensure submitter is authorized
             //ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
 
@@ -276,14 +283,18 @@ pub mod pallet {
         #[pallet::weight(<T as Config>::WeightInfo::remove_api())]
         pub fn remove_api(
             origin: OriginFor<T>,
+            // SBP-M1 review: unbounded vector...
             key: Vec<u8>,
         ) -> DispatchResult {
+            // SBP-M1 review: do not clone if unnecessary
+            // See https://github.com/paritytech/substrate/blob/polkadot-v0.9.31/frame/assets/src/lib.rs#L693
             let submitter = ensure_signed(origin.clone())?;
             // ensure submitter is authorized
             //ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
 
             let feed_exists = ApiFeeds::<T>::contains_key(&submitter, &key);
             if feed_exists {
+                // SBP-M1 review: use proper error handling instead of unwrap
                 let feed = Self::api_feeds(&submitter, &key).unwrap();
                 <ApiFeeds<T>>::remove(&submitter, &key);
                 Self::deposit_event(Event::FeedRemoved { sender: submitter, key, feed });
@@ -340,6 +351,10 @@ pub mod pallet {
         /// here we make sure that some particular calls (the ones produced by offchain worker)
         /// are being whitelisted and marked as valid.
         fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
+            // SBP-M1 review: as I understand properly 
+            // every unsigned tx will be invalid
+            // So why have you implemented `validate_unsigned`
+            // while you can always require signed txs
             InvalidTransaction::Call.into()
         }
     }
@@ -395,10 +410,16 @@ where T::AccountId: AsRef<[u8]>
 
         // :TODO: now we handle URL Endpoint result with specific hardcoded keys,
         // need to handle dynamic result type later 
+        
+        // SBP-M1 review: use some const values not to repeat yourself
+        // And be more self-explaining
+        // Also I can see code duplication between CCApi & CWApi
+        // Refactor needed
         let mut values = Vec::<(Vec<u8>, i64)>::new();
         for (acc, key, val) in <ApiFeeds<T> as IterableStorageDoubleMap<_, _, _>>::iter() {
             // let mut response :Vec<u8>;
             if val.url.is_some() {
+                // SBP-M1 review: use proper error handling instead of unwrap
                 let response = Self::fetch_http_get_result(val.url.clone().unwrap())
                     .map_err(|_| "Failed fetch http")?;
 
@@ -446,6 +467,9 @@ where T::AccountId: AsRef<[u8]>
     }
 
     /// Fetch current price and return the result in cents.
+    // SBP-M1 review: introduce constants instead of hardcoded values
+    // Apply proper error handling instead of unwrap
+    // Check response length for security reasons
     fn fetch_http_get_result(url: Vec<u8>) -> Result<Vec<u8>, http::Error> {
         // We want to keep the offchain worker execution time reasonable, so we set a hard-coded
         // deadline to 2s to complete the external call.
@@ -496,6 +520,7 @@ where T::AccountId: AsRef<[u8]>
         Ok(body_str.clone().as_bytes().to_vec())
     }
 
+    // SBP-M1 review: introduce constant values instead of hardcoded ones
     fn feed_data_to_parachain(para_id: ParaId, values: Vec<(Vec<u8>, i64)>) -> DispatchResult {
         let remark = KylinMockCall::KylinOraclePallet(KylinMockFunc::xcm_feed_data {
             values,

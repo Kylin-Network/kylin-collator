@@ -8,7 +8,8 @@ members = [
     'node',
 	"pallets/kylin-oracle",
 	"pallets/kylin-feed",
-	#"pallets/kylin-market",
+    # SBP-M1 review: you should remove if not needed
+    #"pallets/kylin-market",
 	"runtime/pichiu",
 	"runtime/kylin",
 	"runtime/common",

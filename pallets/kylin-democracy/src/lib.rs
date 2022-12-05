@@ -1,3 +1,7 @@
+// SBP-M1 review: modify description
+// That this pallet is forked from Substrate and list changes
+// Also think about submitting PR with those changes if can be generalized
+
 // This file is part of Substrate.
 
 // Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.
@@ -896,7 +900,10 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			#[pallet::compact] ref_index: ReferendumIndex,
 		) -> DispatchResult {
-			ensure_root(origin)?;
+			// SBP-M1 review: usage of pallet Sudo is not recommended
+            // It is better to have decentralized entity like a council
+            // that can decide about `Sudo` actions
+            ensure_root(origin)?;
 			Self::internal_cancel_referendum(ref_index);
 			Ok(())
 		}
@@ -979,7 +986,8 @@ pub mod pallet {
 		/// Weight: `O(1)`.
 		#[pallet::weight(T::WeightInfo::clear_public_proposals())]
 		pub fn clear_public_proposals(origin: OriginFor<T>) -> DispatchResult {
-			ensure_root(origin)?;
+			// SBP-M1 review: same comment about root
+            ensure_root(origin)?;
 			<PublicProps<T>>::kill();
 			Ok(())
 		}
@@ -995,6 +1003,7 @@ pub mod pallet {
 		///
 		/// Weight: `O(E)` with E size of `encoded_proposal` (protected by a required deposit).
 		#[pallet::weight(T::WeightInfo::note_preimage(encoded_proposal.len() as u32))]
+        // SBP-M1 review: use bounded vectors
 		pub fn note_preimage(origin: OriginFor<T>, encoded_proposal: Vec<u8>) -> DispatchResult {
 			Self::note_preimage_inner(ensure_signed(origin)?, encoded_proposal)?;
 			Ok(())
@@ -1007,6 +1016,7 @@ pub mod pallet {
 		))]
 		pub fn note_preimage_operational(
 			origin: OriginFor<T>,
+            // SBP-M1 review: use bounded vectors
 			encoded_proposal: Vec<u8>,
 		) -> DispatchResult {
 			let who = T::OperationalPreimageOrigin::ensure_origin(origin)?;
@@ -1197,6 +1207,7 @@ pub mod pallet {
 			proposal_hash: T::Hash,
 			index: ReferendumIndex,
 		) -> DispatchResult {
+            // SBP-M1 review: same comment about root
 			ensure_root(origin)?;
 			Self::do_enact_proposal(proposal_hash, index)
 		}

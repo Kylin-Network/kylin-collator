@@ -9,6 +9,12 @@ pub mod weights;
 mod benchmarking;
 mod mocks;
 
+// SBP-M1 review: missing testing & benchmarking
+
+// SBP-M1 review: if would check if pallet_vesting is able to provide this functionality
+// with proper configutation
+// if not it is okay
+
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::{
@@ -426,7 +432,8 @@ pub trait Distributor {
 			reward_account: T::AccountId,
 		) -> DispatchResultWithPostInfo {
 			ensure_none(origin)?;
-			
+	
+            // SBP-M1 review: try to avoid clonning
 			<Self as Distributor>::claim(distribution_id, reward_account.clone(), reward_account)
 		}
 	}
@@ -501,6 +508,7 @@ pub trait Distributor {
 			start: T::Moment,
 		) -> DispatchResult {
 			// Start is valid
+            // SBP-M1 review: I would use block time
 			let now = T::Time::now();
 			ensure!(start >= now, Error::<T>::BackToTheFuture);
 			// Distribution exist and hasn't started
@@ -537,7 +545,8 @@ pub trait Distributor {
 			let distribution_state = Self::get_distribution_state(distribution_id)?;
 			match (distribution_state, distribution.start) {
 				(DistributionState::Enabled, Some(start)) => {
-					let now = T::Time::now();
+					// SBP-M1 review: I would use block time
+                    let now = T::Time::now();
 					let vesting_point = now.saturating_sub(start);
 
 					// If the vesting period is over, the recipient should receive the remainder of
@@ -636,6 +645,7 @@ pub trait Distributor {
 			);
 
 			// Transfer stake into distribution specific account.
+            // What if transfer will fail? Will `Distributions` be properly revoked?
 			T::RecipientFundAsset::transfer(&creator_id, &distribution_account, T::Stake::get(), false)?;
 
 			Self::deposit_event(Event::DistributionCreated { distribution_id, by: creator_id });
@@ -890,6 +900,8 @@ pub trait Distributor {
 					}
 				})?;
 
+            // SBP-M1 review: what if transfer will fail? 
+            // Will the previous action be properly revoked?
 			T::RecipientFundAsset::transfer(
 				&distribution_account,
 				&reward_account,

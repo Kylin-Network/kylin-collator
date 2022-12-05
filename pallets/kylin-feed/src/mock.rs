@@ -1,3 +1,5 @@
+// SBP-M1 review: do not leave `pallet_template` stuff
+// Use proper names
 use crate as pallet_template;
 use frame_support::traits::{ConstU16, ConstU64};
 use frame_system as system;
@@ -18,7 +20,8 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Storage, Event<T>},
-		TemplateModule: pallet_template::{Pallet, Call, Storage, Event<T>},
+		// SBP-M1 review: same as above
+        TemplateModule: pallet_template::{Pallet, Call, Storage, Event<T>},
 	}
 );
 

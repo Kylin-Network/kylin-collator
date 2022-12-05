@@ -3,6 +3,7 @@ name = "kylin-distribution"
 version = "0.0.2"
 authors = ["Kylin Team"]
 edition = "2021"
+# SBP-M1 review: missing at least license & description
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]

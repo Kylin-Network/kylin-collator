@@ -2,6 +2,8 @@
 #![allow(clippy::unused_unit)]
 #![allow(clippy::upper_case_acronyms)]
 
+// SBP-M1 review: missing testing & benchmarking
+
 use frame_support::{
 	dispatch::DispatchResult,
 	ensure,
@@ -345,7 +347,9 @@ pub mod pallet {
 impl<T: Config> Pallet<T>
 	where T: pallet_uniques::Config<CollectionId = CollectionId, ItemId = NftId>,
 {
-	fn do_buy(
+	// SBP-M1 review: too long function
+    // Refactor needed
+    fn do_buy(
 		buyer: T::AccountId,
 		collection_id: CollectionId,
 		nft_id: NftId,
