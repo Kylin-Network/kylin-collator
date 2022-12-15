@@ -6,6 +6,31 @@ cd scripts/parachain-launch/output/
 docker-compose up -d --build
 ```
 
+**insert node keys**
+
+```bash
+curl http://localhost:8833 -H "Content-Type:application/json;charset=utf-8" -X POST  --data '{
+  "jsonrpc":"2.0",
+  "id":1,
+  "method":"author_insertKey",
+  "params": [
+    "ocpf",
+    "bottom drive obey lake curtain smoke basket hold race lonely fit walk//Bob",
+    "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48"
+  ]
+}'
+curl http://localhost:8533 -H "Content-Type:application/json;charset=utf-8" -X POST  --data '{
+  "jsonrpc":"2.0",
+  "id":1,
+  "method":"author_insertKey",
+  "params": [
+    "ocrp",
+    "bottom drive obey lake curtain smoke basket hold race lonely fit walk//Bob",
+    "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48"
+  ]
+}'
+```
+
 ## Use kylin-toolbox to test pallet APIs
 
 **build kylin-toolbox**
