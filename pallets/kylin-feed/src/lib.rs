@@ -8,6 +8,7 @@
 use frame_support::{
 	dispatch::{GetDispatchInfo, DispatchResult},
 	ensure, traits::tokens::nonfungibles::*, BoundedVec,
+	traits::UnixTime,
 	pallet_prelude::*,
 	log,
 };
@@ -76,6 +77,12 @@ pub struct MetaData {
     key: Vec<u8>,
     url: Vec<u8>,
 	vpath: Vec<u8>,
+}
+
+#[derive(Encode, Decode, RuntimeDebug, Eq, PartialEq, Clone, Copy, TypeInfo, MaxEncodedLen)]
+pub struct TimestampedValue {
+    pub value: i64,
+    pub timestamp: u128,
 }
 
 #[frame_support::pallet]
@@ -186,6 +193,10 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn lock)]
 	pub type Lock<T: Config> = StorageMap<_, Twox64Concat, (CollectionId, NftId), bool, ValueQuery>;
+	
+	#[pallet::storage]
+    #[pallet::getter(fn values)]
+    pub type Values<T: Config> = StorageMap<_, Twox64Concat, KeyLimitOf<T>, TimestampedValue>;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_uniques::Config {
@@ -195,6 +206,7 @@ pub mod pallet {
 		type RuntimeOrigin: From<<Self as SystemConfig>::RuntimeOrigin>
 			+ Into<Result<CumulusOrigin, <Self as Config>::RuntimeOrigin>>;
 		type MaxRecursions: Get<u32>;
+		type UnixTime: UnixTime;
 
 		#[pallet::constant]
 		type ResourceSymbolLimit: Get<u32>;
@@ -294,7 +306,7 @@ pub mod pallet {
 		},
 		QueryFeedBack {
 			key: Vec<u8>,
-			value: i64,
+			value: TimestampedValue,
 		},
 	}
 
@@ -630,17 +642,20 @@ pub mod pallet {
 		/// # Emits
 		/// * `QueryFeedBack`
 		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
-		pub fn xcm_feed_back(
-			origin: OriginFor<T>,
-			key: Vec<u8>,
-			value: i64,
-		) -> DispatchResult {
-			let para_id =
-                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
+		pub fn xcm_feed_back(origin: OriginFor<T>, key: Vec<u8>, value: i64) -> DispatchResult {
+            let para_id = ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
 
-			Self::deposit_event(Event::QueryFeedBack { key, value });
-			Ok(())
-		}
+            let now = T::UnixTime::now().as_millis();
+            let tval = TimestampedValue {
+                value: value.clone(),
+                timestamp: now,
+            };
+
+            let keylimit: KeyLimitOf<T> = key.clone().try_into().map_err(|_| Error::<T>::StorageOverflow)?;
+            <Values<T>>::insert(keylimit, tval);
+            Self::deposit_event(Event::QueryFeedBack { key, value: tval });
+            Ok(())
+        }
 
 		/// Transfer the ownership of the NFT
 		///

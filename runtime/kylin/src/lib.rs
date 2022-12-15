@@ -1178,6 +1178,7 @@ impl kylin_feed::Config for Runtime {
 	//type ProtocolOrigin = frame_system::EnsureRoot<AccountId>;
 	type RuntimeOrigin = RuntimeOrigin;
 	type MaxRecursions = MaxRecursions;
+	type UnixTime = Timestamp;
 	type ResourceSymbolLimit = ResourceSymbolLimit;
 	type PartsLimit = PartsLimit;
 	type MaxPriorities = MaxPriorities;
