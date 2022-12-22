@@ -4015,6 +4015,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "kylin-feed-api"
+version = "4.0.0-dev"
+dependencies = [
+ "cumulus-pallet-xcm",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "kylin-primitives",
+ "pallet-balances",
+ "pallet-uniques",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "serde_json",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+]
+
+[[package]]
 name = "kylin-oracle"
 version = "3.0.0"
 dependencies = [
@@ -6796,6 +6818,7 @@ dependencies = [
  "hex-literal",
  "kylin-democracy",
  "kylin-distribution",
+ "kylin-feed-api",
  "kylin-oracle",
  "log",
  "orml-currencies",
@@ -6821,6 +6844,7 @@ dependencies = [
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
+ "pallet-uniques",
  "pallet-utility",
  "pallet-vesting",
  "pallet-xcm",
