@@ -26,7 +26,6 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkad
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31", default-features = false }
 cumulus-pallet-xcm = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.31", default-features = false }
-
 cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.31", default-features = false }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.31", default-features = false }
 

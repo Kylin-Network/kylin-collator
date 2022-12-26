@@ -698,9 +698,8 @@ impl kylin_oracle::Config for Runtime {
 	type Currency = Balances;
 
 	type CombineData = DefaultCombineData<Self, ConstU32<1>, ConstU128<600>>;
-	type OracleKey = Vec<u8>;
-	type OracleValue = i64;
 	type Members = OracleProvider;
+	type StrLimit = ConstU32<512>;
 	type MaxHasDispatchedSize = ConstU32<100>;
 }
 
@@ -1285,7 +1284,7 @@ construct_runtime! {
 		Uniques: pallet_uniques = 55,
 		KylinDistribution: kylin_distribution::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 56,
 		KylinOraclePallet: kylin_oracle = 166, // Fix index 166
-		KylinFeedApi: kylin_feed_api  = 168, // Fix index 168
+		KylinFeedApi: kylin_feed_api  = 167, // Fix index 167
 
 		// orml
 		OrmlXcm: orml_xcm = 70,

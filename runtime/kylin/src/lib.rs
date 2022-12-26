@@ -1229,7 +1229,7 @@ construct_runtime! {
 		OracleProvider: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>} = 54,
 		KylinReporterPallet: kylin_reporter = 55,
 		Uniques: pallet_uniques = 56,
-		KylinFeed: kylin_feed  = 167, // Fix index 167
+		KylinFeed: kylin_feed  = 168, // Fix index 168
 
 		// orml
 		OrmlXcm: orml_xcm = 70,

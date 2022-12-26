@@ -12,7 +12,7 @@ use cumulus_pallet_xcm::{ensure_sibling_para, Origin as CumulusOrigin};
 use cumulus_primitives_core::ParaId;
 use frame_support::{
     dispatch::{GetDispatchInfo, DispatchResultWithPostInfo},
-    log,
+    log, BoundedVec,
     pallet_prelude::*,
     traits::{Currency, EstimateCallFee, UnixTime, ChangeMembers, Get, SortedMembers},
     IterableStorageMap, IterableStorageDoubleMap,
@@ -60,8 +60,10 @@ mod benchmarking;
 
 pub mod weights;
 pub use weights::*;
-type BalanceOf<T> =
+pub type BalanceOf<T> =
     <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+
+pub type OracleKeyOf<T> = BoundedVec<u8, <T as Config>::StrLimit>;
 
 /// Defines application identifier for crypto keys of this module.
 ///
@@ -149,7 +151,7 @@ pub mod pallet {
     use super::*;
 
     //pub(crate) type MomentOf<T> = <<T as Config>::Time as Time>::Moment;
-	pub(crate) type TimestampedValueOf<T> = TimestampedValue<<T as Config>::OracleValue, u128>;
+	pub(crate) type TimestampedValueT = TimestampedValue<i64, u128>;
 
 	#[derive(Encode, Decode, RuntimeDebug, Eq, PartialEq, Clone, Copy, Ord, PartialOrd, TypeInfo, MaxEncodedLen)]
 	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
@@ -194,16 +196,13 @@ pub mod pallet {
 
         /// Provide the implementation to combine raw values to produce
 		/// aggregated value
-		type CombineData: CombineData<Self::OracleKey, TimestampedValueOf<Self>>;
-
-        /// The data key type
-		type OracleKey: Parameter + Member + Eq + Into<Vec<u8>>;
-
-		/// The data value type
-		type OracleValue: Parameter + Member + Ord + From<i64> + Into<i64>;
+		type CombineData: CombineData<OracleKeyOf<Self>, TimestampedValueT>;
 
         /// Oracle operators.
 		type Members: SortedMembers<Self::AccountId>;
+
+        #[pallet::constant]
+		type StrLimit: Get<u32>;
 
 		/// Maximum size of HasDispatched
 		#[pallet::constant]
@@ -224,19 +223,19 @@ pub mod pallet {
     #[pallet::storage]
 	#[pallet::getter(fn api_feeds)]
 	pub type ApiFeeds<T: Config> =
-		StorageDoubleMap<_, Twox64Concat, CreatorId<T::AccountId>, Twox64Concat, T::OracleKey, ApiFeed<T::BlockNumber>>;
+		StorageDoubleMap<_, Twox64Concat, CreatorId<T::AccountId>, Twox64Concat, OracleKeyOf<T>, ApiFeed<T::BlockNumber>>;
 
     /// Raw values for each oracle operators
 	#[pallet::storage]
 	#[pallet::getter(fn raw_values)]
 	pub type RawValues<T: Config> =
-		StorageDoubleMap<_, Twox64Concat, CreatorId<T::AccountId>, Twox64Concat, T::OracleKey, TimestampedValueOf<T>>;
+		StorageDoubleMap<_, Twox64Concat, CreatorId<T::AccountId>, Twox64Concat, OracleKeyOf<T>, TimestampedValueT>;
 
 	/// Up to date combined value from Raw Values
 	#[pallet::storage]
 	#[pallet::getter(fn values)]
 	pub type Values<T: Config> =
-		StorageMap<_, Twox64Concat, <T as Config>::OracleKey, TimestampedValueOf<T>>;
+		StorageMap<_, Twox64Concat, OracleKeyOf<T>, TimestampedValueT>;
 
 	/// If an oracle operator has fed a value in this block
 	#[pallet::storage]
@@ -315,7 +314,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::feed_data(values.len() as u32))]
 		pub fn feed_data(
 			origin: OriginFor<T>,
-			values: Vec<(T::OracleKey, T::OracleValue)>,
+			values: Vec<(OracleKeyOf<T>, i64)>,
 		) -> DispatchResultWithPostInfo {
 			let feeder = ensure_signed(origin.clone())?;
             let cid = CreatorId::AccountId(feeder);
@@ -359,7 +358,7 @@ pub mod pallet {
         #[pallet::weight(T::WeightInfo::feed_data(values.len() as u32))]
 		pub fn xcm_feed_data(
 			origin: OriginFor<T>,
-			values: Vec<(T::OracleKey, T::OracleValue)>,
+			values: Vec<(OracleKeyOf<T>, i64)>,
 		) -> DispatchResultWithPostInfo {
             let para_id =
                 ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
@@ -402,7 +401,7 @@ pub mod pallet {
         #[pallet::weight(T::WeightInfo::query_data())]
 		pub fn xcm_query_data(
 			origin: OriginFor<T>,
-			key: T::OracleKey,
+			key: OracleKeyOf<T>,
 		) -> DispatchResult {
 			let para_id =
                 ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
@@ -431,7 +430,7 @@ pub mod pallet {
         #[pallet::weight(T::WeightInfo::submit_api())]
         pub fn submit_api(
             origin: OriginFor<T>,
-            key: T::OracleKey,
+            key: OracleKeyOf<T>,
             url: Vec<u8>,
             vpath: Vec<u8>,
         ) -> DispatchResultWithPostInfo {
@@ -465,7 +464,7 @@ pub mod pallet {
         #[pallet::weight(T::WeightInfo::remove_api())]
         pub fn remove_api(
             origin: OriginFor<T>,
-            key: T::OracleKey,
+            key: OracleKeyOf<T>,
         ) -> DispatchResult {
             let submitter = ensure_signed(origin.clone())?;
             let cid = CreatorId::AccountId(submitter);
@@ -500,7 +499,7 @@ pub mod pallet {
         #[pallet::weight(T::WeightInfo::submit_api())]
         pub fn xcm_submit_api(
             origin: OriginFor<T>,
-            key: T::OracleKey,
+            key: OracleKeyOf<T>,
             url: Vec<u8>,
             vpath: Vec<u8>,
         ) -> DispatchResultWithPostInfo {
@@ -535,7 +534,7 @@ pub mod pallet {
         #[pallet::weight(T::WeightInfo::remove_api())]
         pub fn xcm_remove_api(
             origin: OriginFor<T>,
-            key: T::OracleKey,
+            key: OracleKeyOf<T>,
         ) -> DispatchResult {
             let para_id =
                 ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
@@ -575,7 +574,7 @@ pub mod pallet {
         /// New feed data is submitted.
 		NewFeedData {
 			sender: CreatorId<T::AccountId>,
-			values: Vec<(T::OracleKey, T::OracleValue)>,
+			values: Vec<(OracleKeyOf<T>, i64)>,
 		},
         NewParaEvt {
             para_id: ParaId,
@@ -586,13 +585,13 @@ pub mod pallet {
         /// New feed is submitted.
 		NewApiFeed {
 			sender: CreatorId<T::AccountId>,
-            key: T::OracleKey,
+            key: OracleKeyOf<T>,
             feed: ApiFeed<T::BlockNumber>,
 		},
         /// Apifeed is removed.
 		ApiFeedRemoved {
 			sender: CreatorId<T::AccountId>,
-            key: T::OracleKey,
+            key: OracleKeyOf<T>,
             feed: ApiFeed<T::BlockNumber>,
 		},
     }
@@ -696,7 +695,7 @@ where T::AccountId: AsRef<[u8]>
             )?;
         }
 
-        let mut values = Vec::<(T::OracleKey, T::OracleValue)>::new();
+        let mut values = Vec::<(OracleKeyOf<T>, i64)>::new();
         for (_creator, key, val) in <ApiFeeds<T> as IterableStorageDoubleMap<_, _, _>>::iter() {
             // let mut response :Vec<u8>;
             if val.url.is_some() && val.vpath.is_some() {
@@ -714,7 +713,7 @@ where T::AccountId: AsRef<[u8]>
 
                 // We only store int, so every float will be convert to int with 6 decimals pad
                 let ival :i64 = (fval * 1000000.0) as i64;
-                values.push((key.clone(), ival.into()));
+                values.push((key.clone(), ival));
             }
         }
 
@@ -826,7 +825,7 @@ where T::AccountId: AsRef<[u8]>
             .build()
     }
 
-    pub fn read_raw_values(key: &T::OracleKey) -> Vec<TimestampedValueOf<T>> {
+    pub fn read_raw_values(key: &OracleKeyOf<T>) -> Vec<TimestampedValueT> {
 		// let mut v0 :Vec<TimestampedValueOf<T>> = T::Members::sorted_members()
 		// 	.iter()
 		// 	.filter_map(|x| Self::raw_values(x, key))
@@ -846,16 +845,16 @@ where T::AccountId: AsRef<[u8]>
 	}
 
 	/// Fetch current combined value.
-	pub fn get(key: &T::OracleKey) -> Option<TimestampedValueOf<T>> {
+	pub fn get(key: &OracleKeyOf<T>) -> Option<TimestampedValueT> {
 		Self::values(key)
 	}
 
 	#[allow(clippy::complexity)]
-	pub fn get_all_values() -> Vec<(T::OracleKey, Option<TimestampedValueOf<T>>)> {
+	pub fn get_all_values() -> Vec<(OracleKeyOf<T>, Option<TimestampedValueT>)> {
 		<Values<T>>::iter().map(|(k, v)| (k, Some(v))).collect()
 	}
 
-	fn combined(key: &T::OracleKey) -> Option<TimestampedValueOf<T>> {
+	fn combined(key: &OracleKeyOf<T>) -> Option<TimestampedValueT> {
 		let values = Self::read_raw_values(key);
 		T::CombineData::combine_data(key, values, Self::values(key))
 	}
