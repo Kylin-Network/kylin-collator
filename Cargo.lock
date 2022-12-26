@@ -4019,9 +4019,11 @@ name = "kylin-feed-api"
 version = "4.0.0-dev"
 dependencies = [
  "cumulus-pallet-xcm",
+ "cumulus-primitives-core",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "kylin-oracle",
  "kylin-primitives",
  "pallet-balances",
  "pallet-uniques",

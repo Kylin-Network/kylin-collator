@@ -11,7 +11,7 @@ use sp_runtime::{
 /// Mock structure for XCM Call message encoding
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[allow(non_camel_case_types)]
-enum KylinMockFunc {
+enum KylinOracleFunc {
     #[codec(index = 1u8)]
     xcm_feed_data { 
         values: Vec<(Vec<u8>, i64)> 
@@ -35,9 +35,35 @@ enum KylinMockFunc {
 /// Mock structure for XCM Call message encoding
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[allow(non_camel_case_types)]
-enum KylinMockCall {
+enum KylinFeedApiFunc {
+    #[codec(index = 1u8)]
+    xcm_create_collection { 
+        values: Vec<(Vec<u8>, i64)> 
+    },
+    #[codec(index = 2u8)]
+    xcm_query_data { 
+        key: Vec<u8> 
+    },
+    #[codec(index = 5u8)]
+    xcm_submit_api {
+        key: Vec<u8>,
+        url: Vec<u8>,
+        vpath: Vec<u8>,
+    },
+    #[codec(index = 6u8)]
+    xcm_remove_api { 
+        key: Vec<u8> 
+    },
+}
+
+/// Mock structure for XCM Call message encoding
+#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[allow(non_camel_case_types)]
+enum KylinXcmCall {
     #[codec(index = 166u8)]
-    KylinOraclePallet(KylinMockFunc),
+    KylinOraclePallet(KylinOracleFunc),
+    #[codec(index = 167u8)]
+    KylinFeedApi(KylinFeedApiFunc),
 }
 
 pub const SALT_NFT: &[u8; 8] = b"KylinNft";
@@ -159,7 +185,7 @@ impl<T: Config> Pallet<T>
     }
 
     pub fn do_create_feed(para_id: u32, key: &Vec<u8>, url: &Vec<u8>, vpath: &Vec<u8>) -> DispatchResult {
-        let remark = KylinMockCall::KylinOraclePallet(KylinMockFunc::xcm_submit_api{
+        let remark = KylinXcmCall::KylinOraclePallet(KylinOracleFunc::xcm_submit_api{
             key:key.clone(), url:url.clone(), vpath:vpath.clone(),
         });
         T::XcmSender::send_xcm(
@@ -183,7 +209,7 @@ impl<T: Config> Pallet<T>
     }
 
     pub fn do_remove_feed(para_id: u32, key: &Vec<u8>) -> DispatchResult {
-        let remark = KylinMockCall::KylinOraclePallet(KylinMockFunc::xcm_remove_api{
+        let remark = KylinXcmCall::KylinOraclePallet(KylinOracleFunc::xcm_remove_api{
             key:key.clone()
         });
         T::XcmSender::send_xcm(
@@ -207,7 +233,7 @@ impl<T: Config> Pallet<T>
     }
 
     pub fn do_query_feed(para_id: u32, key: &Vec<u8>) -> DispatchResult {
-        let remark = KylinMockCall::KylinOraclePallet(KylinMockFunc::xcm_query_data{
+        let remark = KylinXcmCall::KylinOraclePallet(KylinOracleFunc::xcm_query_data{
             key:key.clone()
         });
         T::XcmSender::send_xcm(
