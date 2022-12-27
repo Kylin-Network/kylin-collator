@@ -3997,12 +3997,12 @@ name = "kylin-feed"
 version = "4.0.0-dev"
 dependencies = [
  "cumulus-pallet-xcm",
+ "cumulus-primitives-core",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "kylin-primitives",
  "pallet-balances",
- "pallet-uniques",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -4161,7 +4161,6 @@ dependencies = [
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
- "pallet-uniques",
  "pallet-utility",
  "pallet-vesting",
  "pallet-xcm",

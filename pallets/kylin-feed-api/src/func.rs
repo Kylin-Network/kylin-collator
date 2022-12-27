@@ -11,16 +11,17 @@ use sp_runtime::{
 /// Mock structure for XCM Call message encoding
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[allow(non_camel_case_types)]
-enum KylinMockFunc {
+enum KylinFeedFunc {
+    #[codec(index = 1u8)]
+    xcm_return_collectionid { 
+		collection_id: CollectionId,
+    },
+    #[codec(index = 3u8)]
+    xcm_return_nftid { 
+		collection_id: CollectionId,
+		nft_id: NftId,
+    },
     #[codec(index = 6u8)]
-    xcm_collection_back { 
-		value: i64,
-    },
-    #[codec(index = 7u8)]
-    xcm_nft_back { 
-		value: i64,
-    },
-    #[codec(index = 8u8)]
     xcm_feed_back { 
         key: Vec<u8>,
 		value: i64,
@@ -30,9 +31,9 @@ enum KylinMockFunc {
 /// Mock structure for XCM Call message encoding
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[allow(non_camel_case_types)]
-enum KylinMockCall {
+enum KylinXcmCall {
     #[codec(index = 168u8)]
-    KylinFeed(KylinMockFunc),
+    KylinFeed(KylinFeedFunc),
 }
 
 pub const SALT_NFT: &[u8; 8] = b"KylinNft";
@@ -162,56 +163,56 @@ impl<T: Config> Pallet<T>
         Ok(())
     }
 
-    pub fn do_create_feed(para_id: u32, key: &Vec<u8>, url: &Vec<u8>, vpath: &Vec<u8>) -> DispatchResult {
-        // let remark = KylinMockCall::KylinOraclePallet(KylinMockFunc::xcm_submit_api{
-        //     key:key.clone(), url:url.clone(), vpath:vpath.clone(),
-        // });
-        // T::XcmSender::send_xcm(
-        //     (
-        //         1,
-        //         Junction::Parachain(para_id.into()),
-        //     ),
-        //     Xcm(vec![Transact {
-        //         origin_type: OriginKind::Native,
-        //         require_weight_at_most: 1_000_000_000,
-        //         call: remark.encode().into(),
-        //     }]),
-        // ).map_err(
-        //     |e| {
-        //         log::error!("Error: XcmSendError {:?}, {:?}", para_id, e);
-        //         Error::<T>::XcmSendError
-        //     }
-        // )?;
+    pub fn sendback_collectionid(para_id: ParaId, collection_id: CollectionId) -> DispatchResult {
+        let remark = KylinXcmCall::KylinFeed(KylinFeedFunc::xcm_return_collectionid{
+            collection_id,
+        });
+        T::XcmSender::send_xcm(
+            (
+                1,
+                Junction::Parachain(para_id.into()),
+            ),
+            Xcm(vec![Transact {
+                origin_type: OriginKind::Native,
+                require_weight_at_most: 1_000_000_000,
+                call: remark.encode().into(),
+            }]),
+        ).map_err(
+            |e| {
+                log::error!("Error: XcmSendError {:?}, {:?}", para_id, e);
+                Error::<T>::XcmSendError
+            }
+        )?;
 
         Ok(())
     }
 
-    pub fn do_remove_feed(para_id: u32, key: &Vec<u8>) -> DispatchResult {
-        // let remark = KylinMockCall::KylinOraclePallet(KylinMockFunc::xcm_remove_api{
-        //     key:key.clone()
-        // });
-        // T::XcmSender::send_xcm(
-        //     (
-        //         1,
-        //         Junction::Parachain(para_id.into()),
-        //     ),
-        //     Xcm(vec![Transact {
-        //         origin_type: OriginKind::Native,
-        //         require_weight_at_most: 1_000_000_000,
-        //         call: remark.encode().into(),
-        //     }]),
-        // ).map_err(
-        //     |e| {
-        //         log::error!("Error: XcmSendError {:?}, {:?}", para_id, e);
-        //         Error::<T>::XcmSendError
-        //     }
-        // )?;
+    pub fn sendback_nftid(para_id: ParaId, collection_id: CollectionId, nft_id: NftId,) -> DispatchResult {
+        let remark = KylinXcmCall::KylinFeed(KylinFeedFunc::xcm_return_nftid{
+            collection_id, nft_id,
+        });
+        T::XcmSender::send_xcm(
+            (
+                1,
+                Junction::Parachain(para_id.into()),
+            ),
+            Xcm(vec![Transact {
+                origin_type: OriginKind::Native,
+                require_weight_at_most: 1_000_000_000,
+                call: remark.encode().into(),
+            }]),
+        ).map_err(
+            |e| {
+                log::error!("Error: XcmSendError {:?}, {:?}", para_id, e);
+                Error::<T>::XcmSendError
+            }
+        )?;
 
         Ok(())
     }
 
-    pub fn send_qret_to_parachain(para_id: ParaId, key: Vec<u8>, value: i64) -> DispatchResult {
-        let remark = KylinMockCall::KylinFeed(KylinMockFunc::xcm_feed_back{
+    pub fn sendback_query_res(para_id: ParaId, key: Vec<u8>, value: i64) -> DispatchResult {
+        let remark = KylinXcmCall::KylinFeed(KylinFeedFunc::xcm_feed_back{
             key, value,
         });
         T::XcmSender::send_xcm(

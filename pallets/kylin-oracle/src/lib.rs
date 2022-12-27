@@ -107,7 +107,7 @@ pub mod crypto {
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[allow(non_camel_case_types)]
 enum KylinMockFunc {
-    #[codec(index = 8u8)]
+    #[codec(index = 6u8)]
     xcm_feed_back { 
         key: Vec<u8>,
 		value: i64,
@@ -118,7 +118,7 @@ enum KylinMockFunc {
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[allow(non_camel_case_types)]
 enum KylinMockCall {
-    #[codec(index = 167u8)]
+    #[codec(index = 168u8)]
     KylinFeed(KylinMockFunc),
 }
 
@@ -433,7 +433,7 @@ pub mod pallet {
             key: OracleKeyOf<T>,
             url: Vec<u8>,
             vpath: Vec<u8>,
-        ) -> DispatchResultWithPostInfo {
+        ) -> DispatchResult {
             let submitter = ensure_signed(origin.clone())?;
             let cid = CreatorId::AccountId(submitter);
 
@@ -449,7 +449,7 @@ pub mod pallet {
             ApiFeeds::<T>::insert(&cid, &key, feed.clone());
 
             Self::deposit_event(Event::NewApiFeed { sender: cid, key, feed });
-			Ok(Pays::No.into())
+			Ok(())
         }
 
         /// Remove the URL Endpoint for the feed.
@@ -502,7 +502,7 @@ pub mod pallet {
             key: OracleKeyOf<T>,
             url: Vec<u8>,
             vpath: Vec<u8>,
-        ) -> DispatchResultWithPostInfo {
+        ) -> DispatchResult {
             let para_id =
                 ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
             let cid = CreatorId::ParaId(para_id);
@@ -519,7 +519,7 @@ pub mod pallet {
             ApiFeeds::<T>::insert(&cid, &key, feed.clone());
 
             Self::deposit_event(Event::NewApiFeed { sender: cid, key, feed });
-			Ok(Pays::No.into())
+			Ok(())
         }
 
         /// Remove the URL Endpoint for the feed.

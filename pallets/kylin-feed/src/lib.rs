@@ -6,9 +6,11 @@
 #![allow(dead_code)]
 
 use codec::{Decode, Encode};
+use scale_info::TypeInfo;
 use frame_support::{
 	dispatch::DispatchResult, ensure, traits::tokens::nonfungibles::*, BoundedVec,
 	traits::UnixTime,
+	pallet_prelude::*,
 	log,
 };
 use frame_system::{
@@ -52,23 +54,23 @@ enum KylinFeedApiFunc {
 		max: Option<u32>,
 		symbol: Vec<u8>,
     },
-	#[codec(index = 1u8)]
+	#[codec(index = 4u8)]
 	xcm_destroy_collection { 
 		collection_id: u32,
     },
-	#[codec(index = 1u8)]
+	#[codec(index = 8u8)]
 	xcm_create_feed { 
 		collection_id: u32,
 		key: Vec<u8>,
 		url: Vec<u8>,
 		vpath: Vec<u8>,
     },
-	#[codec(index = 1u8)]
+	#[codec(index = 10u8)]
 	xcm_remove_feed { 
 		collection_id: u32,
 		nft_id: u32,
     },
-    #[codec(index = 2u8)]
+    #[codec(index = 11u8)]
     xcm_query_feed { 
         collection_id: u32,
 		nft_id: u32,
@@ -116,9 +118,20 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
+		CollectionCreated {
+			collection_id: CollectionId,
+		},
+		FeedCreated {
+			collection_id: CollectionId,
+			nft_id: NftId,
+		},
+		FeedRemoved {
+			collection_id: CollectionId,
+			nft_id: NftId,
+		},
 		QueryFeedBack {
 			key: Vec<u8>,
-			value: i64,
+			value: TimestampedValue,
 		},
 	}
 
@@ -153,7 +166,6 @@ pub mod pallet {
 		NonTransferable,
 		XcmSendError,
 	}
-
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T>
@@ -190,7 +202,7 @@ pub mod pallet {
 		) -> DispatchResult {
             let para_id = ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
 
-            Self::deposit_event(Event::CollectionCreated { issuer: sender, collection_id });
+            Self::deposit_event(Event::CollectionCreated { collection_id });
             Ok(())
         }
 
@@ -220,7 +232,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin.clone())?;
 			
-			Self::do_create_feed(oracle_paraid, collection_id, &key, &url, &vpath)?;
+			Self::do_create_feed(oracle_paraid, collection_id, key, url, vpath)?;
 			Ok(())
 		}
 
@@ -232,7 +244,7 @@ pub mod pallet {
 		) -> DispatchResult {
             let para_id = ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
 
-            Self::deposit_event(Event::FeedCreated { owner: nft_owner, collection_id, nft_id, metadata:mdata });
+            Self::deposit_event(Event::FeedCreated {collection_id, nft_id});
             Ok(())
         }
 
@@ -256,8 +268,8 @@ pub mod pallet {
 			let sender = ensure_signed(origin.clone())?;
 			
 			
-			Self::do_remove_feed(oracle_paraid, collection_id， nft_id)?;
-			Self::deposit_event(Event::FeedRemoved { owner: sender, nft_id });
+			Self::do_remove_feed(oracle_paraid, collection_id, nft_id)?;
+			Self::deposit_event(Event::FeedRemoved { collection_id, nft_id });
 			Ok(())
 		}
 
@@ -314,13 +326,13 @@ pub mod pallet {
 impl<T: Config> Pallet<T>
 {
 	pub fn do_create_collection(
-		para_id: u32,
+		para_id: ParaId,
 		metadata: BoundedVec<u8, T::StringLimit>,
 		max: Option<u32>,
 		symbol: BoundedVec<u8, T::StringLimit>,
 	) -> DispatchResult {
         let remark = KylinXcmCall::KylinFeedApi(KylinFeedApiFunc::xcm_create_collection{
-            metadata.to_vec(), max, symbol.to_vec(),
+            metadata:metadata.into(), max, symbol:symbol.into(),
         });
         T::XcmSender::send_xcm(
             (
@@ -343,7 +355,7 @@ impl<T: Config> Pallet<T>
     }
 
 	pub fn do_destroy_collection(
-		para_id: u32,
+		para_id: ParaId,
 		collection_id: u32,
 	) -> DispatchResult {
         let remark = KylinXcmCall::KylinFeedApi(KylinFeedApiFunc::xcm_destroy_collection{
@@ -370,7 +382,7 @@ impl<T: Config> Pallet<T>
     }
 
 	pub fn do_create_feed(
-		para_id: u32,
+		para_id: ParaId,
 		collection_id: CollectionId,
 		key: Vec<u8>,
 		url: Vec<u8>,
@@ -400,7 +412,7 @@ impl<T: Config> Pallet<T>
     }
 
 	pub fn do_remove_feed(
-		para_id: u32,
+		para_id: ParaId,
 		collection_id: u32,
 		nft_id: u32,
 	) -> DispatchResult {
@@ -427,7 +439,7 @@ impl<T: Config> Pallet<T>
         Ok(())
     }
 
-	pub fn do_query_feed(para_id: u32, collection_id: CollectionId, nft_id: NftId) -> DispatchResult {
+	pub fn do_query_feed(para_id: ParaId, collection_id: CollectionId, nft_id: NftId) -> DispatchResult {
         let remark = KylinXcmCall::KylinFeedApi(KylinFeedApiFunc::xcm_query_feed{
             collection_id, nft_id
         });

@@ -25,6 +25,7 @@ frame-benchmarking = { default-features = false, git = "https://github.com/parit
 pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.31" }
 
 cumulus-pallet-xcm = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.31", default-features = false }
+cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.31", default-features = false }
 xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.31" }
 
 kylin-primitives = { default-features = false, version = "0.0.1", path = "../../primitives" }
@@ -42,7 +43,6 @@ std = [
 	"frame-support/std",
 	"frame-system/std",
 	"frame-benchmarking/std",
-	"pallet-uniques/std",
 	"pallet-balances/std",
 ]
 
