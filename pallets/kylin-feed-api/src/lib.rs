@@ -25,6 +25,7 @@ use kylin_primitives::nft::{Nft, AccountIdOrCollectionNftTuple};
 use kylin_primitives::resource::{Resource, ResourceInfo, ResourceTypes};
 use kylin_primitives::collection::{Collection, CollectionInfo};
 use kylin_primitives::types::*;
+use kylin_oracle::{OracleKeyOf, CreatorId};
 use sp_std::convert::TryInto;
 use sp_std::result::Result;
 use sp_std::{prelude::*, str, vec::Vec};
@@ -572,10 +573,11 @@ pub mod pallet {
 				return Err(Error::<T>::CollectionUnknown.into())
 			}
 
-			let key_limit: kylin_oracle::OracleKeyOf<T> = key.clone().try_into().map_err(
+			let cid = CreatorId::AccountId(sender.clone());
+			let key_limit: OracleKeyOf<T> = key.clone().try_into().map_err(
 				|_| Error::<T>::StorageOverflow
 			)?;
-			kylin_oracle::Pallet::<T>::submit_api(origin, key_limit, url.clone(), vpath.clone())?;
+			kylin_oracle::Pallet::<T>::do_submit_api(cid, key_limit, url.clone(), vpath.clone())?;
 
 			let mdata = MetaData { key, url, vpath };
 			let meta_str = serde_json::to_string(&mdata).map_err(|_| Error::<T>::JsonError)?;
@@ -624,10 +626,11 @@ pub mod pallet {
 				return Err(Error::<T>::CollectionUnknown.into())
 			}
 
-			let key_limit: kylin_oracle::OracleKeyOf<T> = key.clone().try_into().map_err(
+			let cid = CreatorId::ParaId(para_id);
+			let key_limit: OracleKeyOf<T> = key.clone().try_into().map_err(
 				|_| Error::<T>::StorageOverflow
 			)?;
-			kylin_oracle::Pallet::<T>::xcm_submit_api(origin, key_limit, url.clone(), vpath.clone())?;
+			kylin_oracle::Pallet::<T>::do_submit_api(cid, key_limit, url.clone(), vpath.clone())?;
 
 			let mdata = MetaData { key, url, vpath };
 			let meta_str = serde_json::to_string(&mdata).map_err(|_| Error::<T>::JsonError)?;
@@ -682,10 +685,11 @@ pub mod pallet {
 			let nft = Nfts::<T>::get(collection_id, nft_id).ok_or(Error::<T>::NoAvailableNftId)?;
 			let mdata: MetaData = serde_json::from_slice(&nft.metadata).map_err(|_| Error::<T>::JsonError)?;
 
-			let key_limit: kylin_oracle::OracleKeyOf<T> = mdata.key.clone().try_into().map_err(
+			let cid = CreatorId::AccountId(sender.clone());
+			let key_limit: OracleKeyOf<T> = mdata.key.clone().try_into().map_err(
 					|_| Error::<T>::StorageOverflow
 				)?;
-			kylin_oracle::Pallet::<T>::remove_api(origin, key_limit)?;
+			kylin_oracle::Pallet::<T>::do_remove_api(cid, key_limit)?;
 
 			let max_recursions = T::MaxRecursions::get();
 			let (_collection_id, nft_id) = Self::nft_burn(collection_id, nft_id, max_recursions)?;
@@ -713,10 +717,11 @@ pub mod pallet {
 			let nft = Nfts::<T>::get(collection_id, nft_id).ok_or(Error::<T>::NoAvailableNftId)?;
 			let mdata: MetaData = serde_json::from_slice(&nft.metadata).map_err(|_| Error::<T>::JsonError)?;
 
-			let key_limit: kylin_oracle::OracleKeyOf<T> = mdata.key.clone().try_into().map_err(
+			let cid = CreatorId::ParaId(para_id);
+			let key_limit: OracleKeyOf<T> = mdata.key.clone().try_into().map_err(
 					|_| Error::<T>::StorageOverflow
 				)?;
-			kylin_oracle::Pallet::<T>::xcm_remove_api(origin, key_limit)?;
+			kylin_oracle::Pallet::<T>::do_remove_api(cid, key_limit)?;
 
 			let max_recursions = T::MaxRecursions::get();
 			let (_collection_id, nft_id) = Self::nft_burn(collection_id, nft_id, max_recursions)?;
@@ -751,7 +756,7 @@ pub mod pallet {
 			let nft = Nfts::<T>::get(collection_id, nft_id).ok_or(Error::<T>::NoAvailableNftId)?;
 			let mdata: MetaData = serde_json::from_slice(&nft.metadata).map_err(|_| Error::<T>::JsonError)?;
 			
-			let key: kylin_oracle::OracleKeyOf<T> = mdata.key.clone().try_into().map_err(
+			let key: OracleKeyOf<T> = mdata.key.clone().try_into().map_err(
 				|_| Error::<T>::StorageOverflow
 			)?;
 			if let Some(val) = kylin_oracle::Pallet::<T>::get(&key) {

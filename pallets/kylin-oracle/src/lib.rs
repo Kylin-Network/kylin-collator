@@ -440,15 +440,7 @@ pub mod pallet {
             // ensure submitter is authorized
             //ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
             
-            let block_number = <system::Pallet<T>>::block_number();
-            let feed = ApiFeed {
-                    requested_block_number: block_number,
-                    url: Some(url),
-                    vpath: Some(vpath),
-                };
-            ApiFeeds::<T>::insert(&cid, &key, feed.clone());
-
-            Self::deposit_event(Event::NewApiFeed { sender: cid, key, feed });
+            Self::do_submit_api(cid, key, url, vpath)?;
 			Ok(())
         }
 
@@ -472,15 +464,8 @@ pub mod pallet {
             // ensure submitter is authorized
             //ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
 
-            let feed_exists = ApiFeeds::<T>::contains_key(&cid, &key);
-            if feed_exists {
-                let feed = Self::api_feeds(&cid, &key).unwrap();
-                <ApiFeeds<T>>::remove(&cid, &key);
-                Self::deposit_event(Event::ApiFeedRemoved { sender: cid, key, feed });
-                Ok(())
-            } else {
-                Err(DispatchError::CannotLookup)
-            }
+            Self::do_remove_api(cid, key)?;
+            Ok(())
         }
 
         /// Submit the URL Endpoint for the feed.
@@ -510,15 +495,7 @@ pub mod pallet {
             // ensure submitter is authorized
             //ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
             
-            let block_number = <system::Pallet<T>>::block_number();
-            let feed = ApiFeed {
-                    requested_block_number: block_number,
-                    url: Some(url),
-                    vpath: Some(vpath),
-                };
-            ApiFeeds::<T>::insert(&cid, &key, feed.clone());
-
-            Self::deposit_event(Event::NewApiFeed { sender: cid, key, feed });
+            Self::do_submit_api(cid, key, url, vpath)?;
 			Ok(())
         }
 
@@ -543,15 +520,8 @@ pub mod pallet {
             // ensure submitter is authorized
             //ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
 
-            let feed_exists = ApiFeeds::<T>::contains_key(&cid, &key);
-            if feed_exists {
-                let feed = Self::api_feeds(&cid, &key).unwrap();
-                <ApiFeeds<T>>::remove(&cid, &key);
-                Self::deposit_event(Event::ApiFeedRemoved { sender: cid, key, feed });
-                Ok(())
-            } else {
-                Err(DispatchError::CannotLookup)
-            }
+            Self::do_remove_api(cid, key)?;
+            Ok(())
         }
         
     }
@@ -858,4 +828,38 @@ where T::AccountId: AsRef<[u8]>
 		let values = Self::read_raw_values(key);
 		T::CombineData::combine_data(key, values, Self::values(key))
 	}
+
+    pub fn do_submit_api(
+        cid: CreatorId<T::AccountId>,
+        key: OracleKeyOf<T>,
+        url: Vec<u8>,
+        vpath: Vec<u8>,
+    ) -> DispatchResult {
+        let block_number = <system::Pallet<T>>::block_number();
+        let feed = ApiFeed {
+                requested_block_number: block_number,
+                url: Some(url),
+                vpath: Some(vpath),
+            };
+        ApiFeeds::<T>::insert(&cid, &key, feed.clone());
+
+        Self::deposit_event(Event::NewApiFeed { sender: cid, key, feed });
+        Ok(())
+    }
+
+    pub fn do_remove_api(
+        cid: CreatorId<T::AccountId>,
+        key: OracleKeyOf<T>,
+    ) -> DispatchResult {
+        let feed_exists = ApiFeeds::<T>::contains_key(&cid, &key);
+        if feed_exists {
+            let feed = Self::api_feeds(&cid, &key).unwrap();
+            <ApiFeeds<T>>::remove(&cid, &key);
+            Self::deposit_event(Event::ApiFeedRemoved { sender: cid, key, feed });
+            Ok(())
+        } else {
+            Err(DispatchError::CannotLookup)
+        }
+    }
+
 }

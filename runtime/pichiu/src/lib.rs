@@ -148,7 +148,7 @@ parameter_types! {
 	pub const BlockHashCount: BlockNumber = 250;
 	pub const Version: RuntimeVersion = VERSION;
 	pub RuntimeBlockLength: BlockLength =
-		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
+		BlockLength::max_with_normal_ratio(10 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
 		.base_block(BlockExecutionWeight::get())
 		.for_class(DispatchClass::all(), |weights| {
@@ -306,24 +306,24 @@ impl kylin_democracy::Config for Runtime {
 	type MaxProposals = MaxProposals;
 }
 
-parameter_types! {
-	pub const DistributionPalletId: PalletId = PalletId(*b"pdistrib");
-	pub DistributionStake: Balance = 10 * Balance::from(10_u64.pow(18));
-	pub const DistributionPrefix: &'static [u8] = b"kylin-";
-}
+// parameter_types! {
+// 	pub const DistributionPalletId: PalletId = PalletId(*b"pdistrib");
+// 	pub DistributionStake: Balance = 10 * Balance::from(10_u64.pow(18));
+// 	pub const DistributionPrefix: &'static [u8] = b"kylin-";
+// }
 
-impl kylin_distribution::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type DistributionId = DistributionId;
-	type Balance = Balance;
-	type Convert = sp_runtime::traits::ConvertInto;
-	type Moment = Moment;
-	type RecipientFundAsset = Balances;
-	type Time = Timestamp;
-	type PalletId = DistributionPalletId;
-	type Stake = DistributionStake;
-	type WeightInfo = kylin_distribution::weights::SubstrateWeight<Runtime>;
-}
+// impl kylin_distribution::Config for Runtime {
+// 	type RuntimeEvent = RuntimeEvent;
+// 	type DistributionId = DistributionId;
+// 	type Balance = Balance;
+// 	type Convert = sp_runtime::traits::ConvertInto;
+// 	type Moment = Moment;
+// 	type RecipientFundAsset = Balances;
+// 	type Time = Timestamp;
+// 	type PalletId = DistributionPalletId;
+// 	type Stake = DistributionStake;
+// 	type WeightInfo = kylin_distribution::weights::SubstrateWeight<Runtime>;
+// }
 
 parameter_types! {
 	pub const CouncilMotionDuration: BlockNumber = 5 * DAYS;
@@ -1187,7 +1187,6 @@ impl orml_tokens::Config for Runtime {
 	type ReserveIdentifier = ReserveIdentifier;
 }
 
-
 parameter_types! {
 	pub const CollectionDeposit: Balance = 10 * CENTI_PCHU;
 	pub const ItemDeposit: Balance = PCHU;
@@ -1281,9 +1280,9 @@ construct_runtime! {
 
 		// Kylin Pallets
 		OracleProvider: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>} = 54,
-		Uniques: pallet_uniques = 55,
-		KylinDistribution: kylin_distribution::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 56,
+		//KylinDistribution: kylin_distribution::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 55,
 		KylinOraclePallet: kylin_oracle = 166, // Fix index 166
+		Uniques: pallet_uniques = 56,
 		KylinFeedApi: kylin_feed_api  = 167, // Fix index 167
 
 		// orml
