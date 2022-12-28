@@ -95,7 +95,7 @@ pub mod crypto {
 /// Mock structure for XCM Call message encoding
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[allow(non_camel_case_types)]
-enum KylinMockFunc {
+enum KylinOracleFunc {
     #[codec(index = 1u8)]
     xcm_feed_data { values: Vec<(Vec<u8>, i64)> },
     #[codec(index = 2u8)]
@@ -105,9 +105,9 @@ enum KylinMockFunc {
 /// Mock structure for XCM Call message encoding
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[allow(non_camel_case_types)]
-enum KylinMockCall {
+enum KylinXcmCall {
     #[codec(index = 166u8)]
-    KylinOraclePallet(KylinMockFunc),
+    KylinOraclePallet(KylinOracleFunc),
 }
 
 /// An index to a block.
@@ -481,7 +481,7 @@ where T::AccountId: AsRef<[u8]>
     }
 
     fn feed_data_to_parachain(para_id: ParaId, values: Vec<(Vec<u8>, i64)>) -> DispatchResult {
-        let remark = KylinMockCall::KylinOraclePallet(KylinMockFunc::xcm_feed_data {
+        let remark = KylinXcmCall::KylinOraclePallet(KylinOracleFunc::xcm_feed_data {
             values,
         });
         match T::XcmSender::send_xcm(

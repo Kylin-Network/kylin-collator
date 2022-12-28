@@ -1133,60 +1133,17 @@ impl orml_tokens::Config for Runtime {
 }
 
 parameter_types! {
-	pub const CollectionDeposit: Balance = 10 * CENTI_PCHU;
-	pub const ItemDeposit: Balance = PCHU;
-	pub const KeyLimit: u32 = 32;
-	pub const ValueLimit: u32 = 256;
-	pub const UniquesMetadataDepositBase: Balance = 10 * CENTI_PCHU;
-	pub const AttributeDepositBase: Balance = 10 * CENTI_PCHU;
-	pub const DepositPerByte: Balance = CENTI_PCHU;
-	pub const UniquesStringLimit: u32 = 512;
-	pub const MaxPropertiesPerTheme: u32 = 100;
-	pub const MaxCollectionsEquippablePerPart: u32 = 100;
-}
-
-impl pallet_uniques::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type CollectionId = u32;
-	type ItemId = u32;
-	type Currency = Balances;
-	type ForceOrigin = frame_system::EnsureRoot<AccountId>;
-	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
-	type Locker = kylin_feed::Pallet<Runtime>;
-	type CollectionDeposit = CollectionDeposit;
-	type ItemDeposit = ItemDeposit;
-	type MetadataDepositBase = UniquesMetadataDepositBase;
-	type AttributeDepositBase = AttributeDepositBase;
-	type DepositPerByte = DepositPerByte;
-	type StringLimit = UniquesStringLimit;
-	type KeyLimit = KeyLimit;
-	type ValueLimit = ValueLimit;
-	type WeightInfo = ();
-}
-
-parameter_types! {
-	pub const MaxRecursions: u32 = 10;
-	pub const ResourceSymbolLimit: u32 = 10;
-	pub const PartsLimit: u32 = 25;
-	pub const MaxPriorities: u32 = 25;
-	pub const CollectionSymbolLimit: u32 = 100;
-	pub const MaxResourcesOnMint: u32 = 100;
+	pub const FeedStringLimit: u32 = 512;
 }
 
 impl kylin_feed::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	//type ProtocolOrigin = frame_system::EnsureRoot<AccountId>;
 	type RuntimeOrigin = RuntimeOrigin;
-	type MaxRecursions = MaxRecursions;
 	type UnixTime = Timestamp;
-	type ResourceSymbolLimit = ResourceSymbolLimit;
-	type PartsLimit = PartsLimit;
-	type MaxPriorities = MaxPriorities;
-	type CollectionSymbolLimit = CollectionSymbolLimit;
-	type MaxResourcesOnMint = MaxResourcesOnMint;
+	type StringLimit = FeedStringLimit;
 	type XcmSender = XcmRouter;
 }
-
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -1226,8 +1183,7 @@ construct_runtime! {
 		// Kylin Pallets
 		OracleProvider: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>} = 54,
 		KylinReporterPallet: kylin_reporter = 55,
-		Uniques: pallet_uniques = 56,
-		KylinFeed: kylin_feed  = 167, // Fix index 167
+		KylinFeed: kylin_feed  = 168, // Fix index 168
 
 		// orml
 		OrmlXcm: orml_xcm = 70,

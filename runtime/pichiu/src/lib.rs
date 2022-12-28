@@ -697,9 +697,8 @@ impl kylin_oracle::Config for Runtime {
 	type Currency = Balances;
 
 	type CombineData = DefaultCombineData<Self, ConstU32<1>, ConstU128<600>>;
-	type OracleKey = Vec<u8>;
-	type OracleValue = i64;
 	type Members = OracleProvider;
+	type StrLimit = ConstU32<512>;
 	type MaxHasDispatchedSize = ConstU32<100>;
 }
 
@@ -1186,6 +1185,62 @@ impl orml_tokens::Config for Runtime {
 	type ReserveIdentifier = ReserveIdentifier;
 }
 
+
+parameter_types! {
+	pub const CollectionDeposit: Balance = 10 * CENTI_PCHU;
+	pub const ItemDeposit: Balance = PCHU;
+	pub const KeyLimit: u32 = 32;
+	pub const ValueLimit: u32 = 256;
+	pub const UniquesMetadataDepositBase: Balance = 10 * CENTI_PCHU;
+	pub const AttributeDepositBase: Balance = 10 * CENTI_PCHU;
+	pub const DepositPerByte: Balance = CENTI_PCHU;
+	pub const UniquesStringLimit: u32 = 512;
+	pub const MaxPropertiesPerTheme: u32 = 100;
+	pub const MaxCollectionsEquippablePerPart: u32 = 100;
+}
+
+impl pallet_uniques::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type CollectionId = u32;
+	type ItemId = u32;
+	type Currency = Balances;
+	type ForceOrigin = frame_system::EnsureRoot<AccountId>;
+	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
+	type Locker = kylin_feed_api::Pallet<Runtime>;
+	type CollectionDeposit = CollectionDeposit;
+	type ItemDeposit = ItemDeposit;
+	type MetadataDepositBase = UniquesMetadataDepositBase;
+	type AttributeDepositBase = AttributeDepositBase;
+	type DepositPerByte = DepositPerByte;
+	type StringLimit = UniquesStringLimit;
+	type KeyLimit = KeyLimit;
+	type ValueLimit = ValueLimit;
+	type WeightInfo = ();
+}
+
+parameter_types! {
+	pub const MaxRecursions: u32 = 10;
+	pub const ResourceSymbolLimit: u32 = 10;
+	pub const PartsLimit: u32 = 25;
+	pub const MaxPriorities: u32 = 25;
+	pub const CollectionSymbolLimit: u32 = 100;
+	pub const MaxResourcesOnMint: u32 = 100;
+}
+
+impl kylin_feed_api::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	//type ProtocolOrigin = frame_system::EnsureRoot<AccountId>;
+	type RuntimeOrigin = RuntimeOrigin;
+	type MaxRecursions = MaxRecursions;
+	type UnixTime = Timestamp;
+	type ResourceSymbolLimit = ResourceSymbolLimit;
+	type PartsLimit = PartsLimit;
+	type MaxPriorities = MaxPriorities;
+	type CollectionSymbolLimit = CollectionSymbolLimit;
+	type MaxResourcesOnMint = MaxResourcesOnMint;
+	type XcmSender = XcmRouter;
+}
+
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -1226,7 +1281,9 @@ construct_runtime! {
 		OracleProvider: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>} = 54,
 		KylinOraclePallet: kylin_oracle = 166, // Fix index 166
 		KylinDistribution: kylin_distribution::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 140,
-
+		Uniques: pallet_uniques = 56,
+		KylinFeedApi: kylin_feed_api  = 167, // Fix index 167
+		
 		// orml
 		OrmlXcm: orml_xcm = 70,
 		OrmlXTokens: orml_xtokens = 71,
