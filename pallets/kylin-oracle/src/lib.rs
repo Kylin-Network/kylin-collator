@@ -107,7 +107,7 @@ pub mod crypto {
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[allow(non_camel_case_types)]
 enum KylinMockFunc {
-    #[codec(index = 6u8)]
+    #[codec(index = 7u8)]
     xcm_feed_back { 
         key: Vec<u8>,
 		value: i64,

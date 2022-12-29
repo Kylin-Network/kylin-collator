@@ -1187,13 +1187,13 @@ impl orml_tokens::Config for Runtime {
 
 
 parameter_types! {
-	pub const CollectionDeposit: Balance = 10 * CENTI_PCHU;
-	pub const ItemDeposit: Balance = PCHU;
+	pub const CollectionDeposit: Balance = 0;
+	pub const ItemDeposit: Balance = 0;
 	pub const KeyLimit: u32 = 32;
 	pub const ValueLimit: u32 = 256;
-	pub const UniquesMetadataDepositBase: Balance = 10 * CENTI_PCHU;
-	pub const AttributeDepositBase: Balance = 10 * CENTI_PCHU;
-	pub const DepositPerByte: Balance = CENTI_PCHU;
+	pub const UniquesMetadataDepositBase: Balance = 0;
+	pub const AttributeDepositBase: Balance = 0;
+	pub const DepositPerByte: Balance = 0;
 	pub const UniquesStringLimit: u32 = 512;
 	pub const MaxPropertiesPerTheme: u32 = 100;
 	pub const MaxCollectionsEquippablePerPart: u32 = 100;

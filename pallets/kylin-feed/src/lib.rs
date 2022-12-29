@@ -44,6 +44,15 @@ pub struct TimestampedValue {
     pub timestamp: u128,
 }
 
+
+/// Mock structure for XCM Call message encoding
+#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[allow(non_camel_case_types)]
+enum KylinOracleFunc {
+    #[codec(index = 2u8)]
+    xcm_query_data { key: Vec<u8> },
+}
+
 /// Mock structure for XCM Call message encoding
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[allow(non_camel_case_types)]
@@ -81,7 +90,9 @@ enum KylinFeedApiFunc {
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[allow(non_camel_case_types)]
 enum KylinXcmCall {
-    #[codec(index = 167u8)]
+    #[codec(index = 166u8)]
+    KylinOraclePallet(KylinOracleFunc),
+	#[codec(index = 167u8)]
     KylinFeedApi(KylinFeedApiFunc),
 }
 
@@ -294,6 +305,18 @@ pub mod pallet {
 			Ok(())
 		}
 
+		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
+		pub fn query_feed_by_key(
+			origin: OriginFor<T>,
+			oracle_paraid: ParaId,
+			key: Vec<u8>,
+		) -> DispatchResult {
+			let sender = ensure_signed(origin.clone())?;
+			
+			Self::do_query_feed_by_key(oracle_paraid, key)?;
+			Ok(())
+		}
+
 		/// Feed data query feed back from Oracle parachain
 		///
 		/// Can be only XCM call from parachain.
@@ -463,5 +486,28 @@ impl<T: Config> Pallet<T>
         Ok(())
     }
 
+	pub fn do_query_feed_by_key(para_id: ParaId, key: Vec<u8>) -> DispatchResult {
+        let remark = KylinXcmCall::KylinOraclePallet(KylinOracleFunc::xcm_query_data{
+            key
+        });
+        T::XcmSender::send_xcm(
+            (
+                1,
+                Junction::Parachain(para_id.into()),
+            ),
+            Xcm(vec![Transact {
+                origin_type: OriginKind::Native,
+                require_weight_at_most: 1_000_000_000,
+                call: remark.encode().into(),
+            }]),
+        ).map_err(
+            |e| {
+                log::error!("Error: XcmSendError {:?}, {:?}", para_id, e);
+                Error::<T>::XcmSendError
+            }
+        )?;
+
+        Ok(())
+    }
 	
 }

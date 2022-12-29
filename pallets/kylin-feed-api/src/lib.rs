@@ -396,7 +396,7 @@ pub mod pallet {
 			let para_id =
                 ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
 			let sender = Self::paraid_to_account_id::<T::AccountId>(para_id);
-
+			
 			let collection_id = Self::collection_create(sender.clone(), metadata, max, symbol)?;
 
 			pallet_uniques::Pallet::<T>::do_create_collection(
@@ -411,9 +411,9 @@ pub mod pallet {
 					owner: sender.clone(),
 				},
 			)?;
-
-			Self::sendback_collectionid(para_id, collection_id)?;
+			
 			Self::deposit_event(Event::CollectionCreated { issuer: sender, collection_id });
+			Self::sendback_collectionid(para_id, collection_id)?;
 			Ok(())
 		}
 
@@ -655,8 +655,8 @@ pub mod pallet {
 				|_details| Ok(()),
 			)?;
 
-			Self::sendback_nftid(para_id, collection_id, nft_id)?;
 			Self::deposit_event(Event::FeedCreated { owner: nft_owner, collection_id, nft_id, metadata:mdata });
+			Self::sendback_nftid(para_id, collection_id, nft_id)?;
 			Ok(())
 		}
 

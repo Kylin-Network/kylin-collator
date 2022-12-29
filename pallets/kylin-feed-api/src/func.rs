@@ -21,7 +21,7 @@ enum KylinFeedFunc {
 		collection_id: CollectionId,
 		nft_id: NftId,
     },
-    #[codec(index = 6u8)]
+    #[codec(index = 7u8)]
     xcm_feed_back { 
         key: Vec<u8>,
 		value: i64,
