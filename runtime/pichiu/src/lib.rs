@@ -861,6 +861,7 @@ impl pallet_assets::Config for Runtime {
 	type Balance = u64;
 	type AssetId = parachains_common::AssetId;
 	type Currency = Balances;
+	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
 	type ForceOrigin = AssetsForceOrigin;
 	type AssetDeposit = AssetDeposit;
 	type MetadataDepositBase = MetadataDepositBase;
@@ -1175,14 +1176,9 @@ impl orml_tokens::Config for Runtime {
     type CurrencyId = CurrencyId;
     type WeightInfo = ();
     type ExistentialDeposits = ExistentialDeposits;
-    type OnDust = orml_tokens::TransferDust<Runtime, NativeTreasuryAccount>;
-	type OnSlash = ();
-	type OnDeposit = ();
-	type OnTransfer = ();
     type MaxLocks = ORMLMaxLocks;
     type DustRemovalWhitelist = Nothing;
-	type OnNewTokenAccount =  ();
-	type OnKilledTokenAccount =  ();
+	type CurrencyHooks = ();
 	type MaxReserves = MaxReserves;
 	type ReserveIdentifier = ReserveIdentifier;
 }
