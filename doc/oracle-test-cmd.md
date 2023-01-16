@@ -67,8 +67,9 @@ export PCHAIN1_WS=ws://127.0.0.1:8544
 
 ```bash
 ./dist/main.js feed createCollection -o 2000
-./dist/main.js feed createFeed -c 0 -o 2000 -k 'PriceEthUsdt' -u 'https://min-api.cryptocompare.com/data/price?fsym=eth&tsyms=usdt' -v '/USDT'
-./dist/main.js feed queryFeed -c 0 -n 0 -k 'PriceEthUsdt'
+./dist/main.js feed createFeed -o 2000 -c 0 -k 'PriceEthUsdt' -u 'https://min-api.cryptocompare.com/data/price?fsym=eth&tsyms=usdt' -v '/USDT'
+./dist/main.js feed queryFeed -o 2000 -c 0 -n 0
+./dist/main.js feed queryFeedByKey -o 2000 -k 'PriceEthUsdt'
 ```
 
 **Test Oracle APIs**
