@@ -1,0 +1,53 @@
+[package]
+name = "kylin-feed-api"
+version = "4.0.0-dev"
+description = "Kylin Feed API"
+authors = ["Kylin"]
+edition = "2021"
+license = "Unlicense"
+publish = false
+repository = ""
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.1.2", default-features = false, features = ["derive",] }
+scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
+serde = { version = "1.0.136", default-features = false, features = ["derive"]}
+serde_json = { version = "1.0.68", default-features = false, features = ["alloc"] }
+
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.30" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.30" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.30"}
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.30" }
+frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.30", optional = true }
+pallet-uniques = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.30" }
+pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.30" }
+
+cumulus-pallet-xcm = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.30", default-features = false }
+cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.30", default-features = false }
+xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.30" }
+
+kylin-oracle = { default-features = false, path = "../kylin-oracle" }
+kylin-primitives = { default-features = false, version = "0.0.1", path = "../../primitives" }
+
+[dev-dependencies]
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.30" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.30" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.30" }
+
+[features]
+default = ["std"]
+std = [
+	"codec/std",
+	"scale-info/std",
+	"frame-support/std",
+	"frame-system/std",
+	"frame-benchmarking/std",
+	"pallet-uniques/std",
+	"pallet-balances/std",
+]
+
+runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
+try-runtime = ["frame-support/try-runtime"]
