@@ -1,11 +1,10 @@
 [package]
 name = "kylin-feed"
 version = "4.0.0-dev"
-description = "Kylin Feed"
-authors = ["Kylin"]
+authors = ['Kylin <https://github.com/kylin-network>']
 edition = "2021"
-license = "Unlicense"
-publish = false
+license = "Apache-2.0"
+description = "Kylin Feed pallet"
 repository = ""
 
 [package.metadata.docs.rs]

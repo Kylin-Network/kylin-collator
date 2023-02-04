@@ -429,7 +429,6 @@ where T::AccountId: AsRef<[u8]>
         Ok(())
     }
 
-    /// Fetch current price and return the result in cents.
     fn fetch_http_get_result(url: Vec<u8>) -> Result<Vec<u8>, http::Error> {
         // We want to keep the offchain worker execution time reasonable, so we set a hard-coded
         // deadline to 2s to complete the external call.

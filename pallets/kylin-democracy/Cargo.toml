@@ -1,7 +1,7 @@
 [package]
 name = "kylin-democracy"
 version = "4.0.0-dev"
-authors = ["Parity Technologies <admin@parity.io>"]
+authors = ['Kylin <https://github.com/kylin-network>']
 edition = "2021"
 license = "Apache-2.0"
 description = "Kylin democracy pallet"

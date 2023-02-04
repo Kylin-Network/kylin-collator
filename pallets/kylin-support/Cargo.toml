@@ -1,8 +1,10 @@
 [package]
 name = "kylin-support"
 version = "0.0.1"
-authors = ["Kylin Team"]
+authors = ['Kylin <https://github.com/kylin-network>']
 edition = "2021"
+license = "Apache-2.0"
+description = "Kylin support pallet"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
