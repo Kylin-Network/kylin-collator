@@ -316,11 +316,10 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			values: Vec<(OracleKeyOf<T>, i64)>,
 		) -> DispatchResultWithPostInfo {
-			let feeder = ensure_signed(origin.clone())?;
-            let cid = CreatorId::AccountId(feeder);
-
+			let feeder = ensure_signed(origin)?;
+            let cid = CreatorId::AccountId(feeder.clone());
             // ensure feeder is authorized
-            //ensure!(T::Members::contains(&feeder), Error::<T>::NoPermission);
+            ensure!(T::Members::contains(&feeder), Error::<T>::NoPermission);
 
             // ensure account hasn't dispatched an updated yet
             ensure!(
@@ -361,7 +360,7 @@ pub mod pallet {
 			values: Vec<(OracleKeyOf<T>, i64)>,
 		) -> DispatchResultWithPostInfo {
             let para_id =
-                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin))?;
             let cid = CreatorId::ParaId(para_id);
 
             // // ensure feeder is authorized
@@ -404,7 +403,7 @@ pub mod pallet {
 			key: OracleKeyOf<T>,
 		) -> DispatchResult {
 			let para_id =
-                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin))?;
 
             if let Some(val) = Self::get(&key) {
                 Self::send_qret_to_parachain(para_id, key.into(), val.value.into())
@@ -434,11 +433,11 @@ pub mod pallet {
             url: Vec<u8>,
             vpath: Vec<u8>,
         ) -> DispatchResult {
-            let submitter = ensure_signed(origin.clone())?;
-            let cid = CreatorId::AccountId(submitter);
+            let submitter = ensure_signed(origin)?;
+            let cid = CreatorId::AccountId(submitter.clone());
 
             // ensure submitter is authorized
-            //ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
+            ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
             
             Self::do_submit_api(cid, key, url, vpath)?;
 			Ok(())
@@ -458,11 +457,11 @@ pub mod pallet {
             origin: OriginFor<T>,
             key: OracleKeyOf<T>,
         ) -> DispatchResult {
-            let submitter = ensure_signed(origin.clone())?;
-            let cid = CreatorId::AccountId(submitter);
+            let submitter = ensure_signed(origin)?;
+            let cid = CreatorId::AccountId(submitter.clone());
 
             // ensure submitter is authorized
-            //ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
+            ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
 
             Self::do_remove_api(cid, key)?;
             Ok(())
@@ -489,7 +488,7 @@ pub mod pallet {
             vpath: Vec<u8>,
         ) -> DispatchResult {
             let para_id =
-                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin))?;
             let cid = CreatorId::ParaId(para_id);
 
             // ensure submitter is authorized
@@ -514,7 +513,7 @@ pub mod pallet {
             key: OracleKeyOf<T>,
         ) -> DispatchResult {
             let para_id =
-                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin))?;
             let cid = CreatorId::ParaId(para_id);
 
             // ensure submitter is authorized

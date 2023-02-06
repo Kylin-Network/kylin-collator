@@ -209,6 +209,10 @@ pub mod pallet {
             origin: OriginFor<T>,
             para_id: ParaId,
         ) -> DispatchResult {
+            let submitter = ensure_signed(origin)?;
+            // ensure submitter is authorized
+            ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
+            
             <KylinParaId<T>>::put(para_id);
             Ok(())
         }
@@ -227,6 +231,10 @@ pub mod pallet {
             para_id: ParaId,
             values: Vec<(Vec<u8>, i64)>,
         ) -> DispatchResult {
+            let submitter = ensure_signed(origin)?;
+            // ensure submitter is authorized
+            ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
+
             Self::feed_data_to_parachain(para_id, values)
         }
 
@@ -250,9 +258,9 @@ pub mod pallet {
             url: Vec<u8>,
             vpath: Vec<u8>,
         ) -> DispatchResultWithPostInfo {
-            let submitter = ensure_signed(origin.clone())?;
+            let submitter = ensure_signed(origin)?;
             // ensure submitter is authorized
-            //ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
+            ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
 
             let block_number = <system::Pallet<T>>::block_number();
             let feed = ApiFeed {
@@ -280,9 +288,9 @@ pub mod pallet {
             origin: OriginFor<T>,
             key: Vec<u8>,
         ) -> DispatchResult {
-            let submitter = ensure_signed(origin.clone())?;
+            let submitter = ensure_signed(origin)?;
             // ensure submitter is authorized
-            //ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
+            ensure!(T::Members::contains(&submitter), Error::<T>::NoPermission);
 
             let feed_exists = ApiFeeds::<T>::contains_key(&submitter, &key);
             if feed_exists {

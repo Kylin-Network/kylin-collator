@@ -365,7 +365,7 @@ pub mod pallet {
 			max: Option<u32>,
 			symbol: BoundedCollectionSymbolOf<T>,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			let sender = ensure_signed(origin)?;
 
 			let collection_id = Self::collection_create(sender.clone(), metadata, max, symbol)?;
 
@@ -394,7 +394,7 @@ pub mod pallet {
 			symbol: BoundedCollectionSymbolOf<T>,
 		) -> DispatchResult {
 			let para_id =
-                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin))?;
 			let sender = Self::paraid_to_account_id::<T::AccountId>(para_id);
 			
 			let collection_id = Self::collection_create(sender.clone(), metadata, max, symbol)?;
@@ -437,7 +437,7 @@ pub mod pallet {
 			key: KeyLimitOf<T>,
 			value: ValueLimitOf<T>,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			let sender = ensure_signed(origin)?;
 
 			Self::property_set(sender, collection_id, maybe_nft_id, key.clone(), value.clone())?;
 
@@ -459,7 +459,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			let sender = ensure_signed(origin)?;
 
 			Self::core_destroy_collection(sender, collection_id)?;
 			Ok(())
@@ -471,7 +471,7 @@ pub mod pallet {
 			collection_id: CollectionId,
 		) -> DispatchResult {
 			let para_id =
-                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin))?;
 			let sender = Self::paraid_to_account_id::<T::AccountId>(para_id);
 
 			Self::core_destroy_collection(sender, collection_id)?;
@@ -491,7 +491,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			let sender = ensure_signed(origin)?;
 
 			let collection_id = Self::collection_lock(sender.clone(), collection_id)?;
 
@@ -563,7 +563,7 @@ pub mod pallet {
             url: Vec<u8>,
 			vpath: Vec<u8>,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			let sender = ensure_signed(origin)?;
 			
 			if let Some(collection_issuer) =
 			pallet_uniques::Pallet::<T>::collection_owner(collection_id)
@@ -615,7 +615,7 @@ pub mod pallet {
 			vpath: Vec<u8>,
 		) -> DispatchResult {
 			let para_id =
-                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin))?;
 			let sender = Self::paraid_to_account_id::<T::AccountId>(para_id);
 			
 			if let Some(collection_issuer) =
@@ -676,7 +676,7 @@ pub mod pallet {
 			collection_id: CollectionId,
 			nft_id: NftId,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			let sender = ensure_signed(origin)?;
 			
 			let (root_owner, _) = Pallet::<T>::lookup_root_owner(collection_id, nft_id)?;
 			// Check ownership
@@ -707,7 +707,7 @@ pub mod pallet {
 			nft_id: NftId,
 		) -> DispatchResult {
 			let para_id =
-                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin))?;
 			let sender = Self::paraid_to_account_id::<T::AccountId>(para_id);
 
 			let (root_owner, _) = Pallet::<T>::lookup_root_owner(collection_id, nft_id)?;
@@ -747,7 +747,7 @@ pub mod pallet {
 			nft_id: NftId,
 		) -> DispatchResult {
 			let para_id =
-                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
+                ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin))?;
 			let sender = Self::paraid_to_account_id::<T::AccountId>(para_id);
 			let (root_owner, _) = Pallet::<T>::lookup_root_owner(collection_id, nft_id)?;
 			// Check ownership
@@ -784,7 +784,7 @@ pub mod pallet {
 			nft_id: NftId,
 			new_owner: AccountIdOrCollectionNftTuple<T::AccountId>,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			let sender = ensure_signed(origin)?;
 
 			let (new_owner_account, approval_required) =
 				Self::nft_send(sender.clone(), collection_id, nft_id, new_owner.clone())?;
@@ -825,7 +825,7 @@ pub mod pallet {
 			nft_id: NftId,
 			new_owner: AccountIdOrCollectionNftTuple<T::AccountId>,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			let sender = ensure_signed(origin)?;
 
 			let (new_owner_account, collection_id, nft_id) =
 				Self::nft_accept(sender.clone(), collection_id, nft_id, new_owner.clone())?;
@@ -862,7 +862,7 @@ pub mod pallet {
 			collection_id: CollectionId,
 			nft_id: NftId,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			let sender = ensure_signed(origin)?;
 
 			let max_recursions = T::MaxRecursions::get();
 			let (sender, collection_id, nft_id) =

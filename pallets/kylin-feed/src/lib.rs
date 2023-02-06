@@ -200,7 +200,7 @@ pub mod pallet {
 			max: Option<u32>,
 			symbol: BoundedVec<u8, T::StringLimit>,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			let sender = ensure_signed(origin)?;
 			
 			Self::do_create_collection(oracle_paraid, metadata, max, symbol)?;
 			Ok(())
@@ -211,7 +211,7 @@ pub mod pallet {
 			origin: OriginFor<T>, 
 			collection_id: CollectionId
 		) -> DispatchResult {
-            let para_id = ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
+            let para_id = ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin))?;
 
             Self::deposit_event(Event::CollectionCreated { collection_id });
             Ok(())
@@ -241,7 +241,7 @@ pub mod pallet {
             url: Vec<u8>,
 			vpath: Vec<u8>,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			let sender = ensure_signed(origin)?;
 			
 			Self::do_create_feed(oracle_paraid, collection_id, key, url, vpath)?;
 			Ok(())
@@ -253,7 +253,7 @@ pub mod pallet {
 			collection_id: CollectionId,
 			nft_id: NftId,
 		) -> DispatchResult {
-            let para_id = ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
+            let para_id = ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin))?;
 
             Self::deposit_event(Event::FeedCreated {collection_id, nft_id});
             Ok(())
@@ -276,7 +276,7 @@ pub mod pallet {
 			collection_id: CollectionId,
 			nft_id: NftId,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			let sender = ensure_signed(origin)?;
 			
 			
 			Self::do_remove_feed(oracle_paraid, collection_id, nft_id)?;
@@ -299,7 +299,7 @@ pub mod pallet {
 			collection_id: CollectionId,
 			nft_id: NftId,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			let sender = ensure_signed(origin)?;
 			
 			Self::do_query_feed(oracle_paraid, collection_id, nft_id)?;
 			Ok(())
@@ -311,7 +311,7 @@ pub mod pallet {
 			oracle_paraid: ParaId,
 			key: Vec<u8>,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			let sender = ensure_signed(origin)?;
 			
 			Self::do_query_feed_by_key(oracle_paraid, key)?;
 			Ok(())
@@ -329,7 +329,7 @@ pub mod pallet {
 		/// * `QueryFeedBack`
 		#[pallet::weight(T::DbWeight::get().reads_writes(1,1).ref_time().saturating_add(10_000))]
 		pub fn xcm_feed_back(origin: OriginFor<T>, key: Vec<u8>, value: i64) -> DispatchResult {
-            let para_id = ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin.clone()))?;
+            let para_id = ensure_sibling_para(<T as Config>::RuntimeOrigin::from(origin))?;
 
             let now = T::UnixTime::now().as_millis();
             let tval = TimestampedValue {
