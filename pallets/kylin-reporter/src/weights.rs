@@ -36,26 +36,20 @@ pub trait WeightInfo {
 /// Weights for kylin_oracle using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
-	fn submit_api() -> Weight {
-        Weight::from_ref_time(6_284_000)
-            .saturating_add(T::DbWeight::get().writes(1 as u64))
+    fn submit_api() -> Weight {
+        Weight::from_ref_time(6_284_000).saturating_add(T::DbWeight::get().writes(1 as u64))
     }
     fn remove_api() -> Weight {
-        Weight::from_ref_time(6_284_000)
-            .saturating_add(T::DbWeight::get().writes(1 as u64))
+        Weight::from_ref_time(6_284_000).saturating_add(T::DbWeight::get().writes(1 as u64))
     }
-
-
 }
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
-	fn submit_api() -> Weight {
-        Weight::from_ref_time(6_284_000)
-            .saturating_add(RocksDbWeight::get().writes(1 as u64))
+    fn submit_api() -> Weight {
+        Weight::from_ref_time(6_284_000).saturating_add(RocksDbWeight::get().writes(1 as u64))
     }
     fn remove_api() -> Weight {
-        Weight::from_ref_time(6_284_000)
-            .saturating_add(RocksDbWeight::get().writes(1 as u64))
+        Weight::from_ref_time(6_284_000).saturating_add(RocksDbWeight::get().writes(1 as u64))
     }
 }
